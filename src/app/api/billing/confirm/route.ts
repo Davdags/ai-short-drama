@@ -23,14 +23,14 @@ export const POST = apiHandler(async (request: NextRequest) => {
 
   const payment = await prisma.payment.findUnique({
     where: { providerRef: reference },
-    select: { userId: true, provider: true, status: true, planId: true, providerCheckoutId: true },
+    select: { userId: true, provider: true, status: true, planId: true, purpose: true, providerCheckoutId: true },
   })
   if (!payment) throw new ApiError('NOT_FOUND', { resource: 'payment' })
   // Only the payer may ask about their own payment.
   if (payment.userId !== userId) throw new ApiError('FORBIDDEN')
 
   if (payment.status === 'success') {
-    return NextResponse.json({ success: true, status: 'success', planId: payment.planId, alreadySettled: true })
+    return NextResponse.json({ success: true, status: 'success', planId: payment.planId, purpose: payment.purpose, alreadySettled: true })
   }
 
   const provider = providerById(payment.provider)
@@ -43,6 +43,7 @@ export const POST = apiHandler(async (request: NextRequest) => {
     success: true,
     status: verified.status,
     planId: payment.planId,
+    purpose: payment.purpose,
     applied: result.applied,
     reason: result.reason,
   })

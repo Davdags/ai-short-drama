@@ -7,17 +7,22 @@ import { isProviderConfigured, resolveCheckout, type PayMode } from '@/lib/payme
 import { findPayCountry, payCountryForCurrency } from '@/lib/payments/countries'
 import { localPrice } from '@/lib/payments/fx'
 import { isPaidPlan, newPaymentReference, type BillingCycle } from '@/lib/payments/service'
+import type { PaymentPurpose } from '@/lib/payments/types'
+import { getUserPlanId } from '@/lib/billing/plan-limits'
+import { parseTopUpAmount, topUpCredits } from '@/lib/billing/top-up'
 import { prisma } from '@/lib/prisma'
 
 /**
  * POST /api/billing/checkout
- *   { planId, cycle, country, pay: 'local' | 'usd', provider? }
+ *   Plan:    { planId, cycle, country, pay: 'local' | 'usd', provider? }
+ *   Top-up:  { purpose: 'credit_pack', amountUsd, country, pay, provider? }
  *   country: a code from countries.ts; pay 'local' charges its currency (Paystack for
  *   Nigeria, Flutterwave elsewhere); 'usd' charges dollars (provider 'whop' | 'flutterwave').
  *   Older clients sent { currency: 'NGN' | 'USD' } — still accepted.
  *
  * Creates a pending Payment and returns where to send the customer to pay. The price is
- * taken from our own catalog, never from the request, so it cannot be tampered with.
+ * taken from our own catalog, never from the request, so it cannot be tampered with. A
+ * top-up names only its dollar amount; its credits come from the customer's plan here.
  */
 export const POST = apiHandler(async (request: NextRequest) => {
   const authResult = await requireUserAuth()
@@ -25,29 +30,46 @@ export const POST = apiHandler(async (request: NextRequest) => {
   const { session } = authResult
 
   const body = await request.json().catch(() => null) as {
+    purpose?: unknown
     planId?: unknown
     cycle?: unknown
+    amountUsd?: unknown
     currency?: unknown
     provider?: unknown
     country?: unknown
     pay?: unknown
   } | null
 
-  const planId = typeof body?.planId === 'string' ? body.planId : ''
-  const cycle: BillingCycle = body?.cycle === 'yearly' ? 'yearly' : 'monthly'
+  const purpose: PaymentPurpose = body?.purpose === 'credit_pack' ? 'credit_pack' : 'subscription'
   const legacyCurrency = typeof body?.currency === 'string' ? body.currency.toUpperCase() : null
   const country = findPayCountry(typeof body?.country === 'string' ? body.country : null)
     ?? (legacyCurrency && legacyCurrency !== 'USD' ? payCountryForCurrency(legacyCurrency) : null)
   const pay: PayMode = body?.pay === 'local' || (body?.pay === undefined && legacyCurrency && legacyCurrency !== 'USD') ? 'local' : 'usd'
-
-  if (!isPaidPlan(planId)) throw new ApiError('INVALID_PARAMS', { field: 'planId', reason: 'unknown_plan' })
   if (pay === 'local' && !country) throw new ApiError('INVALID_PARAMS', { field: 'country', reason: 'unsupported' })
 
-  const plan = PLANS.find((entry) => entry.id === planId)
-  if (!plan) throw new ApiError('INVALID_PARAMS', { field: 'planId', reason: 'unknown_plan' })
-
-  const usd = cycle === 'yearly' ? plan.yearlyPrice : plan.monthlyPrice
-  if (!usd || usd <= 0) throw new ApiError('INVALID_PARAMS', { field: 'planId', reason: 'not_purchasable' })
+  // What is being bought: a plan at its catalog price, or a top-up at the customer's plan rate.
+  let usd: number
+  let planId: string
+  let cycle: BillingCycle | null
+  let credits: number | null = null
+  if (purpose === 'credit_pack') {
+    const parsed = parseTopUpAmount(body?.amountUsd)
+    if (!parsed.ok) throw new ApiError('INVALID_PARAMS', { field: 'amountUsd', reason: parsed.reason })
+    planId = await getUserPlanId(session.user.id)
+    // Top-ups are for paying subscribers; everyone else is sent to the plans.
+    if (!isPaidPlan(planId)) throw new ApiError('FORBIDDEN', { reason: 'subscribers_only' })
+    usd = parsed.usd
+    cycle = null
+    credits = topUpCredits(planId, usd)
+  } else {
+    planId = typeof body?.planId === 'string' ? body.planId : ''
+    cycle = body?.cycle === 'yearly' ? 'yearly' : 'monthly'
+    if (!isPaidPlan(planId)) throw new ApiError('INVALID_PARAMS', { field: 'planId', reason: 'unknown_plan' })
+    const plan = PLANS.find((entry) => entry.id === planId)
+    if (!plan) throw new ApiError('INVALID_PARAMS', { field: 'planId', reason: 'unknown_plan' })
+    usd = cycle === 'yearly' ? plan.yearlyPrice : plan.monthlyPrice
+    if (!usd || usd <= 0) throw new ApiError('INVALID_PARAMS', { field: 'planId', reason: 'not_purchasable' })
+  }
 
   const { provider, currency } = resolveCheckout({
     country,
@@ -70,12 +92,13 @@ export const POST = apiHandler(async (request: NextRequest) => {
       userId: session.user.id,
       provider: provider.id,
       providerRef: reference,
-      purpose: 'subscription',
+      purpose,
+      // For a top-up this is the plan whose rate priced it, so settling grants the same credits.
       planId,
       cycle,
       amount,
       currency,
-      // The dollar plan price, so commissions and reports stay in USD whatever was charged.
+      // The dollar price, so commissions and reports stay in USD whatever was charged.
       amountUsd: usd,
       status: 'pending',
     },
@@ -87,7 +110,9 @@ export const POST = apiHandler(async (request: NextRequest) => {
     amount,
     currency,
     callbackUrl: `${getPublicBaseUrl()}/en/account?payment=${reference}`,
-    metadata: { userId: session.user.id, username: user.name, planId, cycle },
+    metadata: credits === null
+      ? { userId: session.user.id, username: user.name, planId, cycle }
+      : { userId: session.user.id, username: user.name, purpose, planId, amountUsd: usd, credits },
   })
 
   // Whop looks the payment up by its own checkout id, not by our reference.
@@ -99,8 +124,10 @@ export const POST = apiHandler(async (request: NextRequest) => {
     success: true,
     reference,
     provider: provider.id,
+    purpose,
     amount,
     currency,
+    ...(credits === null ? {} : { credits }),
     authorizationUrl: checkout.authorizationUrl,
   })
 })

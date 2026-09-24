@@ -68,7 +68,16 @@ export function fixedUsdRate(currency: string): number | null {
   return Number.isFinite(configured) && configured > 0 ? configured : 1500
 }
 
-/** A plan's price in the country's currency, as charged at checkout and shown on the pricing page. */
+/** Local units charged per US dollar, before rounding: the fixed rate, or market rate plus buffer. */
+export function usdToLocalRate(country: Pick<PayCountry, 'currency'>, rates: Record<string, number>): number {
+  const fixed = fixedUsdRate(country.currency)
+  if (fixed) return fixed
+  const rate = rates[country.currency]
+  if (!rate) throw new Error(`No exchange rate for ${country.currency}`)
+  return rate * (1 + FX_BUFFER)
+}
+
+/** A price in the country's currency, as charged at checkout and shown on the pricing page. */
 export function countryPrice(usd: number, country: PayCountry, rates: Record<string, number>): number {
   const fixed = fixedUsdRate(country.currency)
   if (fixed) return roundLocalPrice(usd * fixed, country.roundTo)

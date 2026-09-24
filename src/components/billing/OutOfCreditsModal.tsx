@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import { Link } from '@/i18n/navigation'
 import { AppIcon } from '@/components/ui/icons'
-import { OUT_OF_CREDITS_EVENT, type OutOfCreditsDetail } from '@/lib/api-fetch'
+import { OUT_OF_CREDITS_EVENT, apiFetch, type OutOfCreditsDetail } from '@/lib/api-fetch'
+import { isTopUpPlan } from '@/lib/billing/top-up'
 
 /**
  * Shown whenever any request is refused for lack of credits. Before this existed, most
@@ -12,6 +13,8 @@ import { OUT_OF_CREDITS_EVENT, type OutOfCreditsDetail } from '@/lib/api-fetch'
  */
 export function OutOfCreditsModal() {
   const [detail, setDetail] = useState<OutOfCreditsDetail | null>(null)
+  // Subscribers can top up straight away; everyone else is shown the plans.
+  const [subscriber, setSubscriber] = useState(false)
 
   useEffect(() => {
     const onOutOfCredits = (event: Event) => {
@@ -21,6 +24,16 @@ export function OutOfCreditsModal() {
     window.addEventListener(OUT_OF_CREDITS_EVENT, onOutOfCredits)
     return () => window.removeEventListener(OUT_OF_CREDITS_EVENT, onOutOfCredits)
   }, [])
+
+  useEffect(() => {
+    if (!detail) return
+    let cancelled = false
+    apiFetch('/api/billing/subscription')
+      .then(async (res) => (res.ok ? (await res.json() as { topUp?: { planId: string } | null }).topUp?.planId : null))
+      .then((planId) => { if (!cancelled) setSubscriber(isTopUpPlan(planId)) })
+      .catch(() => undefined)
+    return () => { cancelled = true }
+  }, [detail])
 
   useEffect(() => {
     if (!detail) return
@@ -55,15 +68,26 @@ export function OutOfCreditsModal() {
           {required !== null && available !== null
             ? <>This needs <strong>{required.toLocaleString('en-US')} credits</strong> and you have <strong>{available.toLocaleString('en-US')}</strong>.</>
             : 'You don’t have enough credits for this.'}
-          {' '}Upgrade to keep creating — your project is saved exactly as it is.
+          {' '}{subscriber ? 'Top up to keep creating' : 'Upgrade to keep creating'} — your project is saved exactly as it is.
         </p>
         <div className="mt-6 flex flex-col gap-2 sm:flex-row-reverse">
+          {subscriber ? (
+            <Link
+              href={{ pathname: '/account', hash: 'top-up' }}
+              onClick={() => setDetail(null)}
+              className="inline-flex flex-1 items-center justify-center rounded-xl bg-gradient-to-r from-[#8020fc] to-[#5b3df5] px-5 py-3 text-sm font-semibold text-white transition-all hover:brightness-110"
+            >
+              Top up credits
+            </Link>
+          ) : null}
           <Link
             href={{ pathname: '/pricing' }}
             onClick={() => setDetail(null)}
-            className="inline-flex flex-1 items-center justify-center rounded-xl bg-gradient-to-r from-[#8020fc] to-[#5b3df5] px-5 py-3 text-sm font-semibold text-white transition-all hover:brightness-110"
+            className={subscriber
+              ? 'inline-flex flex-1 items-center justify-center rounded-xl border border-[#8020fc]/40 px-5 py-3 text-sm font-semibold text-[#7019e0] transition-colors hover:bg-[#8020fc]/[0.06]'
+              : 'inline-flex flex-1 items-center justify-center rounded-xl bg-gradient-to-r from-[#8020fc] to-[#5b3df5] px-5 py-3 text-sm font-semibold text-white transition-all hover:brightness-110'}
           >
-            See plans
+            {subscriber ? 'Upgrade plan' : 'See plans'}
           </Link>
           <button
             type="button"

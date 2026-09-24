@@ -4,7 +4,8 @@ import { createScopedLogger } from '@/lib/logging/core'
 import { addBalance } from '@/lib/billing/ledger'
 import { PLAN_MONTHLY_CREDITS, type PlanId } from '@/lib/billing/plan-limits'
 import { recordAffiliateCommission } from '@/lib/affiliate/service'
-import { sendPaymentReceiptEmail } from '@/lib/email/billing-emails'
+import { sendPaymentReceiptEmail, sendTopUpReceiptEmail } from '@/lib/email/billing-emails'
+import { topUpCredits } from '@/lib/billing/top-up'
 import { upgradeTrialDefaultsAfterPayment } from '@/lib/providers/evolink/platform-defaults'
 import type { ProviderId } from './index'
 import type { VerifiedPayment } from './types'
@@ -58,6 +59,19 @@ export async function settlePayment(input: {
   // Trust the provider's amount, not the client's — the customer could have tampered with it.
   const amount = input.verified.amount
   const currency = input.verified.currency.toUpperCase()
+
+  // A top-up grants credits for its full price, so an underpaid one must not settle.
+  const isTopUp = payment.purpose === 'credit_pack'
+  const expected = Number(payment.amount)
+  if (isTopUp && currency === payment.currency.toUpperCase() && amount + 0.01 < expected) {
+    await prisma.payment.update({
+      where: { id: payment.id },
+      data: { status: 'failed', failureReason: `amount_mismatch: paid ${amount} of ${expected} ${currency}` },
+    })
+    logger.error({ message: 'top-up underpaid', details: { paymentRef: payment.providerRef, amount, expected, currency } })
+    return { applied: false, reason: 'amount_mismatch' }
+  }
+
   // Local-currency payments keep the USD plan price recorded at checkout (the exchange
   // rate used then), so commissions and reports stay in dollars.
   const amountUsd = currency === 'USD' ? Number(amount.toFixed(2)) : Number(payment.amountUsd)
@@ -65,7 +79,10 @@ export async function settlePayment(input: {
 
   const planId = payment.planId
   const cycle = (payment.cycle as BillingCycle | null) ?? 'monthly'
-  const credits = planId && isPaidPlan(planId) ? PLAN_MONTHLY_CREDITS[planId] : 0
+  // Top-up credits come from the dollar price and the plan rate recorded at checkout.
+  const credits = isTopUp
+    ? topUpCredits(planId, Number(payment.amountUsd))
+    : planId && isPaidPlan(planId) ? PLAN_MONTHLY_CREDITS[planId] : 0
 
   await prisma.payment.update({
     where: { id: payment.id },
@@ -87,7 +104,7 @@ export async function settlePayment(input: {
   if (credits > 0) {
     await addBalance(payment.userId, credits, {
       type: 'recharge',
-      reason: `${planId} plan (${cycle})`,
+      reason: isTopUp ? `credit top-up ($${Number(payment.amountUsd)})` : `${planId} plan (${cycle})`,
       operatorId: `payment:${input.provider}`,
     })
   }
@@ -111,7 +128,9 @@ export async function settlePayment(input: {
     })
   }
 
-  if (periodEnd && planId) {
+  if (isTopUp) {
+    await sendTopUpReceiptEmail({ userId: payment.userId, reference: payment.providerRef, amount, currency, credits })
+  } else if (periodEnd && planId) {
     await sendPaymentReceiptEmail({
       userId: payment.userId,
       reference: payment.providerRef,

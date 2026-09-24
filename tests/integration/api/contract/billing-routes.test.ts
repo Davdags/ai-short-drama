@@ -42,8 +42,26 @@ describe('billing route contract', () => {
     const { readFile } = await import('node:fs/promises')
     const source = await readFile('src/app/api/billing/checkout/route.ts', 'utf8')
     expect(source).toContain('PLANS.find')
-    // An amount taken from the request would let a customer set their own price.
-    expect(source).not.toMatch(/body\?\.\s*amount/)
+    // An amount taken from the request would let a customer set their own price. The only
+    // amount read is a top-up's dollar figure, and that passes through parseTopUpAmount.
+    expect(source).not.toMatch(/body\?\.\s*amount(?!Usd\))/)
+    expect(source).toContain('parseTopUpAmount(body?.amountUsd)')
+  })
+
+  it('prices top-ups from the customer plan on the server and keeps them for subscribers', async () => {
+    const { readFile } = await import('node:fs/promises')
+    const source = await readFile('src/app/api/billing/checkout/route.ts', 'utf8')
+    // The plan (and so the credits per dollar) comes from the account, never the request.
+    expect(source).toContain('planId = await getUserPlanId(session.user.id)')
+    expect(source).toContain("reason: 'subscribers_only'")
+    expect(source).toContain("purpose,")
+  })
+
+  it('tells the account page who can top up from the same plan checkout uses', async () => {
+    const { readFile } = await import('node:fs/promises')
+    const source = await readFile('src/app/api/billing/subscription/route.ts', 'utf8')
+    expect(source).toContain('getUserPlanId(userId)')
+    expect(source).toContain('topUp: isTopUpPlan(effectivePlan)')
   })
 
   it('keeps the webhook the only public billing route', async () => {
@@ -68,6 +86,20 @@ describe('public plan prices route', () => {
     expect((await call('NG')).local).toMatchObject({ currency: 'NGN', plans: { starter: { monthly: 28_500 } } })
     expect((await call('GH')).local).toMatchObject({ currency: 'GHS', plans: { starter: { monthly: 230 } } })
     expect((await call('OTHER')).local).toBeNull()
+  })
+
+  it('shares the local rate per dollar so any top-up amount can be previewed', async () => {
+    const { __setRatesForTests } = await import('@/lib/payments/fx')
+    __setRatesForTests({ GHS: 11.57 })
+    const { GET } = await import('@/app/api/billing/prices/route')
+    const { NextRequest } = await import('next/server')
+    const read = async (country: string) => {
+      const res = await GET(new NextRequest(`https://nucleusart.studio/api/billing/prices?country=${country}`), { params: Promise.resolve({}) } as never)
+      return ((await res.json()) as { local: { perUsd: number } }).local.perUsd
+    }
+    expect(await read('NG')).toBe(1500)
+    // Market rate plus the 3% buffer, exactly as checkout charges it.
+    expect(await read('GH')).toBeCloseTo(11.57 * 1.03, 6)
   })
 
   it('is registered as a deliberate public route', async () => {

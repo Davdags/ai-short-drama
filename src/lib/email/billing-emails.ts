@@ -24,8 +24,12 @@ async function recipientFor(userId: string): Promise<{ email: string; name: stri
 }
 
 function money(amount: number, currency: string): string {
-  const symbol = currency.toUpperCase() === 'NGN' ? '₦' : '$'
-  return `${symbol}${amount.toLocaleString('en-US', { maximumFractionDigits: 2 })}`
+  const code = currency.toUpperCase()
+  const figure = amount.toLocaleString('en-US', { maximumFractionDigits: 2 })
+  if (code === 'NGN') return `₦${figure}`
+  if (code === 'USD') return `$${figure}`
+  // Cedis, shillings, rand and the rest: the code reads more clearly than a shared symbol.
+  return `${code} ${figure}`
 }
 
 function formatDate(value: Date): string {
@@ -69,6 +73,44 @@ export function sendPaymentReceiptEmail(input: {
           `Payment reference: ${input.reference}`,
         ],
         cta: { label: 'Start creating', url: '/en/workspace' },
+        note: 'Keep this email as your receipt. Questions about billing? Just reply to this message.',
+      },
+    })
+  })
+}
+
+/** Receipt for a one-off credit top-up. Deduped on the payment reference. */
+export function sendTopUpReceiptEmail(input: {
+  userId: string
+  reference: string
+  amount: number
+  currency: string
+  credits: number
+}): Promise<void> {
+  return safely('topup_receipt', async () => {
+    const to = await recipientFor(input.userId)
+    if (!to) return
+    const credits = input.credits.toLocaleString('en-US')
+
+    await sendOnce({
+      userId: input.userId,
+      kind: 'topup_receipt',
+      dedupeKey: `topup_receipt:${input.reference}`,
+      to: to.email,
+      content: {
+        subject: `Your NucleusArt receipt — ${credits} credits`,
+        preheader: `${money(input.amount, input.currency)} paid. ${credits} credits added.`,
+        heading: 'Thank you — your credits are in',
+        paragraphs: [
+          `Hi ${to.name}, your top-up went through and ${credits} credits are already in your account. Top-up credits never expire.`,
+        ],
+        bullets: [
+          `Credits added: ${credits}`,
+          `Amount paid: ${money(input.amount, input.currency)}`,
+          'One-off payment — you will not be charged again',
+          `Payment reference: ${input.reference}`,
+        ],
+        cta: { label: 'Keep creating', url: '/en/workspace' },
         note: 'Keep this email as your receipt. Questions about billing? Just reply to this message.',
       },
     })

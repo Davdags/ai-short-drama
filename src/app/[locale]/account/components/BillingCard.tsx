@@ -17,6 +17,7 @@ interface SubscriptionInfo {
 
 interface PaymentRow {
   reference: string
+  purpose?: string
   amount: number
   currency: string
   planId: string | null
@@ -35,8 +36,10 @@ function formatDate(value: string | null): string {
 }
 
 function formatMoney(amount: number, currency: string): string {
-  const symbol = currency === 'NGN' ? '₦' : '$'
-  return `${symbol}${amount.toLocaleString('en-US', { maximumFractionDigits: 2 })}`
+  const figure = amount.toLocaleString('en-US', { maximumFractionDigits: 2 })
+  if (currency === 'NGN') return `₦${figure}`
+  if (currency === 'USD') return `${figure}`
+  return `${currency} ${figure}`
 }
 
 /** Plan, renewal and receipts — plus confirming a payment the customer has just returned from. */
@@ -78,13 +81,18 @@ export function BillingCard() {
     })
       .then(async (response) => {
         const data = await response.json().catch(() => null) as
-          { status?: string; planId?: string; applied?: boolean; alreadySettled?: boolean } | null
+          { status?: string; planId?: string; purpose?: string; applied?: boolean; alreadySettled?: boolean } | null
         if (cancelled) return
 
         if (data?.status === 'success') {
-          setNotice({ tone: 'ok', text: 'Payment received — your plan is active and your credits have been added.' })
+          setNotice({
+            tone: 'ok',
+            text: data.purpose === 'credit_pack'
+              ? 'Payment received — your credits have been added.'
+              : 'Payment received — your plan is active and your credits have been added.',
+          })
           if (data.applied) {
-            trackConversion('purchase', { planId: data.planId, reference: returnedReference })
+            trackConversion('purchase', { planId: data.purpose === 'credit_pack' ? 'top-up' : data.planId, reference: returnedReference })
           }
           void load()
         } else if (data?.status === 'pending') {
@@ -161,8 +169,8 @@ export function BillingCard() {
                   <tr key={payment.reference} className="border-b border-[#f5f5f5] last:border-b-0">
                     <td className="py-2.5 text-[#404040]">{formatDate(payment.paidAt)}</td>
                     <td className="py-2.5 text-[#404040]">
-                      {PLAN_NAMES[payment.planId ?? ''] ?? '—'}
-                      {payment.cycle ? <span className="text-[#a3a3a3]"> · {payment.cycle}</span> : null}
+                      {payment.purpose === 'credit_pack' ? 'Credit top-up' : PLAN_NAMES[payment.planId ?? ''] ?? '—'}
+                      {payment.cycle && payment.purpose !== 'credit_pack' ? <span className="text-[#a3a3a3]"> · {payment.cycle}</span> : null}
                     </td>
                     <td className="py-2.5 text-[#404040]">{formatMoney(payment.amount, payment.currency)}</td>
                     <td className="py-2.5 text-[#404040]">{payment.creditsGranted.toLocaleString('en-US')}</td>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { Caveat } from 'next/font/google'
 import Navbar from '@/components/Navbar'
@@ -8,25 +8,16 @@ import { Footer } from '@/components/Footer'
 import { Link } from '@/i18n/navigation'
 import { AppIcon } from '@/components/ui/icons'
 import { HIGHLIGHTS, PLANS, yearlySavingPercent, type BillingCycle, type PricingPlan } from './plans'
-import { useCheckout, type UsdPaymentMethod } from '@/components/billing/useCheckout'
-import { OTHER_COUNTRY_CODE, PAY_COUNTRIES, findPayCountry, formatLocalPrice, guessPayCountryCode, type PayCountry } from '@/lib/payments/countries'
-import { apiFetch } from '@/lib/api-fetch'
+import { useCheckout } from '@/components/billing/useCheckout'
+import { PayChoiceControls, usePayChoice, type LocalPrices } from '@/components/billing/PayChoice'
+import { formatLocalPrice, type PayCountry } from '@/lib/payments/countries'
+import { TOP_UP_MIN_USD } from '@/lib/billing/top-up'
 
 const handwriting = Caveat({ subsets: ['latin'], weight: ['500'] })
 
 const GRADIENT_TEXT = 'bg-gradient-to-r from-[#8020fc] via-[#a13cf0] to-[#5b3df5] bg-clip-text text-transparent'
 const PRIMARY_BUTTON = 'bg-gradient-to-r from-[#8020fc] to-[#5b3df5] text-white shadow-lg shadow-[#8020fc]/25 hover:shadow-xl hover:shadow-[#8020fc]/35 hover:brightness-110'
 const OUTLINE_BUTTON = 'border border-[#8020fc]/40 text-[#7019e0] hover:bg-[#8020fc]/[0.06] hover:border-[#8020fc]'
-
-const COUNTRY_KEY = 'nucleus:pay-country'
-
-interface LocalPrices {
-  country: string
-  currency: string
-  symbol: string
-  methods: string
-  plans: Record<string, { monthly: number; yearly: number }>
-}
 
 /** What the price reads as: dollars, or the visitor's own currency from today's rate. */
 type PriceDisplay = { mode: 'usd' } | { mode: 'local'; country: PayCountry; prices: LocalPrices }
@@ -140,42 +131,9 @@ function PlanCard({ plan, cycle, display, signedIn, busy, onCheckout }: {
 export default function PricingPage() {
   const { data: session } = useSession()
   const [cycle, setCycle] = useState<BillingCycle>('yearly')
-  const [countryCode, setCountryCode] = useState<string>(OTHER_COUNTRY_CODE)
-  const [pay, setPay] = useState<'local' | 'usd'>('local')
-  const [usdMethod, setUsdMethod] = useState<UsdPaymentMethod>('whop')
-  const [localPrices, setLocalPrices] = useState<LocalPrices | null>(null)
   const { startCheckout, pendingPlan, error, clearError } = useCheckout()
-
-  // Where the visitor pays from: their earlier choice, else a guess from the device time zone.
-  useEffect(() => {
-    let saved: string | null = null
-    try { saved = window.localStorage.getItem(COUNTRY_KEY) } catch { /* private mode */ }
-    let guess: string = OTHER_COUNTRY_CODE
-    try { guess = guessPayCountryCode(Intl.DateTimeFormat().resolvedOptions().timeZone) } catch { /* old browser */ }
-    setCountryCode(saved && (saved === OTHER_COUNTRY_CODE || findPayCountry(saved)) ? saved : guess)
-  }, [])
-
-  const country = findPayCountry(countryCode)
-  useEffect(() => {
-    setLocalPrices(null)
-    if (!country) return
-    let cancelled = false
-    apiFetch(`/api/billing/prices?country=${country.code}`)
-      .then(async (res) => (res.ok ? (await res.json() as { local: LocalPrices | null }).local : null))
-      .then((local) => { if (!cancelled) setLocalPrices(local) })
-      .catch(() => undefined)
-    return () => { cancelled = true }
-  }, [country])
-
-  const chooseCountry = (code: string) => {
-    setCountryCode(code)
-    setPay('local')
-    clearError()
-    try { window.localStorage.setItem(COUNTRY_KEY, code) } catch { /* ignore */ }
-  }
-
-  const localAvailable = Boolean(country && localPrices)
-  const payMode: 'local' | 'usd' = localAvailable && pay === 'local' ? 'local' : 'usd'
+  const choice = usePayChoice(clearError)
+  const { country, localPrices, payMode, usdMethod } = choice
   const display: PriceDisplay = payMode === 'local' && country && localPrices
     ? { mode: 'local', country, prices: localPrices }
     : { mode: 'usd' }
@@ -240,51 +198,7 @@ export default function PricingPage() {
           </div>
 
           <div className="mt-6 flex flex-col items-center gap-3">
-            <label className="flex items-center gap-2 text-sm text-[#525252]">
-              Paying from
-              <select
-                value={countryCode}
-                onChange={(event) => chooseCountry(event.target.value)}
-                className="rounded-lg border border-[#e5e5e5] bg-white px-3 py-1.5 text-sm font-medium text-[#171717] outline-none focus:border-[#8020fc]"
-              >
-                {PAY_COUNTRIES.map((entry) => <option key={entry.code} value={entry.code}>{entry.name}</option>)}
-                <option value={OTHER_COUNTRY_CODE}>Another country</option>
-              </select>
-            </label>
-            {localAvailable && country && (
-            <div className="flex items-center gap-1 rounded-full border border-[#e5e5e5] bg-white p-1">
-              {(['local', 'usd'] as const).map((mode) => (
-                <button
-                  key={mode}
-                  type="button"
-                  onClick={() => { setPay(mode); clearError() }}
-                  className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${
-                    payMode === mode ? 'bg-[#8020fc] text-white' : 'text-[#737373] hover:text-[#171717]'
-                  }`}
-                >
-                  {mode === 'local' ? `Pay in ${country.currency}` : 'Pay in USD'}
-                </button>
-              ))}
-            </div>
-            )}
-            <p className="max-w-md text-center text-xs text-[#a3a3a3]">
-              {payMode === 'local' && country
-                ? (country.code === 'NG'
-                  ? `Pay in naira by ${country.localMethods}.`
-                  : `Pay in ${country.currency} by ${country.localMethods}. Prices follow today’s exchange rate.`)
-                : usdMethod === 'whop'
-                  ? 'Secure payment in US dollars by card, Apple Pay, Google Pay or crypto.'
-                  : 'Pay in US dollars by bank transfer, mobile money or card via Flutterwave.'}
-            </p>
-            {payMode === 'usd' && (
-              <button
-                type="button"
-                onClick={() => { setUsdMethod(usdMethod === 'whop' ? 'flutterwave' : 'whop'); clearError() }}
-                className="text-xs font-medium text-[#8020fc] hover:underline"
-              >
-                {usdMethod === 'whop' ? 'Other payment methods' : 'Pay by card or crypto instead'}
-              </button>
-            )}
+            <PayChoiceControls choice={choice} />
             {error && (
               <p role="alert" className="max-w-md text-center text-sm text-red-600">{error}</p>
             )}
@@ -310,6 +224,11 @@ export default function PricingPage() {
               />
             ))}
           </div>
+
+          <p className="mt-8 text-center text-sm text-[#737373]">
+            Ran out mid-month? Subscribers can top up any time from ${TOP_UP_MIN_USD} at their plan&apos;s rate, with a one-off payment.{' '}
+            <Link href={{ pathname: '/account', hash: 'top-up' }} className="font-semibold text-[#8020fc] hover:underline">Buy credits</Link>
+          </p>
 
           <div className="mt-10 grid gap-6 rounded-2xl border border-[#e5e5e5] bg-[#fafafa] p-6 sm:grid-cols-2 lg:grid-cols-4">
             {HIGHLIGHTS.map((item) => (

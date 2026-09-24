@@ -97,6 +97,10 @@ export function toVerifiedStatus(payment: WhopPayment | null): VerifiedPayment['
 }
 
 function planLabel(metadata: Record<string, unknown>): { title: string; identifier: string } {
+  if (metadata.purpose === 'credit_pack') {
+    const credits = typeof metadata.credits === 'number' ? metadata.credits.toLocaleString('en-US') : ''
+    return { title: `NucleusArt credits${credits ? ` (${credits})` : ''}`, identifier: 'nucleusart-credits' }
+  }
   const plan = typeof metadata.planId === 'string' ? metadata.planId : 'plan'
   const cycle = typeof metadata.cycle === 'string' ? metadata.cycle : 'monthly'
   const name = plan.charAt(0).toUpperCase() + plan.slice(1)

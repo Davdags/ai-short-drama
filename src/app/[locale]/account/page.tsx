@@ -8,6 +8,7 @@ import { apiFetch } from '@/lib/api-fetch'
 import { UsageHistory } from './components/UsageHistory'
 import { ChangePasswordCard, DeleteAccountCard } from './components/SecurityCards'
 import { BillingCard } from './components/BillingCard'
+import { TopUpCard } from './components/TopUpCard'
 
 interface AccountSummary {
   balance: number
@@ -53,6 +54,8 @@ export default function AccountPage() {
         </div>
 
         <div className={CARD}><BillingCard /></div>
+
+        {session && <div className={CARD}><TopUpCard /></div>}
 
         <div className={`${CARD} grid gap-6 sm:grid-cols-2`}>
           <div>

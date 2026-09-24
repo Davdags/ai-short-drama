@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { apiHandler } from '@/lib/api-errors'
 import { PLANS } from '@/app/[locale]/pricing/plans'
 import { findPayCountry } from '@/lib/payments/countries'
-import { countryPrice, fixedUsdRate, getUsdRates } from '@/lib/payments/fx'
+import { countryPrice, fixedUsdRate, getUsdRates, usdToLocalRate } from '@/lib/payments/fx'
 
 /**
  * GET /api/billing/prices?country=GH  (public — the pricing page shows it to visitors)
@@ -24,6 +24,9 @@ export const GET = apiHandler(async (request: NextRequest) => {
       symbol: country.symbol,
       methods: country.localMethods,
       rateUpdatedAt: updatedAt ? new Date(updatedAt).toISOString() : null,
+      // Local units per US dollar as charged (fixed rate, or market rate plus buffer), so a
+      // custom top-up amount can be previewed with the same rounding checkout uses.
+      perUsd: usdToLocalRate(country, rates),
       plans: Object.fromEntries(PLANS.filter((plan) => plan.monthlyPrice > 0).map((plan) => [plan.id, {
         monthly: countryPrice(plan.monthlyPrice, country, rates),
         yearly: countryPrice(plan.yearlyPrice, country, rates),
