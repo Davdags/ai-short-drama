@@ -72,9 +72,9 @@ export default function LocationSection({
     const generateType = resolveLocationBackedGenerateType(assetType)
 
     return (
-        <div className="glass-surface p-6">
-            <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
+        <div className="glass-surface p-3 sm:p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+                <div className="flex flex-wrap items-center gap-3">
                     <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--glass-tone-info-bg)] text-[var(--glass-tone-info-fg)]">
                         <AppIcon name="imageLandscape" className="h-5 w-5" />
                     </span>

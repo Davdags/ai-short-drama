@@ -18,6 +18,7 @@ import {
   parsePanelCharacterReferences,
   pickFirstString,
   resolveNovelData,
+  matchesLocationName,
 } from './image-task-handler-shared'
 import { buildPrompt, PROMPT_IDS } from '@/lib/prompt-i18n'
 
@@ -148,7 +149,7 @@ function buildVariantReferenceImages(params: {
 
   if (params.includeLocationAsset && params.newPanel.location) {
     const location = (params.projectData.locations || []).find(
-      (item) => item.name.toLowerCase() === params.newPanel.location!.toLowerCase(),
+      (item) => matchesLocationName(item.name, params.newPanel.location!),
     )
     if (location) {
       const selected = (location.images || []).find((image) => image.isSelected) || location.images?.[0]

@@ -14,11 +14,14 @@ import { normalizeReferenceImagesForGeneration } from '@/lib/media/outbound-imag
 import {
   AnyObj,
   clampCount,
-  collectPanelReferenceImages,
+  collectLabeledPanelReferenceImages,
   findCharacterByName,
   parsePanelCharacterReferences,
   pickFirstString,
   resolveNovelData,
+  matchesLocationName,
+  sameAssetName,
+  type PanelReferenceImage,
 } from './image-task-handler-shared'
 import { buildPrompt, PROMPT_IDS } from '@/lib/prompt-i18n'
 
@@ -73,15 +76,31 @@ function buildPanelPromptContext(params: {
     actingNotes: string | null
   }
   projectData: Awaited<ReturnType<typeof resolveNovelData>>
+  referenceImages?: PanelReferenceImage[]
 }) {
-  const panelCharacters = parsePanelCharacterReferences(params.panel.characters)
-  const characterContexts = panelCharacters.map((reference) => {
+  const referenceImages = params.referenceImages || []
+  // A character with a reference picture is drawn from that picture. Any outfit or hair text the
+  // storyboard writer added would compete with it, so it is replaced by a pointer to the picture.
+  const pictureNote = (name: string) => {
+    const index = referenceImages.findIndex((ref) => ref.kind === 'character' && ref.name && sameAssetName(ref.name, name))
+    return index >= 0
+      ? `Draw exactly as shown in reference image ${index + 1}: same face, skin tone, hair, clothes and accessories.`
+      : null
+  }
+  const rawPanelCharacters = parsePanelCharacterReferences(params.panel.characters)
+  const panelCharacters = rawPanelCharacters.map((reference) => {
+    const character = findCharacterByName(params.projectData.characters || [], reference.name)
+    const note = pictureNote(character?.name ?? reference.name)
+    return note ? { name: reference.name, appearance: note } : reference
+  })
+  const characterContexts = rawPanelCharacters.map((reference) => {
     const character = findCharacterByName(params.projectData.characters || [], reference.name)
     if (!character) {
+      const note = pictureNote(reference.name)
       return {
         name: reference.name,
-        appearance: reference.appearance || null,
-        description: 'No appearance data for this character',
+        appearance: note ? null : reference.appearance || null,
+        description: note ?? 'No appearance data for this character',
       }
     }
 
@@ -90,18 +109,19 @@ function buildPanelPromptContext(params: {
       (reference.appearance
         ? appearances.find((appearance) => (appearance.changeReason || '').toLowerCase() === reference.appearance!.toLowerCase())
         : null) || appearances[0] || null
+    const note = pictureNote(character.name)
 
     return {
       name: character.name,
       appearance: matchedAppearance?.changeReason || null,
-      description: matchedAppearance ? pickAppearanceDescription(matchedAppearance) : 'No appearance data for this character',
+      description: note ?? (matchedAppearance ? pickAppearanceDescription(matchedAppearance) : 'No appearance data for this character'),
     }
   })
 
   const locationContext = (() => {
     if (!params.panel.location) return null
     const matchedLocation = (params.projectData.locations || []).find(
-      (item) => item.name.toLowerCase() === params.panel.location!.toLowerCase(),
+      (item) => matchesLocationName(item.name, params.panel.location!),
     )
     if (!matchedLocation) return null
     const selectedImage = (matchedLocation.images || []).find((item) => item.isSelected) || matchedLocation.images?.[0]
@@ -127,6 +147,8 @@ function buildPanelPromptContext(params: {
     context: {
       character_appearances: characterContexts,
       location_reference: locationContext,
+      // In the same order as the pictures sent with the request, so each person is drawn from their own sheet.
+      reference_images: referenceImages.map((ref, index) => `Reference image ${index + 1}: ${ref.label}`),
     },
   }
 }
@@ -167,7 +189,8 @@ export async function handlePanelImageTask(job: Job<TaskJobData>) {
   if (!modelKey) throw new Error('Storyboard model not configured')
 
   const candidateCount = clampCount(payload.candidateCount ?? payload.count, 1, 4, 1)
-  const refs = await collectPanelReferenceImages(projectData, panel)
+  const labeledRefs = await collectLabeledPanelReferenceImages(projectData, panel)
+  const refs = labeledRefs.map((ref) => ref.url)
   const normalizedRefs = await normalizeReferenceImagesForGeneration(refs)
 
   const logger = createScopedLogger({
@@ -211,6 +234,8 @@ export async function handlePanelImageTask(job: Job<TaskJobData>) {
       actingNotes: panel.actingNotes,
     },
     projectData,
+    // Labels only line up with the pictures when none were dropped while preparing them.
+    referenceImages: normalizedRefs.length === labeledRefs.length ? labeledRefs : [],
   })
   const contextJson = JSON.stringify(promptContext, null, 2)
   const prompt = buildPanelPrompt({

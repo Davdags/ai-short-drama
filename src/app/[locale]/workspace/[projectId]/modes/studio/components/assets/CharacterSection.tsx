@@ -189,9 +189,9 @@ export default function CharacterSection({
     }, [characters, focusCharacterId, focusCharacterRequestId])
 
     return (
-        <div className="glass-surface p-6">
-            <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
+        <div className="glass-surface p-3 sm:p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+                <div className="flex flex-wrap items-center gap-3">
                     <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--glass-bg-muted)] text-[var(--glass-text-secondary)]">
                         <AppIcon name="user" className="h-5 w-5" />
                     </span>
@@ -217,8 +217,8 @@ export default function CharacterSection({
             {unconfirmedCharacters.length > 0 && (
                 <div className="mb-6">
                     {/* 引导横幅 */}
-                    <div className="flex items-center justify-between mb-3 px-1">
-                        <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-3 px-1">
+                        <div className="flex flex-wrap items-center gap-2">
                             <span className="inline-flex h-5 w-5 items-center justify-center rounded-md bg-[var(--glass-tone-info-bg)]">
                                 <AppIcon name="sparkles" className="h-3 w-3 text-[var(--glass-tone-info-fg)]" />
                             </span>

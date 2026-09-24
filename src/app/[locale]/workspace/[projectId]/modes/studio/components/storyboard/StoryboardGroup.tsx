@@ -136,7 +136,7 @@ export default function StoryboardGroup({
   )
 
   return (
-    <div className={`glass-surface-elevated p-6 relative ${failedError ? 'border-2 border-[var(--glass-stroke-danger)] bg-[var(--glass-danger-ring)]' : ''}`}>
+    <div className={`glass-surface-elevated p-3 sm:p-6 relative ${failedError ? 'border-2 border-[var(--glass-stroke-danger)] bg-[var(--glass-danger-ring)]' : ''}`}>
       {failedError && (
         <StoryboardGroupFailedAlert
           failedError={failedError}
@@ -153,7 +153,7 @@ export default function StoryboardGroup({
         />
       )}
 
-      <div className="mb-4 pb-2 flex items-start justify-between">
+      <div className="mb-4 pb-2 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <StoryboardGroupHeader
           clip={clip}
           sbIndex={sbIndex}

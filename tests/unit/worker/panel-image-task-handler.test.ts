@@ -17,7 +17,7 @@ const utilsMock = vi.hoisted(() => ({
 }))
 
 const sharedMock = vi.hoisted(() => ({
-  collectPanelReferenceImages: vi.fn(async () => ['https://signed.example/ref-1.png']),
+  collectLabeledPanelReferenceImages: vi.fn(async () => [{ url: 'https://signed.example/ref-1.png', label: 'character Amara', kind: 'character' as const, name: 'Amara' }]),
   resolveNovelData: vi.fn(async () => ({
     videoRatio: '16:9',
     characters: [],
@@ -50,7 +50,7 @@ vi.mock('@/lib/workers/handlers/image-task-handler-shared', async () => {
   )
   return {
     ...actual,
-    collectPanelReferenceImages: sharedMock.collectPanelReferenceImages,
+    collectLabeledPanelReferenceImages: sharedMock.collectLabeledPanelReferenceImages,
     resolveNovelData: sharedMock.resolveNovelData,
   }
 })
@@ -59,6 +59,7 @@ vi.mock('@/lib/prompt-i18n', () => ({
   buildPrompt: vi.fn(() => 'panel-image-prompt'),
 }))
 
+import { buildPrompt } from '@/lib/prompt-i18n'
 import { handlePanelImageTask } from '@/lib/workers/handlers/panel-image-task-handler'
 
 function buildJob(payload: Record<string, unknown>, targetId = 'panel-1'): Job<TaskJobData> {
@@ -184,5 +185,36 @@ describe('worker panel-image-task-handler behavior', () => {
         candidateImages: JSON.stringify(['cos/panel-regenerated.png']),
       },
     })
+  })
+
+  it('tells the model which reference picture belongs to which character', async () => {
+    await handlePanelImageTask(buildJob({ candidateCount: 1 }))
+
+    const call = vi.mocked(buildPrompt).mock.calls.at(-1)?.[0] as { variables: Record<string, string> }
+    const context = JSON.parse(call.variables.storyboard_text_json_input)
+    expect(context.context.reference_images).toEqual(['Reference image 1: character Amara'])
+  })
+
+  it('replaces the storyboard writer outfit text with a pointer to the character picture', async () => {
+    prismaMock.studioPanel.findUnique.mockResolvedValueOnce({
+      id: 'panel-1', storyboardId: 'storyboard-1', panelIndex: 0, shotType: 'close-up', cameraMove: 'static',
+      description: 'Amara looks up', videoPrompt: '', location: null,
+      characters: JSON.stringify([{ name: 'Amara', appearance: 'navy blouse, hair pulled back' }]),
+      srtSegment: '', photographyRules: null, actingNotes: null, sketchImageUrl: null, imageUrl: null,
+    })
+    await handlePanelImageTask(buildJob({ candidateCount: 1 }))
+
+    const call = vi.mocked(buildPrompt).mock.calls.at(-1)?.[0] as { variables: Record<string, string> }
+    const json = call.variables.storyboard_text_json_input
+    expect(json).not.toContain('navy blouse')
+    expect(JSON.parse(json).panel.characters[0].appearance).toContain('reference image 1')
+  })
+
+  it('drops the labels when a reference picture could not be prepared, so they never point at the wrong image', async () => {
+    outboundMock.normalizeReferenceImagesForGeneration.mockResolvedValueOnce([])
+    await handlePanelImageTask(buildJob({ candidateCount: 1 }))
+
+    const call = vi.mocked(buildPrompt).mock.calls.at(-1)?.[0] as { variables: Record<string, string> }
+    expect(JSON.parse(call.variables.storyboard_text_json_input).context.reference_images).toEqual([])
   })
 })

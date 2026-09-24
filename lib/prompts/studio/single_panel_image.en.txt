@@ -27,3 +27,5 @@ Execution rules:
 5. Keep final visual style consistent with provided references.
 6. Characters wear exactly the clothing, hairstyle and accessories shown in their reference images; never change an outfit.
 7. Keep the time of day and lighting stated in the panel and source text (night stays night).
+8. context.reference_images lists the reference pictures in the order they were sent. Draw each character as the exact person in their own reference picture: same face, skin tone, hair, clothes and accessories. If a character's text description disagrees with their reference picture, follow the picture.
+9. A location reference picture shows the set: keep its furniture, windows, colours and layout.

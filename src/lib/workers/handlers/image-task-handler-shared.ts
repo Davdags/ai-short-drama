@@ -165,18 +165,48 @@ export function parsePanelCharacterReferences(value: string | null | undefined):
  * 优先级：1. 精确全名匹配  2. 按 '/' 拆分后别名精确匹配
  * 例：引用名 "顾娘子" 可匹配角色 "顾娘子/顾盼之"
  */
+/**
+ * Compares asset names the way people read them: the AI often writes a curly apostrophe
+ * ("Okafor’s Office") where the asset was saved with a straight one ("Okafor's Office").
+ */
+export function normalizeAssetName(name: string): string {
+  return name
+    .replace(/[‘’‛`´]/g, "'")
+    .replace(/[“”]/g, '"')
+    .replace(/\s+/g, ' ')
+    .toLowerCase()
+    .trim()
+}
+
+export function sameAssetName(a: string, b: string): boolean {
+  return normalizeAssetName(a) === normalizeAssetName(b)
+}
+
+/**
+ * The storyboard writer often appends a description to the location name
+ * ("Okafor's Office — corner office with glass walls"), so a panel location also matches
+ * when it starts with the asset name followed by punctuation or a space.
+ */
+export function matchesLocationName(assetName: string, panelLocation: string): boolean {
+  const name = normalizeAssetName(assetName)
+  const location = normalizeAssetName(panelLocation)
+  if (!name || !location) return false
+  if (location === name) return true
+  return location.startsWith(name) && !/[\p{L}\p{N}]/u.test(location.charAt(name.length))
+}
+
 export function findCharacterByName<T extends { name: string }>(characters: T[], referenceName: string): T | undefined {
-  const refLower = referenceName.toLowerCase().trim()
+  const refLower = normalizeAssetName(referenceName)
   if (!refLower) return undefined
 
   // 优先级 1：精确全名匹配
-  const exact = characters.find((c) => c.name.toLowerCase().trim() === refLower)
+  const exact = characters.find((c) => normalizeAssetName(c.name) === refLower)
   if (exact) return exact
 
   // 优先级 2：别名匹配 — 按 '/' 拆分后任一别名精确匹配
   const refAliases = refLower.split('/').map((s) => s.trim()).filter(Boolean)
   for (const character of characters) {
-    const charAliases = character.name.toLowerCase().split('/').map((s) => s.trim()).filter(Boolean)
+    const charAliases = normalizeAssetName(character.name).split('/').map((s) => s.trim()).filter(Boolean)
     const hasOverlap = refAliases.some((refAlias) => charAliases.includes(refAlias))
     if (hasOverlap) return character
   }
@@ -184,11 +214,24 @@ export function findCharacterByName<T extends { name: string }>(characters: T[],
   return undefined
 }
 
+export interface PanelReferenceImage {
+  url: string
+  /** What the picture is, so the prompt can tell the model which reference is which person or place. */
+  label: string
+  kind: 'sketch' | 'character' | 'location'
+  /** Asset name for characters and locations. */
+  name?: string
+}
+
 export async function collectPanelReferenceImages(projectData: NovelProjectData, panel: PanelLike) {
-  const refs: string[] = []
+  return (await collectLabeledPanelReferenceImages(projectData, panel)).map((ref) => ref.url)
+}
+
+export async function collectLabeledPanelReferenceImages(projectData: NovelProjectData, panel: PanelLike): Promise<PanelReferenceImage[]> {
+  const refs: PanelReferenceImage[] = []
 
   const sketch = toSignedUrlIfCos(panel.sketchImageUrl, 3600)
-  if (sketch) refs.push(sketch)
+  if (sketch) refs.push({ url: sketch, label: 'rough sketch of this panel composition', kind: 'sketch' })
 
   const panelCharacters = parsePanelCharacterReferences(panel.characters)
   for (const item of panelCharacters) {
@@ -209,16 +252,16 @@ export async function collectPanelReferenceImages(projectData: NovelProjectData,
     const selectedUrl = selectedIndex !== null && selectedIndex !== undefined ? imageUrls[selectedIndex] : null
     const key = selectedUrl || imageUrls[0] || appearance.imageUrl
     const signed = toSignedUrlIfCos(key, 3600)
-    if (signed) refs.push(signed)
+    if (signed) refs.push({ url: signed, label: `character ${character.name}`, kind: 'character', name: character.name })
   }
 
   if (panel.location) {
-    const location = (projectData.locations || []).find((loc) => loc.name.toLowerCase() === panel.location!.toLowerCase())
+    const location = (projectData.locations || []).find((loc) => matchesLocationName(loc.name, panel.location!))
     if (location) {
       const images = location.images || []
-      const selected = images.find((img) => img.isSelected) || images[0]
+      const selected = images.find((img) => img.isSelected && img.imageUrl) || images.find((img) => img.imageUrl)
       const signed = toSignedUrlIfCos(selected?.imageUrl, 3600)
-      if (signed) refs.push(signed)
+      if (signed) refs.push({ url: signed, label: `location ${location.name}`, kind: 'location', name: location.name })
     }
   }
 

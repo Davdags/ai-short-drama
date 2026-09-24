@@ -291,9 +291,9 @@ export default function AssetToolbar({
     }
 
     return (
-        <div className="glass-surface p-4">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
+        <div className="glass-surface p-3 sm:p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                     <span className="text-sm font-semibold text-[var(--glass-text-secondary)] inline-flex items-center gap-2">
                         <AppIcon name="diamond" className="w-4 h-4 text-[var(--glass-tone-info-fg)]" />
                         {t("toolbar.assetManagement")}
