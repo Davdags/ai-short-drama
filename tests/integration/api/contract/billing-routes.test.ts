@@ -54,3 +54,25 @@ describe('billing route contract', () => {
     }
   })
 })
+
+describe('public plan prices route', () => {
+  it('prices naira at the flat rate, other currencies from the live rate, and gives USD-only countries no local price', async () => {
+    const { __setRatesForTests } = await import('@/lib/payments/fx')
+    __setRatesForTests({ GHS: 11.57, KES: 129.5 })
+    const { GET } = await import('@/app/api/billing/prices/route')
+    const call = async (country: string) => {
+      const { NextRequest } = await import('next/server')
+      const res = await GET(new NextRequest(`https://nucleusart.studio/api/billing/prices?country=${country}`), { params: Promise.resolve({}) } as never)
+      return (await res.json()) as { local: { currency: string; plans: Record<string, { monthly: number }> } | null }
+    }
+    expect((await call('NG')).local).toMatchObject({ currency: 'NGN', plans: { starter: { monthly: 28_500 } } })
+    expect((await call('GH')).local).toMatchObject({ currency: 'GHS', plans: { starter: { monthly: 230 } } })
+    expect((await call('OTHER')).local).toBeNull()
+  })
+
+  it('is registered as a deliberate public route', async () => {
+    const { readFile } = await import('node:fs/promises')
+    const guard = await readFile('scripts/guards/api-route-contract-guard.mjs', 'utf8')
+    expect(guard).toContain("'src/app/api/billing/prices/route.ts'")
+  })
+})

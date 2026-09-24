@@ -22,6 +22,6 @@ export const config = {
     matcher: [
         '/',
         '/(zh|en)/:path*',
-        '/((?!api|m|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|.*\\.png|.*\\.jpg|.*\\.jpeg|.*\\.svg|.*\\.gif|.*\\.ico).*)'
+        '/((?!api|m|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|llms.txt|.*\\.png|.*\\.jpg|.*\\.jpeg|.*\\.svg|.*\\.gif|.*\\.ico).*)'
     ]
 };

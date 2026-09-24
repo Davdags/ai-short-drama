@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { apiHandler } from '@/lib/api-errors'
 import { PLANS } from '@/app/[locale]/pricing/plans'
 import { findPayCountry } from '@/lib/payments/countries'
-import { getUsdRates, localPriceFromRate } from '@/lib/payments/fx'
+import { countryPrice, fixedUsdRate, getUsdRates } from '@/lib/payments/fx'
 
 /**
  * GET /api/billing/prices?country=GH  (public — the pricing page shows it to visitors)
@@ -14,8 +14,7 @@ export const GET = apiHandler(async (request: NextRequest) => {
   if (!country) return NextResponse.json({ success: true, local: null })
 
   const { rates, updatedAt } = await getUsdRates()
-  const rate = rates[country.currency]
-  if (!rate) return NextResponse.json({ success: true, local: null })
+  if (!fixedUsdRate(country.currency) && !rates[country.currency]) return NextResponse.json({ success: true, local: null })
 
   return NextResponse.json({
     success: true,
@@ -26,8 +25,8 @@ export const GET = apiHandler(async (request: NextRequest) => {
       methods: country.localMethods,
       rateUpdatedAt: updatedAt ? new Date(updatedAt).toISOString() : null,
       plans: Object.fromEntries(PLANS.filter((plan) => plan.monthlyPrice > 0).map((plan) => [plan.id, {
-        monthly: localPriceFromRate(plan.monthlyPrice, rate, country),
-        yearly: localPriceFromRate(plan.yearlyPrice, rate, country),
+        monthly: countryPrice(plan.monthlyPrice, country, rates),
+        yearly: countryPrice(plan.yearlyPrice, country, rates),
       }])),
     },
   }, { headers: { 'Cache-Control': 'public, max-age=600' } })

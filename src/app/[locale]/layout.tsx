@@ -10,6 +10,7 @@ import { NewVersionNotice } from "@/components/system/NewVersionNotice";
 import { MarketingPixels } from "@/components/marketing/MarketingPixels";
 import { OutOfCreditsModal } from "@/components/billing/OutOfCreditsModal";
 import { NotificationCenter } from "@/components/system/NotificationCenter";
+import { SiteStructuredData } from "@/components/seo/SiteStructuredData";
 import { uiLocales } from '@/i18n/routing';
 import RouteTracker from '@/components/analytics/RouteTracker';
 import ReferralCapture from '@/components/affiliate/ReferralCapture';
@@ -90,6 +91,7 @@ export default async function LocaleLayout({
     return (
         <html lang={locale}>
             <head>
+                <SiteStructuredData />
                 {process.env.NODE_ENV === "development" && (
                     <Script
                         src="//unpkg.com/react-grab/dist/index.global.js"

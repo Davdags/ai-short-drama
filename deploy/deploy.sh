@@ -41,6 +41,8 @@ rm /tmp/nucleusart.tar.gz
 cd $APP_DIR/deploy
 docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
 docker image prune -f >/dev/null
+# Every deploy builds on the server; without this the build cache filled 70 GB of a 96 GB disk.
+docker builder prune -af --filter until=48h >/dev/null 2>&1 || true
 echo "==> Waiting for the website to be healthy"
 for i in \$(seq 1 60); do
   status=\$(docker inspect -f '{{.State.Health.Status}}' nucleusart-web-1 2>/dev/null || echo starting)

@@ -45,7 +45,7 @@ export function FolderSidebar({
     const t = useTranslations('assetHub')
 
     return (
-        <div className="w-56 flex-shrink-0">
+        <div className="w-full flex-shrink-0 md:w-56">
             <div className="glass-surface p-4">
                 <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-medium text-[var(--glass-text-secondary)]">{t('folders')}</h3>

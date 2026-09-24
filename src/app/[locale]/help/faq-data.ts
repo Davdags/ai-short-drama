@@ -115,7 +115,7 @@ export const FAQ_CATEGORIES: FaqCategory[] = [
       },
       {
         q: 'What resolutions can I make?',
-        a: 'Resolution depends on your plan and the model you choose. Free and Starter cover standard and HD, Pro adds Full HD, and Studio adds 4K where the model supports it. Higher resolutions cost more credits per second.',
+        a: 'You choose the resolution for each video: standard (480p) or HD (720p) on every video model, and up to Full HD (1080p) with Seedance 2.5. Higher resolutions cost more credits per second — the price shows on the button before you click.',
       },
     ],
   },

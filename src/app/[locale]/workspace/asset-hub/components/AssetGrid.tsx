@@ -294,16 +294,19 @@ export function AssetGrid({
     return (
         <div className="flex-1 min-w-0">
             {/* Header: 筛选 Tab + 操作按钮 */}
-            <div className="flex items-center justify-between mb-6">
+            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 {/* 左侧筛选 */}
+                <div className="-mx-1 overflow-x-auto px-1">
                 <SegmentedControl
+                    layout="compact"
                     options={tabs.map(tab => ({ value: tab.id, label: tab.label }))}
                     value={filter}
                     onChange={(val) => setFilter(val as 'all' | 'character' | 'location' | 'prop' | 'voice')}
                 />
+                </div>
 
                 {/* 右侧操作按钮 */}
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                     {onDownloadAll && (
                         <button
                             onClick={onDownloadAll}

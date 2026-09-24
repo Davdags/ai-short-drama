@@ -269,7 +269,9 @@ export default function PricingPage() {
             )}
             <p className="max-w-md text-center text-xs text-[#a3a3a3]">
               {payMode === 'local' && country
-                ? `Pay in ${country.code === 'NG' ? 'naira' : country.currency} by ${country.localMethods}. Prices follow today’s exchange rate.`
+                ? (country.code === 'NG'
+                  ? `Pay in naira by ${country.localMethods}.`
+                  : `Pay in ${country.currency} by ${country.localMethods}. Prices follow today’s exchange rate.`)
                 : usdMethod === 'whop'
                   ? 'Secure payment in US dollars by card, Apple Pay, Google Pay or crypto.'
                   : 'Pay in US dollars by bank transfer, mobile money or card via Flutterwave.'}

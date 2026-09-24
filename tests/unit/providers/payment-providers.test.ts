@@ -4,7 +4,7 @@ import { paystackProvider } from '@/lib/payments/paystack'
 import { flutterwaveProvider } from '@/lib/payments/flutterwave'
 import { providerForCurrency, resolveCheckout } from '@/lib/payments'
 import { findPayCountry, flutterwavePaymentOptions, guessPayCountryCode } from '@/lib/payments/countries'
-import { localPriceFromRate } from '@/lib/payments/fx'
+import { countryPrice, localPriceFromRate } from '@/lib/payments/fx'
 
 /**
  * The webhook route is the only publicly reachable endpoint in the app, so signature
@@ -87,9 +87,31 @@ describe('paying by country', () => {
     expect(localPriceFromRate(19, 1326.87, { roundTo: 500 })).toBe(26_000)
   })
 
+  it('prices naira at the flat ₦1,500 per dollar, whatever the market rate', () => {
+    const nigeria = findPayCountry('NG')!
+    expect(countryPrice(19, nigeria, { NGN: 1326.87 })).toBe(28_500)
+    expect(countryPrice(49, nigeria, {})).toBe(73_500)
+    expect(countryPrice(19, findPayCountry('GH')!, { GHS: 11.57 })).toBe(230)
+  })
+
   it('puts mobile money first where people pay that way', () => {
     expect(flutterwavePaymentOptions('GHS')).toMatch(/^mobilemoneyghana/)
     expect(flutterwavePaymentOptions('KES')).toMatch(/^mpesa/)
     expect(flutterwavePaymentOptions('XOF')).toContain('mobilemoneyfranco')
+  })
+})
+
+describe('Flutterwave checkout not paid yet', () => {
+  it('reports "pending" instead of an error when the customer left checkout without paying', async () => {
+    const { flutterwaveProvider: provider } = await import('@/lib/payments/flutterwave')
+    process.env.FLUTTERWAVE_SECRET_KEY = 'FLWSECK_TEST-fixture'
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = (async () => new Response(JSON.stringify({ status: 'error', message: 'No transaction was found for this id', data: null }), { status: 400 })) as typeof fetch
+    try {
+      const verified = await provider.verify('na_abandoned')
+      expect(verified.status).toBe('pending')
+    } finally {
+      globalThis.fetch = originalFetch
+    }
   })
 })

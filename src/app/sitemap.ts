@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next'
 import { publishedPosts } from '@/content/blog'
 import { STORY_PROMPTS } from '@/content/prompt-library'
 import { PRODUCT_UPDATES } from '@/content/updates'
+import { LANDING_PAGES } from '@/content/landing-pages'
 
 /** Public, indexable pages. The app is English-only, so only /en URLs are listed. */
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -22,6 +23,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     page('/terms', 0.2, 'monthly'),
     page('/privacy', 0.2, 'monthly'),
     page('/refund-policy', 0.2, 'monthly'),
+    ...LANDING_PAGES.map((landing) => page(`/use-cases/${landing.slug}`, 0.9, 'monthly')),
     ...publishedPosts().map((post) => page(`/blog/${post.slug}`, 0.7, 'monthly', new Date(`${post.date}T12:00:00Z`))),
     ...STORY_PROMPTS.map((prompt) => page(`/prompts/${prompt.slug}`, 0.6, 'monthly')),
   ]

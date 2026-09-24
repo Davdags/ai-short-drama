@@ -14,10 +14,11 @@ const COLUMNS: Array<{ heading: string; links: FooterLink[] }> = [
   {
     heading: 'Product',
     links: [
-      { title: 'Create a drama', href: '/en/workspace' },
+      { title: 'AI short drama maker', href: '/en/use-cases/ai-short-drama-maker' },
+      { title: 'AI video ad generator', href: '/en/use-cases/ai-video-ad-generator' },
+      { title: 'Nollywood-style dramas', href: '/en/use-cases/nollywood-ai-drama' },
+      { title: 'AI storyboard generator', href: '/en/use-cases/ai-storyboard-generator' },
       { title: 'Prompt Library', href: '/en/prompts' },
-      { title: 'Asset Hub', href: '/en/workspace/asset-hub' },
-      { title: 'Workflows', href: '/en/workflows' },
       { title: 'Pricing', href: '/en/pricing' },
     ],
   },

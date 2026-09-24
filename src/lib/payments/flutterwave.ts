@@ -73,9 +73,19 @@ export const flutterwaveProvider: PaymentProvider = {
 
   async verify(reference: string): Promise<VerifiedPayment> {
     // Flutterwave verifies by its own id, so resolve our tx_ref to a transaction first.
-    const data = await call<FlutterwaveTransaction>(
-      `/transactions/verify_by_reference?tx_ref=${encodeURIComponent(reference)}`,
-    )
+    let data: FlutterwaveTransaction
+    try {
+      data = await call<FlutterwaveTransaction>(
+        `/transactions/verify_by_reference?tx_ref=${encodeURIComponent(reference)}`,
+      )
+    } catch (error) {
+      // No transaction yet means the customer opened checkout but has not paid (or left):
+      // that is "pending", not an error — returning from Flutterwave used to show a failure.
+      if (error instanceof PaymentProviderError && /no transaction was found/i.test(error.message)) {
+        return { reference, status: 'pending', amount: 0, currency: 'USD', paidAt: null, failureReason: 'not_paid_yet' }
+      }
+      throw error
+    }
 
     return {
       reference,

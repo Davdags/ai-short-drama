@@ -1,0 +1,37 @@
+# NucleusArt
+
+> NucleusArt (https://nucleusart.studio) is an AI short drama and video ad studio. You paste a story; it writes the screenplay, finds the characters and locations, keeps every character looking the same in every shot, draws a storyboard picture for each shot and turns the scenes into vertical video for TikTok, Instagram Reels and YouTube Shorts.
+
+NucleusArt is made by Nucleus LLC. It is used by creators, storytellers, Nollywood-style drama makers and small brands making story-driven video ads.
+
+## What it does
+- Story to screenplay: write or paste a few paragraphs; the script, shots and camera directions are written for you.
+- Consistent characters: each character gets a reference sheet first, so faces, outfits and places match across shots and episodes.
+- Storyboard: a picture for every shot, in a photorealistic film style or anime/comic styles.
+- Video: each storyboard frame becomes a video clip (Seedance, Kling and Wan video models); dramas up to 90 seconds per episode.
+- Formats: 9:16 vertical, 1:1 and 16:9.
+- Transparent pricing: every generate button shows its price in credits before you click.
+
+## Models
+Writing: Claude (Opus, Sonnet) and Gemini. Pictures: GPT Image 2, Nano Banana, Seedream. Video: Seedance 2.0/2.5, Kling 3.0, Wan 2.6.
+
+## Pricing
+- Free: 150 credits on sign-up (script, storyboard and first pictures).
+- Starter: $19/month, 500 credits.
+- Pro: $49/month, 2,000 credits (about 1 minute of finished video a month).
+- Studio: $99/month, 5,000 credits.
+- Yearly billing gives two months free. Nigerian customers can pay in naira (Starter ₦28,500/month); Ghana, Kenya, South Africa and other African countries can pay in local currency with mobile money; everyone else pays in USD by card, Apple/Google Pay or crypto.
+
+## Key pages
+- [Home](https://nucleusart.studio/en)
+- [Pricing](https://nucleusart.studio/en/pricing)
+- [AI short drama maker](https://nucleusart.studio/en/use-cases/ai-short-drama-maker)
+- [AI video ad generator](https://nucleusart.studio/en/use-cases/ai-video-ad-generator)
+- [Nollywood-style AI dramas](https://nucleusart.studio/en/use-cases/nollywood-ai-drama)
+- [AI storyboard generator](https://nucleusart.studio/en/use-cases/ai-storyboard-generator)
+- [Prompt Library: 30 ready-made short drama stories](https://nucleusart.studio/en/prompts)
+- [Blog](https://nucleusart.studio/en/blog)
+- [Help Centre](https://nucleusart.studio/en/help)
+
+## Contact
+support@nucleusart.studio

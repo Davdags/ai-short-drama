@@ -58,11 +58,28 @@ export function localPriceFromRate(usd: number, rate: number, country: Pick<PayC
   return roundLocalPrice(usd * rate * (1 + FX_BUFFER), country.roundTo)
 }
 
-export async function localPrice(usd: number, country: PayCountry): Promise<number> {
-  const { rates } = await getUsdRates()
+/**
+ * Currencies priced at a flat rate set by the owner instead of the live rate + buffer.
+ * Naira: ₦1,500 per $1 (USD_TO_NGN to change it), so Starter is always ₦28,500.
+ */
+export function fixedUsdRate(currency: string): number | null {
+  if (currency.toUpperCase() !== 'NGN') return null
+  const configured = Number(process.env.USD_TO_NGN)
+  return Number.isFinite(configured) && configured > 0 ? configured : 1500
+}
+
+/** A plan's price in the country's currency, as charged at checkout and shown on the pricing page. */
+export function countryPrice(usd: number, country: PayCountry, rates: Record<string, number>): number {
+  const fixed = fixedUsdRate(country.currency)
+  if (fixed) return roundLocalPrice(usd * fixed, country.roundTo)
   const rate = rates[country.currency]
   if (!rate) throw new Error(`No exchange rate for ${country.currency}`)
   return localPriceFromRate(usd, rate, country)
+}
+
+export async function localPrice(usd: number, country: PayCountry): Promise<number> {
+  const { rates } = await getUsdRates()
+  return countryPrice(usd, country, rates)
 }
 
 /** For tests. */
