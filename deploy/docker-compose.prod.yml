@@ -1,0 +1,137 @@
+# NucleusArt production stack (single VPS).
+#   web     — Next.js website + API
+#   worker  — background generation workers, watchdog, queue dashboard
+#   caddy   — HTTPS (automatic Let's Encrypt certificates) in front of web
+#   mysql / redis — database and queues (never exposed to the internet)
+#
+# All generated files are stored on the server disk (../data), so they never expire.
+# Usage (on the server, in /opt/nucleusart/deploy):
+#   docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+
+name: nucleusart
+
+x-app-env: &app-env
+  NODE_ENV: production
+  DATABASE_URL: "mysql://root:${MYSQL_ROOT_PASSWORD}@mysql:3306/nucleusart?connection_limit=30&pool_timeout=30&connect_timeout=15"
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  REDIS_PASSWORD: "${REDIS_PASSWORD}"
+  STORAGE_TYPE: local
+  UPLOAD_DIR: ./data/uploads
+  NEXTAUTH_URL: "https://${DOMAIN}"
+  NEXT_PUBLIC_APP_URL: "https://${DOMAIN}"
+  INTERNAL_APP_URL: "http://web:3000"
+  # Speed caps (EvoLink allows 50 at once per model variant; we stay under it)
+  QUEUE_CONCURRENCY_IMAGE: "40"
+  QUEUE_CONCURRENCY_VIDEO: "40"
+  QUEUE_CONCURRENCY_VOICE: "10"
+  QUEUE_CONCURRENCY_TEXT: "10"
+  WATCHDOG_INTERVAL_MS: "30000"
+  TASK_HEARTBEAT_TIMEOUT_MS: "90000"
+  LOG_UNIFIED_ENABLED: "true"
+  LOG_LEVEL: "INFO"
+  LOG_FORMAT: "json"
+  LOG_REDACT_KEYS: "password,token,apiKey,apikey,authorization,cookie,secret,access_token,refresh_token"
+  LLM_STREAM_EPHEMERAL_ENABLED: "true"
+
+services:
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+      MYSQL_DATABASE: nucleusart
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --max-connections=300
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  web:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_APP_URL: "https://${DOMAIN}"
+        NEXT_PUBLIC_GA4_ID: "${NEXT_PUBLIC_GA4_ID:-}"
+        NEXT_PUBLIC_META_PIXEL_ID: "${NEXT_PUBLIC_META_PIXEL_ID:-}"
+        NEXT_PUBLIC_TIKTOK_PIXEL_ID: "${NEXT_PUBLIC_TIKTOK_PIXEL_ID:-}"
+        NEXT_PUBLIC_SNAPCHAT_PIXEL_ID: "${NEXT_PUBLIC_SNAPCHAT_PIXEL_ID:-}"
+        NEXT_PUBLIC_TWITTER_PIXEL_ID: "${NEXT_PUBLIC_TWITTER_PIXEL_ID:-}"
+        NEXT_PUBLIC_GOOGLE_ADS_ID: "${NEXT_PUBLIC_GOOGLE_ADS_ID:-}"
+        NEXT_PUBLIC_GOOGLE_ADS_PURCHASE_LABEL: "${NEXT_PUBLIC_GOOGLE_ADS_PURCHASE_LABEL:-}"
+    image: nucleusart:latest
+    restart: unless-stopped
+    env_file: .env.production
+    environment: *app-env
+    command: ["sh", "-c", "npx prisma db push --skip-generate && npm run start:web"]
+    volumes:
+      - ../data:/app/data
+      - ../logs/web:/app/logs
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/api/system/boot-id"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+
+  worker:
+    image: nucleusart:latest
+    restart: unless-stopped
+    env_file: .env.production
+    environment:
+      <<: *app-env
+      BULL_BOARD_HOST: "0.0.0.0"
+      BULL_BOARD_PORT: "3010"
+      BULL_BOARD_BASE_PATH: "/admin/queues"
+    command: ["npm", "run", "start:workers"]
+    volumes:
+      - ../data:/app/data
+      - ../logs/worker:/app/logs
+    # Queue dashboard: reachable only from the server itself (use an SSH tunnel).
+    ports:
+      - "127.0.0.1:3010:3010"
+    depends_on:
+      web:
+        condition: service_healthy
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      DOMAIN: "${DOMAIN}"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+
+volumes:
+  mysql_data:
+  redis_data:
+  caddy_data:
+  caddy_config:

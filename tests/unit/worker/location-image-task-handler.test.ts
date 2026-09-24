@@ -1,6 +1,6 @@
 import type { Job } from 'bullmq'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { getArtStylePrompt } from '@/lib/constants'
+import { addLocationPromptSuffix, getArtStylePrompt } from '@/lib/constants'
 import { TASK_TYPE, type TaskJobData } from '@/lib/task/types'
 
 const utilsMock = vi.hoisted(() => ({
@@ -96,7 +96,7 @@ describe('worker location-image-task-handler behavior', () => {
 
     expect(sharedMock.generateLabeledImageToCos).toHaveBeenCalledWith(
       expect.objectContaining({
-        prompt: `雨夜街道，${animeStylePrompt}`,
+        prompt: `${addLocationPromptSuffix('雨夜街道')} ${animeStylePrompt}`,
         label: 'Old Town',
         targetId: 'location-image-1',
         options: expect.objectContaining({ aspectRatio: '1:1' }),
@@ -119,7 +119,7 @@ describe('worker location-image-task-handler behavior', () => {
 
     expect(sharedMock.generateLabeledImageToCos).toHaveBeenCalledWith(
       expect.objectContaining({
-        prompt: `雨夜街道，${getArtStylePrompt('realistic', 'zh')}`,
+        prompt: `${addLocationPromptSuffix('雨夜街道')} ${getArtStylePrompt('realistic', 'zh')}`,
       }),
     )
   })

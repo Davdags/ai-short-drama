@@ -202,6 +202,7 @@ export async function persistClips(params: {
           characters: clip.characters.length > 0 ? JSON.stringify(clip.characters) : null,
           props: clip.props.length > 0 ? JSON.stringify(clip.props) : null,
           content: clip.content,
+          duration: clip.durationSeconds ?? null,
         },
         select: {
           id: true,
@@ -221,6 +222,7 @@ export async function persistClips(params: {
         characters: clip.characters.length > 0 ? JSON.stringify(clip.characters) : null,
         props: clip.props.length > 0 ? JSON.stringify(clip.props) : null,
         content: clip.content,
+        duration: clip.durationSeconds ?? null,
       },
       select: {
         id: true,

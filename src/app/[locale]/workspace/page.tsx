@@ -13,6 +13,10 @@ import { AppIcon } from '@/components/ui/icons'
 import { shouldGuideToModelSetup } from '@/lib/workspace/model-setup'
 import { Link, useRouter } from '@/i18n/navigation'
 import { apiFetch } from '@/lib/api-fetch'
+import { notifyAlert } from '@/lib/ui/notify'
+import { notify } from '@/lib/ui/notify'
+import { GettingStartedCard } from '@/components/onboarding/GettingStarted'
+import { PENDING_PROMPT_KEY } from '@/content/prompt-library'
 
 interface ProjectStats {
   episodes: number
@@ -40,11 +44,9 @@ interface Pagination {
 }
 
 const PAGE_SIZE = 7 // 加上新建项目按钮正好8个，4列布局下2行
-const DEFAULT_BILLING_CURRENCY = 'CNY'
-
-function formatProjectCost(amount: number, currency = DEFAULT_BILLING_CURRENCY): string {
-  if (currency === 'USD') return `$${amount.toFixed(2)}`
-  return `¥${amount.toFixed(2)}`
+/** Project costs are recorded in NucleusArt credits. */
+function formatProjectCost(amount: number): string {
+  return `${Math.ceil(amount).toLocaleString('en-US')} credits`
 }
 
 export default function WorkspacePage() {
@@ -84,6 +86,16 @@ export default function WorkspacePage() {
       router.push({ pathname: '/auth/signin' })
       return
     }
+    // A story picked from the Prompt Library before signing up: open it now.
+    try {
+      const pendingPrompt = window.localStorage.getItem(PENDING_PROMPT_KEY)
+      if (pendingPrompt) {
+        window.localStorage.removeItem(PENDING_PROMPT_KEY)
+        router.push({ pathname: '/start', query: { prompt: pendingPrompt } })
+      }
+    } catch {
+      // Storage blocked: the customer can press "Use this prompt" again.
+    }
   }, [session, status, router])
 
   // 获取项目列表
@@ -103,9 +115,12 @@ export default function WorkspacePage() {
         const data = await response.json()
         setProjects(data.projects)
         setPagination(data.pagination)
+      } else {
+        notify.error(`Your projects could not be loaded (${response.status}).`, { action: { label: 'Try again', onClick: () => window.location.reload() } })
       }
     } catch (error) {
       _ulogError('获取项目失败:', error)
+      notify.error('Your projects could not be loaded. Check your connection and try again.', { action: { label: 'Try again', onClick: () => window.location.reload() } })
     } finally {
       setLoading(false)
     }
@@ -182,31 +197,29 @@ export default function WorkspacePage() {
         setFormData({ name: '', description: '' })
 
         if (shouldOpenModelSetup) {
-          alert(t('analysisModelRequiredAfterCreate'))
+          notifyAlert(t('analysisModelRequiredAfterCreate'))
           router.push({ pathname: '/profile' })
         }
       } else {
-        alert(t('createFailed'))
+        notifyAlert(t('createFailed'))
       }
     } catch (error) {
       _ulogError('创建项目失败:', error)
-      alert(t('createFailed'))
+      notifyAlert(t('createFailed'))
     } finally {
       setCreateLoading(false)
     }
   }
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    // 转换为北京时间 (UTC+8)
-    const beijingTime = new Date(date.getTime() + 8 * 60 * 60 * 1000)
-    return beijingTime.toLocaleDateString('zh-CN', {
+    // English, in the viewer's own time zone. This used to force Chinese formatting and
+    // shift to Beijing time twice (manual +8h and timeZone), showing times 16 hours off.
+    return new Date(dateString).toLocaleString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
-      hour: '2-digit',
+      hour: 'numeric',
       minute: '2-digit',
-      timeZone: 'Asia/Shanghai'
     })
   }
 
@@ -231,10 +244,10 @@ export default function WorkspacePage() {
         setEditingProject(null)
         setEditFormData({ name: '', description: '' })
       } else {
-        alert(t('updateFailed'))
+        notifyAlert(t('updateFailed'))
       }
     } catch {
-      alert(t('updateFailed'))
+      notifyAlert(t('updateFailed'))
     } finally {
       setCreateLoading(false)
     }
@@ -255,10 +268,10 @@ export default function WorkspacePage() {
         // 删除成功后重新获取当前页
         fetchProjects(pagination.page, searchQuery)
       } else {
-        alert(t('deleteFailed'))
+        notifyAlert(t('deleteFailed'))
       }
     } catch {
-      alert(t('deleteFailed'))
+      notifyAlert(t('deleteFailed'))
     } finally {
       setDeletingProjectId(null)
       setProjectToDelete(null)
@@ -301,7 +314,8 @@ export default function WorkspacePage() {
       <Navbar />
       <div className="flex flex-1 min-h-0">
         <AppSidebar />
-        <main className="flex-1 overflow-y-auto px-8 py-8">
+        <main className="flex-1 overflow-y-auto px-4 pb-24 pt-6 sm:px-8 sm:py-8 md:pb-8">
+        <GettingStartedCard />
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold text-[#171717] mb-1">{t('title')}</h1>

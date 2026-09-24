@@ -1,6 +1,7 @@
 'use client'
 import { logError as _ulogError } from '@/lib/logging/core'
 import { useTranslations } from 'next-intl'
+import { notifyAlert } from '@/lib/ui/notify'
 
 /**
  * useTTSGeneration - TTS 和音色相关逻辑
@@ -16,6 +17,7 @@ import {
     useUpdateProjectCharacterVoiceSettings,
     useSaveProjectDesignedVoice,
 } from '@/lib/query/hooks'
+import { humanizeErrorMessage } from '@/lib/errors/humanize'
 
 interface VoiceDesignCharacter {
     id: string
@@ -28,10 +30,10 @@ interface UseTTSGenerationProps {
 }
 
 function getErrorMessage(error: unknown, fallback: string): string {
-    if (error instanceof Error) return error.message
+    if (error instanceof Error) return humanizeErrorMessage(error.message, fallback)
     if (typeof error === 'object' && error !== null) {
         const message = (error as { message?: unknown }).message
-        if (typeof message === 'string') return message
+        if (typeof message === 'string') return humanizeErrorMessage(message, fallback)
     }
     return fallback
 }
@@ -89,9 +91,9 @@ export function useTTSGeneration({
                 audioBase64,
             })
             refreshAssets()
-            alert(t('tts.voiceDesignSaved', { name: voiceDesignCharacter.name }))
+            notifyAlert(t('tts.voiceDesignSaved', { name: voiceDesignCharacter.name }))
         } catch (error: unknown) {
-            alert(t('tts.saveVoiceDesignFailed', { error: getErrorMessage(error, t('common.unknownError')) }))
+            notifyAlert(t('tts.saveVoiceDesignFailed', { error: getErrorMessage(error, t('common.unknownError')) }))
         } finally {
             setVoiceDesignCharacter(null)
         }

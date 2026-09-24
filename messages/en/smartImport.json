@@ -15,8 +15,8 @@
     "recommended": "Recommended"
   },
   "markerDetection": {
-    "enable": "Detect chapter markers (Episode X / 第X集) first",
-    "tooltip": "Detects [Episode/Chapter X] and [第X集/章] markers automatically — free and instant"
+    "enable": "Detect chapter markers (Episode 1, Chapter 1) first",
+    "tooltip": "Finds markers like [Episode 1] or [Chapter 1] automatically — free and instant"
   },
   "smartImportDesc": "Upload your full novel or script. The AI engine detects structure and splits episodes in one click.",
   "recommended": "Recommended",

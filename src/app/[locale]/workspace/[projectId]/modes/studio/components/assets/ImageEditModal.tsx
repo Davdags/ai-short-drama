@@ -1,6 +1,7 @@
 'use client'
 import { useTranslations } from 'next-intl'
 import { MediaImageWithLoading } from '@/components/media/MediaImageWithLoading'
+import { notifyAlert } from '@/lib/ui/notify'
 
 /**
  * 图片编辑弹窗 - 统一的 AI 修图组件
@@ -35,7 +36,7 @@ export default function ImageEditModal({
 
     const handleSubmit = () => {
         if (!modifyPrompt.trim()) {
-            alert(t('modal.designInstruction'))
+            notifyAlert(t('modal.designInstruction'))
             return
         }
         onConfirm(modifyPrompt, editImages.length > 0 ? editImages : undefined)

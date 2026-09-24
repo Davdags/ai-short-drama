@@ -34,6 +34,7 @@ import { useVoiceGenerationActions } from './voice-stage-runtime/useVoiceGenerat
 import { useVoiceLineCrudActions } from './voice-stage-runtime/useVoiceLineCrudActions'
 import { useVoiceRuntimeSync } from './voice-stage-runtime/useVoiceRuntimeSync'
 import { useVoiceLineBindings } from './voice-stage-runtime/useVoiceLineBindings'
+import { notifyAlert } from '@/lib/ui/notify'
 
 export type { VoiceStageShellProps } from './voice-stage-runtime/types'
 
@@ -88,7 +89,7 @@ export function useVoiceStageRuntime({
   }) => {
     const lineLabel = params.line ? `#${params.line.lineIndex}` : t('common.regenerate')
     const reason = params.errorMessage?.trim() || t('errors.generateFailed')
-    alert(`${t('errors.generateFailed')} (${lineLabel}): ${reason}`)
+    notifyAlert(`${t('errors.generateFailed')} (${lineLabel}): ${reason}`)
   }, [t])
   const {
     speakerCharacterMap,

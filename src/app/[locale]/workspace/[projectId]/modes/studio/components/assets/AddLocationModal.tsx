@@ -10,6 +10,8 @@ import { useAiCreateProjectLocation, useCreateProjectLocation } from '@/lib/quer
 import TaskStatusInline from '@/components/task/TaskStatusInline'
 import { resolveTaskPresentationState } from '@/lib/task/presentation'
 import { AppIcon } from '@/components/ui/icons'
+import { humanizeErrorMessage } from '@/lib/errors/humanize'
+import { notifyAlert } from '@/lib/ui/notify'
 
 interface AddLocationModalProps {
   projectId: string
@@ -18,10 +20,10 @@ interface AddLocationModalProps {
 }
 
 function getErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof Error && error.message) return error.message
+  if (error instanceof Error && error.message) return humanizeErrorMessage(error.message, fallback)
   if (typeof error === 'object' && error !== null) {
     const message = (error as { message?: unknown }).message
-    if (typeof message === 'string') return message
+    if (typeof message === 'string') return humanizeErrorMessage(message, fallback)
   }
   return fallback
 }
@@ -90,11 +92,11 @@ export default function AddLocationModal({
       setAiInstruction('')
     } catch (error: unknown) {
       if (getErrorStatus(error) === 402) {
-        alert(getErrorMessage(error, tc('insufficientBalanceDetail')))
+        notifyAlert(getErrorMessage(error, tc('insufficientBalanceDetail')))
       } else {
         _ulogError('AI设计失败:', error)
         if (shouldShowError(error)) {
-          alert(getErrorMessage(error, t('errors.aiDesignFailed')))
+          notifyAlert(getErrorMessage(error, t('errors.aiDesignFailed')))
         }
       }
     } finally {
@@ -118,9 +120,9 @@ export default function AddLocationModal({
       onClose()
     } catch (error: unknown) {
       if (getErrorStatus(error) === 402) {
-        alert(getErrorMessage(error, tc('insufficientBalanceDetail')))
+        notifyAlert(getErrorMessage(error, tc('insufficientBalanceDetail')))
       } else if (shouldShowError(error)) {
-        alert(getErrorMessage(error, t('errors.createFailed')))
+        notifyAlert(getErrorMessage(error, t('errors.createFailed')))
       }
     } finally {
       setIsSubmitting(false)

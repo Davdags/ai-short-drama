@@ -23,7 +23,8 @@ export default function AppSidebar() {
   const userInitial = userName.charAt(0).toUpperCase()
 
   return (
-    <aside className="w-[200px] flex-shrink-0 bg-white border-r border-[#e5e5e5] flex flex-col overflow-y-auto">
+    <>
+    <aside className="hidden md:flex w-[200px] flex-shrink-0 bg-white border-r border-[#e5e5e5] flex-col overflow-y-auto">
       {/* User info */}
       <div className="p-4 border-b border-[#e5e5e5]">
         <div className="flex items-center gap-3">
@@ -83,5 +84,27 @@ export default function AppSidebar() {
         </button>
       </div>
     </aside>
+
+    {/* Phones: bottom tab bar (the side menu took half the screen) */}
+    <nav aria-label="App" className="fixed inset-x-0 bottom-0 z-40 flex border-t border-[#e5e5e5] bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
+      {[...NAV_ITEMS, { id: 'profile', label: 'Settings', icon: 'settingsHex' as AppIconName, href: '/profile' }].map((item) => {
+        const isActive = item.id === 'asset-hub'
+          ? pathname.includes('/asset-hub')
+          : item.id === 'profile'
+            ? pathname.includes('/profile')
+            : pathname.endsWith('/workspace')
+        return (
+          <Link
+            key={item.id}
+            href={{ pathname: item.href as never }}
+            className={`flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-medium ${isActive ? 'text-[#8020fc]' : 'text-[#737373]'}`}
+          >
+            <AppIcon name={item.icon} className="h-5 w-5" />
+            {item.label}
+          </Link>
+        )
+      })}
+    </nav>
+    </>
   )
 }

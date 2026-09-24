@@ -7,6 +7,7 @@ import type { TaskPresentationState } from '@/lib/task/presentation'
 import { AppIcon } from '@/components/ui/icons'
 import ImageGenerationInlineCountButton from '@/components/image-generation/ImageGenerationInlineCountButton'
 import { getImageGenerationCountOptions } from '@/lib/image-generation/count'
+import { useParams } from 'next/navigation'
 
 type CharacterCardActionsProps =
   | {
@@ -34,6 +35,7 @@ type CharacterCardActionsProps =
 
 export default function CharacterCardActions(props: CharacterCardActionsProps) {
   const t = useTranslations('assets')
+  const projectId = useParams<{ projectId?: string }>()?.projectId ?? ''
 
   if (props.mode === 'selection') {
     return (
@@ -82,6 +84,7 @@ export default function CharacterCardActions(props: CharacterCardActionsProps) {
             suffix={<span>{t('image.generateCountSuffix')}</span>}
             value={props.generationCount}
             options={getImageGenerationCountOptions('character')}
+            costItems={projectId ? [{ apiType: 'image', model: '', quantity: props.generationCount, usesProjectModel: true, projectId, projectModelField: 'characterModel' }] : null}
             onValueChange={props.onGenerationCountChange}
             onClick={() => props.onGenerate(props.generationCount)}
             disabled={!props.hasDescription}

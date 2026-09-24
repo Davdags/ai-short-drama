@@ -102,7 +102,7 @@ export async function handleVoiceDesignTask(job: Job<TaskJobData>) {
   }
 
   if (!designed.success) {
-    throw new Error(designed.error || '声音设计失败')
+    throw new Error(designed.error || 'Voice design failed. Please try again.')
   }
 
   // EvoLink returns audioUrl (download link) instead of inline audioBase64.

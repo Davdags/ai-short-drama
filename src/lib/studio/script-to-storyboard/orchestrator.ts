@@ -24,6 +24,7 @@ import {
   DEFAULT_ANALYSIS_WORKFLOW_CONCURRENCY,
   normalizeWorkflowConcurrencyValue,
 } from '@/lib/workflow-concurrency'
+import { buildStoryboardDirective, mergePanelsToBudget } from '@/lib/studio/story-length'
 
 type JsonRecord = Record<string, unknown>
 const orchestratorLogger = createScopedLogger({ module: 'worker.orchestrator.script_to_storyboard' })
@@ -53,6 +54,8 @@ type ClipInput = {
   location: string | null
   props?: string | null
   screenplay: string | null
+  /** Story length control: seconds budgeted for this clip (null = unconstrained). */
+  duration?: number | null
 }
 
 export type ScriptToStoryboardPromptTemplates = {
@@ -77,6 +80,9 @@ export type ScriptToStoryboardOrchestratorInput = {
     props?: PropAsset[]
   }
   promptTemplates: ScriptToStoryboardPromptTemplates
+  /** Story length control: every panel lasts this many seconds (null = unconstrained). */
+  shotSeconds?: number | null
+  locale?: string
   runStep: (
     meta: ScriptToStoryboardStepMeta,
     prompt: string,
@@ -284,7 +290,11 @@ async function runStepWithRetry<T>(
 export async function runScriptToStoryboardOrchestrator(
   input: ScriptToStoryboardOrchestratorInput,
 ): Promise<ScriptToStoryboardOrchestratorResult> {
-  const { clips, studioData, promptTemplates, runStep, concurrency: rawConcurrency } = input
+  const { clips, studioData, promptTemplates, runStep, concurrency: rawConcurrency, shotSeconds, locale } = input
+  const panelBudgetFor = (clip: ClipInput): number | null =>
+    shotSeconds && clip.duration ? Math.max(1, Math.round(clip.duration / shotSeconds)) : null
+  const withShotDuration = <T extends StoryboardPanel>(panels: T[]): T[] =>
+    shotSeconds ? panels.map((panel) => ({ ...panel, duration: shotSeconds })) : panels
   if (!Array.isArray(clips) || clips.length === 0) {
     throw new Error('No clips found')
   }
@@ -363,20 +373,39 @@ export async function runScriptToStoryboardOrchestrator(
           retryable: true,
         },
       )
-      const { parsed: planPanels } = await runStepWithRetry(
-        runStep, phase1Meta, phase1Prompt, 'storyboard_phase1_plan', 2600,
-        (text) => {
-          const panels = parseJsonArray<StoryboardPanel>(text, `phase1:${formatClipId(clip)}`)
-          if (panels.length === 0) {
-            throw new Error(`Phase 1 returned empty panels for clip ${formatClipId(clip)}`)
-          }
-          return panels
-        },
+      const panelBudget = panelBudgetFor(clip)
+      const parsePlan = (text: string) => {
+        const panels = parseJsonArray<StoryboardPanel>(text, `phase1:${formatClipId(clip)}`)
+        if (panels.length === 0) {
+          throw new Error(`Phase 1 returned empty panels for clip ${formatClipId(clip)}`)
+        }
+        return panels
+      }
+      const budgetDirective = (overBy?: number) => (panelBudget && shotSeconds
+        ? buildStoryboardDirective(locale, { panelBudget, shotSeconds, overBy })
+        : '')
+      let { parsed: planPanels } = await runStepWithRetry(
+        runStep, phase1Meta, phase1Prompt + budgetDirective(), 'storyboard_phase1_plan', 2600, parsePlan,
       )
+      if (panelBudget && planPanels.length > panelBudget) {
+        // Ask once more for a plan within the budget; if it still overshoots, merge neighbours.
+        const retry = await runStepWithRetry(
+          runStep,
+          { ...phase1Meta, stepAttempt: (phase1Meta.stepAttempt || 1) + 1 },
+          phase1Prompt + budgetDirective(planPanels.length - panelBudget),
+          'storyboard_phase1_plan',
+          2600,
+          parsePlan,
+        ).catch(() => null)
+        if (retry) planPanels = retry.parsed
+        if (planPanels.length > panelBudget) {
+          planPanels = mergePanelsToBudget(planPanels as unknown as Record<string, unknown>[], panelBudget) as unknown as StoryboardPanel[]
+        }
+      }
 
       return {
         clipId: clip.id,
-        planPanels,
+        planPanels: withShotDuration(planPanels),
       }
     },
   )
@@ -504,11 +533,11 @@ export async function runScriptToStoryboardOrchestrator(
       return {
         clipId: clip.id,
         clipIndex,
-        finalPanels: mergePanelsWithRules({
+        finalPanels: withShotDuration(mergePanelsWithRules({
           finalPanels: filteredPhase3Panels,
           photographyRules,
           actingDirections,
-        }),
+        })),
       }
     },
   )

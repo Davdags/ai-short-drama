@@ -39,6 +39,7 @@ import { withStreamChunkTimeout } from './stream-timeout'
 import { shouldUseOpenAIReasoningProviderOptions } from './reasoning-capability'
 import { completeBailianLlm } from '@/lib/providers/bailian'
 import { completeSiliconFlowLlm } from '@/lib/providers/siliconflow'
+import { waitForEvolinkRequestSlot } from '@/lib/providers/evolink/rate-limiter'
 
 const OFFICIAL_ONLY_PROVIDER_KEYS = new Set(['bailian', 'siliconflow'])
 
@@ -71,7 +72,7 @@ export async function chatCompletionStream(
   const streamStep = resolveStreamStepMeta(options)
   emitStreamStage(callbacks, streamStep, 'submit')
   if (!model) {
-    const error = new Error('ANALYSIS_MODEL_NOT_CONFIGURED: 请先在设置页面配置分析模型')
+    const error = new Error('ANALYSIS_MODEL_NOT_CONFIGURED: Please choose an analysis model in Model preferences first')
     callbacks?.onError?.(error, streamStep)
     throw error
   }
@@ -81,6 +82,7 @@ export async function chatCompletionStream(
   const provider = selection.provider
   const providerKey = getProviderKey(provider).toLowerCase()
   const providerConfig = await getProviderConfig(userId, provider)
+  if (providerKey === 'evolink') await waitForEvolinkRequestSlot(resolvedModelId)
   const gatewayRoute = OFFICIAL_ONLY_PROVIDER_KEYS.has(providerKey)
     ? 'official'
     : (providerConfig.gatewayRoute || resolveModelGatewayRoute(provider))
@@ -701,7 +703,7 @@ export async function chatCompletionStream(
             ? ` [apiError: ${JSON.stringify(streamErrorChunks[0])}]`
             : sdkWarnings.length > 0 ? ` [warnings: ${JSON.stringify(sdkWarnings)}]` : ''
           throw new Error(
-            `LLM_EMPTY_RESPONSE: ${providerName}::${resolvedModelId} 返回空内容` +
+            `LLM_EMPTY_RESPONSE: ${providerName}::${resolvedModelId} returned an empty response` +
             ` [finishReason: ${finishInfo}]` +
             ` [httpStatus: ${sdkResponseStatus ?? 'unknown'}]` +
             errDetail +
@@ -864,7 +866,7 @@ export async function chatCompletionStream(
     // (consistent with chat-completion.ts)
     const errMsg = error instanceof Error ? error.message : String(error)
     if (errMsg.includes('PROHIBITED_CONTENT') || errMsg.includes('request_body_blocked')) {
-      const sensitiveError = new Error('SENSITIVE_CONTENT: 内容包含敏感信息,无法处理。请修改内容后重试')
+      const sensitiveError = new Error('SENSITIVE_CONTENT: This content may break our content rules. Please adjust it and try again')
       callbacks?.onError?.(sensitiveError, streamStep)
       throw sensitiveError
     }

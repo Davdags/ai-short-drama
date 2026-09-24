@@ -4,6 +4,8 @@ import { useTranslations } from 'next-intl'
 import { GlassButton, GlassChip, GlassSurface } from '@/components/ui/primitives'
 import TaskStatusInline from '@/components/task/TaskStatusInline'
 import { resolveTaskPresentationState } from '@/lib/task/presentation'
+import { useParams } from 'next/navigation'
+import { CreditCost } from '@/components/credits/CreditCost'
 
 interface StoryboardHeaderProps {
   totalSegments: number
@@ -29,6 +31,7 @@ export default function StoryboardHeader({
   onBack
 }: StoryboardHeaderProps) {
   const t = useTranslations('storyboard')
+  const projectId = String(useParams()?.projectId ?? '')
   const storyboardTaskRunningState = runningCount > 0
     ? resolveTaskPresentationState({
       phase: 'processing',
@@ -72,6 +75,11 @@ export default function StoryboardHeader({
           >
             {t('header.generateAllPanels')} ({pendingPanelCount})
           </GlassButton>
+        ) : null}
+        {pendingPanelCount > 0 && projectId ? (
+          <CreditCost
+            items={[{ apiType: 'image', model: '', quantity: pendingPanelCount, usesProjectModel: true, projectId }]}
+          />
         ) : null}
 
         <GlassButton

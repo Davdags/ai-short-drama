@@ -4,6 +4,7 @@ import { useCallback } from 'react'
 import { useTranslations } from 'next-intl'
 import type { StudioStoryboard } from '@/types/project'
 import { extractErrorMessage } from '@/lib/errors/extract'
+import { notifyAlert } from '@/lib/ui/notify'
 
 interface DownloadImagesMutationLike {
   mutateAsync: (payload: { episodeId: string }) => Promise<Blob>
@@ -24,7 +25,7 @@ export function usePanelImageDownload({
   const downloadAllImages = useCallback(async () => {
     const firstEpisodeId = localStoryboards[0]?.episodeId
     if (!firstEpisodeId) {
-      alert(t('messages.episodeNotFound'))
+      notifyAlert(t('messages.episodeNotFound'))
       return
     }
 
@@ -40,7 +41,7 @@ export function usePanelImageDownload({
       window.URL.revokeObjectURL(url)
       document.body.removeChild(anchor)
     } catch (error: unknown) {
-      alert(
+      notifyAlert(
         t('messages.downloadFailed', {
           error: extractErrorMessage(error, t('common.unknownError')),
         }),

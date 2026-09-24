@@ -139,7 +139,7 @@ type GraphRuntimeTx = {
 }
 
 type GraphRuntimeClient = GraphRuntimeTx & {
-  $transaction: <T>(fn: (tx: GraphRuntimeTx) => Promise<T>) => Promise<T>
+  $transaction: <T>(fn: (tx: GraphRuntimeTx) => Promise<T>, options?: { maxWait?: number; timeout?: number }) => Promise<T>
 }
 
 const runtimeClient = prisma as unknown as GraphRuntimeClient
@@ -868,7 +868,47 @@ export async function requestRunCancel(params: {
   return row ? mapRunRow(row) : null
 }
 
+/**
+ * Every event of a run increments the same graphRun row, so parallel steps of one run used
+ * to pile up on that row lock until transactions hit the 5s timeout (P2028), which then
+ * crashed the worker. Events of a run are now written one at a time per process, with a
+ * longer timeout and a retry on transient lock/timeout errors.
+ */
+const runEventChains = new Map<string, Promise<unknown>>()
+const RUN_EVENT_TX_OPTIONS = { maxWait: 10_000, timeout: 15_000 }
+const RUN_EVENT_RETRYABLE_CODES = new Set(['P2028', 'P2034', 'P1017'])
+const RUN_EVENT_MAX_ATTEMPTS = 3
+
+function isRetryableRunEventError(error: unknown): boolean {
+  const code = (error as { code?: unknown } | null)?.code
+  return typeof code === 'string' && RUN_EVENT_RETRYABLE_CODES.has(code)
+}
+
+function serializeByRun<T>(runId: string, task: () => Promise<T>): Promise<T> {
+  const previous = runEventChains.get(runId) ?? Promise.resolve()
+  const next = previous.catch(() => undefined).then(task)
+  const tail = next.catch(() => undefined)
+  runEventChains.set(runId, tail)
+  void tail.then(() => {
+    if (runEventChains.get(runId) === tail) runEventChains.delete(runId)
+  })
+  return next
+}
+
 export async function appendRunEventWithSeq(input: RunEventInput): Promise<RunEvent> {
+  return await serializeByRun(input.runId, async () => {
+    for (let attempt = 1; ; attempt += 1) {
+      try {
+        return await appendRunEventTransaction(input)
+      } catch (error) {
+        if (attempt >= RUN_EVENT_MAX_ATTEMPTS || !isRetryableRunEventError(error)) throw error
+        await new Promise((resolve) => setTimeout(resolve, 200 * attempt))
+      }
+    }
+  })
+}
+
+async function appendRunEventTransaction(input: RunEventInput): Promise<RunEvent> {
   return await runtimeClient.$transaction(async (tx) => {
     const run = await tx.graphRun.update({
       where: { id: input.runId },
@@ -897,7 +937,7 @@ export async function appendRunEventWithSeq(input: RunEventInput): Promise<RunEv
 
     await applyRunProjection(tx, input)
     return mapEventRow(created)
-  })
+  }, RUN_EVENT_TX_OPTIONS)
 }
 
 export async function listRunEventsAfterSeq(params: {

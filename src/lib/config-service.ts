@@ -247,13 +247,13 @@ export function checkRequiredModels(
   const configValues = config as Record<string, unknown>
 
   const fieldNames: Record<string, string> = {
-    analysisModel: 'AI分析模型',
-    characterModel: '角色图像模型',
-    locationModel: '场景图像模型',
-    storyboardModel: '分镜图像模型',
-    editModel: '修图/编辑模型',
-    videoModel: '视频模型',
-    audioModel: '语音合成模型',
+    analysisModel: 'AI analysis model',
+    characterModel: 'character image model',
+    locationModel: 'location image model',
+    storyboardModel: 'storyboard image model',
+    editModel: 'image edit model',
+    videoModel: 'video model',
+    audioModel: 'voice model',
   }
 
   for (const field of requiredFields) {
@@ -271,9 +271,9 @@ export function checkRequiredModels(
 export function getMissingConfigError(missingFields: string[]): string {
   if (missingFields.length === 0) return ''
   if (missingFields.length === 1) {
-    return `请先在项目设置中配置"${missingFields[0]}"`
+    return `Please choose a ${missingFields[0]} in Model preferences first`
   }
-  return `请先在项目设置中配置以下模型：${missingFields.join('、')}`
+  return `Please choose these models in Model preferences first: ${missingFields.join(', ')}`
 }
 
 /**

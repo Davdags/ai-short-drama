@@ -8,6 +8,7 @@ import VoiceCreationModal from '@/app/[locale]/workspace/asset-hub/components/Vo
 import { AppIcon } from '@/components/ui/icons'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import type { InlineSpeakerVoiceBinding } from '@/lib/studio/stages/voice-stage-runtime/types'
+import { notifyAlert } from '@/lib/ui/notify'
 
 type BindingTab = 'select' | 'upload' | 'design'
 
@@ -66,7 +67,7 @@ export default function SpeakerVoiceBindingDialog({
                 voiceType: voice.voiceType,
                 audioUrl: voice.customVoiceUrl,
             })
-            alert(t('uploadQwenHint'))
+            notifyAlert(t('uploadQwenHint'))
         }
         setSubDialogOpen(false)
         onClose()

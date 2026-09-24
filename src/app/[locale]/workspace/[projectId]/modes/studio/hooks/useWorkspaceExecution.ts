@@ -7,6 +7,8 @@ import {
   useScriptToStoryboardRunStream,
   useStoryToScriptRunStream,
 } from '@/lib/query/hooks'
+import { humanizeErrorMessage } from '@/lib/errors/humanize'
+import { notifyAlert } from '@/lib/ui/notify'
 
 interface UseWorkspaceExecutionParams {
   projectId: string
@@ -170,7 +172,7 @@ export function useWorkspaceExecution({
         _ulogInfo(t('execution.requestAborted'))
         return
       }
-      alert(`${t('execution.analysisFailed')}: ${getErrorMessage(err)}`)
+      notifyAlert(`${t('execution.analysisFailed')}: ${getErrorMessage(err)}`)
     } finally {
       setIsAssetAnalysisRunning(false)
     }
@@ -178,13 +180,13 @@ export function useWorkspaceExecution({
 
   const runStoryToScriptFlow = useCallback(async () => {
     if (!episodeId) {
-      alert(t('execution.selectEpisode'))
+      notifyAlert(t('execution.selectEpisode'))
       return
     }
 
     const storyContent = (novelText || '').trim()
     if (!storyContent) {
-      alert(`${t('execution.prepareFailed')}: ${t('execution.fillContentFirst')}`)
+      notifyAlert(`${t('execution.prepareFailed')}: ${t('execution.fillContentFirst')}`)
       return
     }
 
@@ -213,8 +215,8 @@ export function useWorkspaceExecution({
       const rawMessage = getErrorMessage(err)
       const friendlyMessage = isRunStreamTimeoutMessage(rawMessage)
         ? t('execution.taskStreamTimeout')
-        : rawMessage
-      alert(`${t('execution.prepareFailed')}: ${friendlyMessage}`)
+        : humanizeErrorMessage(rawMessage)
+      notifyAlert(`${t('execution.prepareFailed')}: ${friendlyMessage}`)
     } finally {
       setIsTransitioning(false)
       setTransitionProgress({ message: '', step: '' })
@@ -223,7 +225,7 @@ export function useWorkspaceExecution({
 
   const runScriptToStoryboardFlow = useCallback(async () => {
     if (!episodeId) {
-      alert(t('execution.selectEpisode'))
+      notifyAlert(t('execution.selectEpisode'))
       return
     }
 
@@ -247,7 +249,7 @@ export function useWorkspaceExecution({
         return
       }
       const rawMessage = getErrorMessage(err)
-      alert(`${t('execution.generationFailed')}: ${isRunStreamTimeoutMessage(rawMessage) ? t('execution.taskStreamTimeout') : rawMessage}`)
+      notifyAlert(`${t('execution.generationFailed')}: ${isRunStreamTimeoutMessage(rawMessage) ? t('execution.taskStreamTimeout') : rawMessage}`)
     } finally {
       setIsConfirmingAssets(false)
       setTransitionProgress({ message: '', step: '' })

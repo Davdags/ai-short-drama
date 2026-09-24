@@ -271,7 +271,7 @@ export function useConfirmProjectLocationSelection(projectId: string) {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ locationId }),
                 },
-                '确认选择失败',
+                'Could not confirm the selection',
             ),
         onSettled: invalidateProjectAssets,
     })

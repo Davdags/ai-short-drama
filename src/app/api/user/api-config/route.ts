@@ -42,6 +42,7 @@ import type {
 } from '@/lib/openai-compat-media-template'
 import { validateOpenAICompatMediaTemplate } from '@/lib/user-api/model-template/validator'
 import { EVOLINK_MODEL_PRESETS } from '@/lib/providers/evolink/presets'
+import { CENTRAL_EVOLINK_PROVIDER_ID, isCentralEvolinkEnabled } from '@/lib/providers/evolink/central'
 
 type ApiModeType = 'gemini-sdk' | 'openai-official'
 type GatewayRouteType = 'official' | 'openai-compat'
@@ -1664,6 +1665,21 @@ function validateCapabilitySelectionsAgainstModels(
   }
 }
 
+/** Central EvoLink account: the platform model list (EvoLink presets the platform can bill for). */
+function buildCentralEvolinkModels(): StoredModel[] {
+  return EVOLINK_MODEL_PRESETS
+    .filter((preset) => hasBuiltinPricingForModel(BILLABLE_MODEL_TYPE_TO_PRICING_API_TYPE[preset.type] as PricingApiType, CENTRAL_EVOLINK_PROVIDER_ID, preset.modelId))
+    .map((preset) => ({
+      modelId: preset.modelId,
+      modelKey: composeModelKey(CENTRAL_EVOLINK_PROVIDER_ID, preset.modelId),
+      name: preset.name,
+      type: preset.type,
+      provider: CENTRAL_EVOLINK_PROVIDER_ID,
+      price: 0,
+      capabilities: findBuiltinCapabilities(preset.type, CENTRAL_EVOLINK_PROVIDER_ID, preset.modelId),
+    }) as StoredModel)
+}
+
 export const GET = apiHandler(async () => {
   const authResult = await requireUserAuth()
   if (isErrorResponse(authResult)) return authResult
@@ -1691,13 +1707,17 @@ export const GET = apiHandler(async () => {
     },
   })
 
-  const providers = parseStoredProviders(pref?.customProviders).map((provider) => ({
-    ...provider,
-    apiKey: provider.apiKey ? decryptApiKey(provider.apiKey) : '',
-  }))
+  const central = isCentralEvolinkEnabled()
+  // Central account: never send a key to the browser; the platform provider is shown as connected.
+  const providers = central
+    ? [{ id: CENTRAL_EVOLINK_PROVIDER_ID, name: 'EvoLink', apiKey: 'central' } as ReturnType<typeof parseStoredProviders>[number]]
+    : parseStoredProviders(pref?.customProviders).map((provider) => ({
+      ...provider,
+      apiKey: provider.apiKey ? decryptApiKey(provider.apiKey) : '',
+    }))
 
   const billingMode = await getBillingMode()
-  const parsedModels = parseStoredModels(pref?.customModels)
+  const parsedModels = central ? buildCentralEvolinkModels() : parseStoredModels(pref?.customModels)
   const models = billingMode === 'OFF' ? parsedModels : sanitizeModelsForBilling(parsedModels)
   const pricingDisplay = buildPricingDisplayMap()
   const pricedModels = models.map((model) => withDisplayPricing(model, pricingDisplay))
@@ -1743,7 +1763,8 @@ export const GET = apiHandler(async () => {
   }
 
   // EvoLink: inject preset models (enabled by default) for any evolink provider
-  for (const p of providers) {
+  // (central account: the priced platform list above already contains them)
+  for (const p of central ? [] : providers) {
     if (getProviderKey(p.id) !== 'evolink') continue
     for (const preset of EVOLINK_MODEL_PRESETS) {
       const modelKey = composeModelKey(p.id, preset.modelId)
@@ -1811,6 +1832,14 @@ export const PUT = apiHandler(async (request: NextRequest) => {
       field: 'body',
     })
   }
+  // Central account: keys, providers, custom models and concurrency are platform-managed.
+  // Users may only change their default models and capability defaults.
+  const central = isCentralEvolinkEnabled()
+  if (central) {
+    body.models = undefined
+    body.providers = undefined
+    body.workflowConcurrency = undefined
+  }
   const normalizedModelsInput = body.models === undefined ? undefined : normalizeModelList(body.models)
   const normalizedProviders = body.providers === undefined ? undefined : normalizeProvidersInput(body.providers)
   const normalizedDefaults = body.defaultModels === undefined ? undefined : normalizeDefaultModelsInput(body.defaultModels)
@@ -1831,7 +1860,7 @@ export const PUT = apiHandler(async (request: NextRequest) => {
     },
   })
   const existingProviders = parseStoredProviders(existingPref?.customProviders)
-  const existingModels = parseStoredModels(existingPref?.customModels)
+  const existingModels = central ? buildCentralEvolinkModels() : parseStoredModels(existingPref?.customModels)
   const normalizedModels = normalizedModelsInput === undefined
     ? undefined
     : resolveStoredMediaTemplates(resolveStoredLlmProtocols(normalizedModelsInput, existingModels), existingModels)
@@ -1879,7 +1908,7 @@ export const PUT = apiHandler(async (request: NextRequest) => {
   }
 
   if (normalizedDefaults !== undefined) {
-    if (billingMode !== 'OFF') {
+    if (billingMode !== 'OFF' || central) {
       validateDefaultModelPricing(normalizedDefaults)
     }
     if (normalizedDefaults.analysisModel !== undefined) {

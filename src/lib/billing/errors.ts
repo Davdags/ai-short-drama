@@ -3,7 +3,12 @@ export class InsufficientBalanceError extends Error {
   public required: number
 
   constructor(required: number, available: number) {
-    super(`余额不足，需要 ¥${required.toFixed(4)}，当前可用 ¥${available.toFixed(4)}`)
+    // Shown to the customer under the paywall message, so it speaks English and credits —
+    // never yuan, which is only ever an internal pricing unit.
+    super(
+      `Needs ${Math.ceil(required).toLocaleString('en-US')} credits, you have `
+      + `${Math.floor(available).toLocaleString('en-US')}.`,
+    )
     this.name = 'InsufficientBalanceError'
     this.required = required
     this.available = available

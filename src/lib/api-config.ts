@@ -20,6 +20,13 @@ import type {
 } from './openai-compat-media-template'
 import { validateOpenAICompatMediaTemplate } from './user-api/model-template/validator'
 import { EVOLINK_MODEL_PRESETS } from './providers/evolink/presets'
+import { EVOLINK_API_BASE } from './providers/evolink/constants'
+import {
+  CENTRAL_EVOLINK_PROVIDER_ID,
+  isCentralEvolinkEnabled,
+  pickCentralEvolinkKey,
+} from './providers/evolink/central'
+import { findBuiltinPricingCatalogEntry, type PricingApiType } from './model-pricing/catalog'
 
 export interface CustomModel {
   modelId: string
@@ -298,10 +305,37 @@ async function readUserConfig(userId: string): Promise<{ models: CustomModel[]; 
     },
   })
 
+  if (isCentralEvolinkEnabled()) {
+    // SaaS mode: everyone generates through the platform EvoLink account. Keys and
+    // providers users may have stored are ignored; their EvoLink model entries are kept.
+    return {
+      models: parseCustomModels(pref?.customModels).filter(
+        (model) => getProviderKey(model.provider).toLowerCase() === CENTRAL_EVOLINK_PROVIDER_ID,
+      ),
+      providers: [{ id: CENTRAL_EVOLINK_PROVIDER_ID, name: 'EvoLink', apiKey: CENTRAL_KEY_PLACEHOLDER }],
+    }
+  }
+
   return {
     models: parseCustomModels(pref?.customModels),
     providers: parseCustomProviders(pref?.customProviders),
   }
+}
+
+/** Marks the synthetic central provider; the real key is picked per call (see getProviderConfig). */
+const CENTRAL_KEY_PLACEHOLDER = 'central'
+
+const MODEL_TYPE_TO_PRICING_API_TYPE: Readonly<Record<UnifiedModelType, PricingApiType>> = {
+  llm: 'text',
+  image: 'image',
+  video: 'video',
+  audio: 'voice',
+  lipsync: 'lip-sync',
+}
+
+/** A model the platform can bill for. Unpriced models would generate for free on the central account. */
+export function isModelPriced(model: Pick<CustomModel, 'type' | 'provider' | 'modelId'>): boolean {
+  return !!findBuiltinPricingCatalogEntry(MODEL_TYPE_TO_PRICING_API_TYPE[model.type], model.provider, model.modelId)
 }
 
 function findModelByKey(models: CustomModel[], modelKey: string): CustomModel | null {
@@ -420,6 +454,12 @@ export async function getProviderConfig(userId: string, providerId: string): Pro
   const { providers } = await readUserConfig(userId)
   const provider = pickProviderStrict(providers, providerId)
 
+  if (provider.apiKey === CENTRAL_KEY_PLACEHOLDER && isCentralEvolinkEnabled()) {
+    // Media generators hardcode EvoLink's endpoints, but the LLM client needs the
+    // base URL passed in — without it every story/script/storyboard call fails.
+    return { id: provider.id, name: provider.name, apiKey: pickCentralEvolinkKey(), baseUrl: EVOLINK_API_BASE }
+  }
+
   if (!provider.apiKey) {
     throw new Error(`PROVIDER_API_KEY_MISSING: ${provider.id}`)
   }
@@ -461,7 +501,8 @@ export async function getUserModels(userId: string): Promise<CustomModel[]> {
     }
   }
 
-  return models
+  // Central account: only offer models the platform can charge for.
+  return isCentralEvolinkEnabled() ? models.filter(isModelPriced) : models
 }
 
 /**
@@ -521,6 +562,7 @@ export async function getLipSyncApiKey(userId: string, model?: string | null): P
  * 检查用户是否有任意 API 配置
  */
 export async function hasApiConfig(userId: string): Promise<boolean> {
+  if (isCentralEvolinkEnabled()) return true
   const pref = await prisma.userPreference.findUnique({
     where: { userId },
     select: { customProviders: true },

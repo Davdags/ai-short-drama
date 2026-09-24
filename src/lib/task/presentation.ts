@@ -35,7 +35,10 @@ export function resolveTaskPresentationState(input: {
       mode: input.hasOutput ? 'overlay' : 'placeholder',
       isRunning: true,
       isError: false,
-      labelKey: `taskStatus.intent.${input.intent}.running.${input.resource}`,
+      // Waiting for a free slot reads as "Queued" so a busy queue doesn't look stuck.
+      labelKey: input.phase === 'queued'
+        ? `taskStatus.queued.${input.resource}`
+        : `taskStatus.intent.${input.intent}.running.${input.resource}`,
     }
   }
 

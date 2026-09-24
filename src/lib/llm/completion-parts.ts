@@ -15,7 +15,7 @@ export function getCompletionParts(completion: OpenAI.Chat.Completions.ChatCompl
       '[LLM] ❌ 返回无效响应 - 完整对象:',
       JSON.stringify(completion, null, 2).substring(0, 2000),
     )
-    throw new Error('LLM 返回无效响应')
+    throw new Error('The AI returned an invalid response')
   }
 
   const message = completion.choices[0]?.message
@@ -24,7 +24,7 @@ export function getCompletionParts(completion: OpenAI.Chat.Completions.ChatCompl
       '[LLM] ❌ 响应中没有消息内容 - choices[0]:',
       JSON.stringify(completion.choices[0], null, 2).substring(0, 1000),
     )
-    throw new Error('LLM 响应中没有消息内容')
+    throw new Error('The AI response had no content')
   }
 
   const content = message.content

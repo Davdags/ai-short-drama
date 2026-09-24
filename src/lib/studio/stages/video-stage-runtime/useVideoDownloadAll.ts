@@ -5,6 +5,7 @@ import { logError as _ulogError, logInfo as _ulogInfo } from '@/lib/logging/core
 import type { VideoPanel } from '@/app/[locale]/workspace/[projectId]/modes/studio/components/video'
 import type { EpisodeVideoUrlsResponse } from './types'
 import { getErrorMessage } from './utils'
+import { notifyAlert } from '@/lib/ui/notify'
 
 interface MutationLike<TInput = unknown, TOutput = unknown> {
   mutateAsync: (input: TInput) => Promise<TOutput>
@@ -91,7 +92,7 @@ export function useVideoDownloadAll({
       _ulogInfo('[下载视频] 完成!')
     } catch (error: unknown) {
       _ulogError('[下载视频] 错误:', error)
-      alert(`${t('stage.downloadFailed')}: ${getErrorMessage(error) || t('errors.unknownError')}`)
+      notifyAlert(`${t('stage.downloadFailed')}: ${getErrorMessage(error) || t('errors.unknownError')}`)
     } finally {
       setIsDownloading(false)
       setDownloadProgress(null)

@@ -54,6 +54,15 @@ function buildWav(durationMs: number, sampleRate = 16000): Buffer {
   return buffer
 }
 
+// Streaming TTS output: RIFF and data sizes are placeholders because the length
+// was unknown when the header was written (values taken from real EvoLink TTS output).
+function buildStreamingWav(durationMs: number, sampleRate = 24000): Buffer {
+  const buffer = buildWav(durationMs, sampleRate)
+  buffer.writeUInt32LE(0x7fffffbf, 4)
+  buffer.writeUInt32LE(0x7fffff9b, 40)
+  return buffer
+}
+
 function buildMp4WithDuration(durationMs: number): Buffer {
   const timescale = 1000
   const duration = Math.max(1, Math.round(durationMs))
@@ -195,5 +204,56 @@ describe('lipsync preprocess', () => {
     expect(result.params.audioUrl).toBe('https://assets.example.com/audio.wav')
     expect(fetchMock).toHaveBeenCalled()
     expect(uploadObjectMock).not.toHaveBeenCalled()
+  })
+
+  it('probes the real duration of a streaming wav with placeholder sizes', async () => {
+    const audio = buildStreamingWav(3000)
+    const video = buildMp4WithDuration(5000)
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url.includes('video.mp4')) return buildBinaryResponse(video, 'video/mp4')
+      if (url.includes('audio.wav')) return buildBinaryResponse(audio, 'audio/wav')
+      throw new Error(`unexpected fetch: ${url}`)
+    })
+    vi.stubGlobal('fetch', fetchMock as unknown as typeof fetch)
+
+    const result = await preprocessLipSyncParams(
+      {
+        videoUrl: 'https://assets.example.com/video.mp4',
+        audioUrl: 'https://assets.example.com/audio.wav',
+      },
+      { providerKey: 'evolink' },
+    )
+
+    expect(result.paddedAudio).toBe(false)
+    expect(result.trimmedAudio).toBe(false)
+    expect(result.params.audioUrl).toBe('https://assets.example.com/audio.wav')
+  })
+
+  it('trims a streaming wav using its real length and writes a valid header', async () => {
+    const audio = buildStreamingWav(7000, 16000)
+    const video = buildMp4WithDuration(5000)
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url.includes('video.mp4')) return buildBinaryResponse(video, 'video/mp4')
+      if (url.includes('audio.wav')) return buildBinaryResponse(audio, 'audio/wav')
+      throw new Error(`unexpected fetch: ${url}`)
+    })
+    vi.stubGlobal('fetch', fetchMock as unknown as typeof fetch)
+
+    const result = await preprocessLipSyncParams(
+      {
+        videoUrl: 'https://assets.example.com/video.mp4',
+        audioUrl: 'https://assets.example.com/audio.wav',
+      },
+      { providerKey: 'vidu' },
+    )
+
+    expect(result.trimmedAudio).toBe(true)
+    const uploadCall = uploadObjectMock.mock.calls[0] as unknown as [Buffer] | undefined
+    if (!uploadCall) throw new Error('expected uploadObject call')
+    const trimmedDurationMs = readWavDurationMs(uploadCall[0])
+    expect(trimmedDurationMs).toBeGreaterThan(0)
+    expect(trimmedDurationMs).toBeLessThanOrEqual(5000)
   })
 })

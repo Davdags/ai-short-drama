@@ -7,6 +7,7 @@ import { usePromptAiModifyFlow } from './usePromptAiModifyFlow'
 import type { PromptAiModifier } from './usePromptAiModifyFlow'
 import { usePromptDraftByShot } from './usePromptDraftByShot'
 import { usePromptAssetMention } from './usePromptAssetMention'
+import { notifyAlert } from '@/lib/ui/notify'
 
 interface UsePromptEditorRuntimeParams {
   onUpdatePrompt: (shotId: string, field: 'imagePrompt', value: string) => Promise<void>
@@ -67,7 +68,7 @@ export function usePromptEditorRuntime({
       draftByShot.removeShotEditState(currentShotId)
     } catch (error: unknown) {
       if (shouldShowError(error)) {
-        alert(t('prompts.updateFailed', { error: getErrorMessage(error, t('common.unknownError')) }))
+        notifyAlert(t('prompts.updateFailed', { error: getErrorMessage(error, t('common.unknownError')) }))
       }
     }
   }

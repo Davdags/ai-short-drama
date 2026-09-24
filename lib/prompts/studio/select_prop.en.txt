@@ -60,7 +60,7 @@ Output rules:
 5. Keep summaries objective.
 6. Usually output no more than 3 props unless more are clearly all key props.
 7. If none exist, return {"props": []}. Returning an empty array is correct in most cases.
-8. Replace raw quotation marks inside JSON string values with corner brackets「」.
+8. Replace raw quotation marks inside JSON string values with curly quotes “ ”.
 
 Input:
 {input}

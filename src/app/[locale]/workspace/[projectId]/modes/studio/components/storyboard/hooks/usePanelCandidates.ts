@@ -18,6 +18,7 @@ import {
   type PanelCandidateData,
 } from './panel-candidate-runtime'
 import { usePanelEpisodeCachePatch } from './usePanelEpisodeCachePatch'
+import { notifyAlert } from '@/lib/ui/notify'
 
 interface UsePanelCandidatesProps {
   projectId: string
@@ -91,7 +92,7 @@ export function usePanelCandidates({
       _ulogInfo('[confirmPanelCandidate] ✅ 数据刷新完成')
     } catch (error: unknown) {
       _ulogError('[confirmPanelCandidate] ❌ 确认失败:', error)
-      alert(
+      notifyAlert(
         t('messages.selectCandidateFailed', {
           error: getErrorMessage(error, t('common.unknownError')),
         }),

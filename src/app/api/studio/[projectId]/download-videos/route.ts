@@ -143,7 +143,7 @@ export const POST = apiHandler(async (
 
       if (videoUrl) {
         videos.push({
-          description: panel.description || `镜头`,
+          description: panel.description || `Shot`,
           videoUrl: videoUrl,
           clipIndex: clipIndex >= 0 ? clipIndex : 999,  // 找不到时排最后
           panelIndex: panel.panelIndex || 0,

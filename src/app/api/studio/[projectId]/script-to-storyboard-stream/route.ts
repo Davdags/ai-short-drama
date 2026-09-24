@@ -3,6 +3,7 @@ import { requireProjectAuth, isErrorResponse } from '@/lib/api-auth'
 import { apiHandler, ApiError } from '@/lib/api-errors'
 import { TASK_TYPE } from '@/lib/task/types'
 import { maybeSubmitLLMTask } from '@/lib/llm-observe/route-task'
+import { assertCanAffordWriting } from '@/lib/billing/writing-precheck'
 
 export const runtime = 'nodejs'
 
@@ -27,6 +28,9 @@ export const POST = apiHandler(async (
   if (project.mode !== 'studio') {
     throw new ApiError('INVALID_PARAMS')
   }
+
+  // Refuse up front (upgrade prompt) when the balance cannot cover the chosen writing model.
+  await assertCanAffordWriting({ userId: session.user.id, projectId, stage: 'storyboard' })
 
   const asyncTaskResponse = await maybeSubmitLLMTask({
     request,

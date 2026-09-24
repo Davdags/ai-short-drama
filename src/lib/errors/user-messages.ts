@@ -1,32 +1,36 @@
 import type { UnifiedErrorCode } from './codes'
 
-export const USER_ERROR_MESSAGES_ZH: Record<UnifiedErrorCode, string> = {
-  UNAUTHORIZED: '请先登录后再试。',
-  FORBIDDEN: '你没有权限执行此操作。',
-  NOT_FOUND: '没有找到对应的数据。',
-  INVALID_PARAMS: '请求参数不正确，请检查后重试。',
-  MISSING_CONFIG: '系统配置不完整，请联系管理员。',
-  CONFLICT: '当前状态冲突，请刷新后重试。',
-  TASK_NOT_READY: '任务还在处理中，请稍后。',
-  NO_RESULT: '任务已完成，但没有可用结果。',
-  RATE_LIMIT: '请求过于频繁，请稍后重试。',
-  MODEL_NOT_OPEN: '模型权限未开通。请前往 https://console.volcengine.com/ark/region:ark+cn-beijing/openManagement?LLM=%7B%7D&advancedActiveKey=model ，在模型管理页面点击右上角「一键开通所有模型」。',
-  MODEL_NOT_REGISTERED: '模型尚未注册，请先完成模型配置后再试。',
-  MODEL_NOT_CONFIGURED: '未配置可用模型，请先前往设置页面添加对应类型的模型后再试。',
-  QUOTA_EXCEEDED: '额度已用尽，请稍后再试。',
-  EXTERNAL_ERROR: '外部服务暂时不可用，请稍后重试。',
-  NETWORK_ERROR: '网络异常，请稍后重试。',
-  EMPTY_RESPONSE: '模型返回空响应（无有效内容），请稍后重试。',
-  INSUFFICIENT_BALANCE: '余额不足，请先充值。',
-  SENSITIVE_CONTENT: '内容可能涉及敏感信息，请修改后重试。',
-  GENERATION_TIMEOUT: '生成超时，请重试。',
-  VIDEO_API_FORMAT_UNSUPPORTED: '当前视频接口格式暂不支持。',
-  GENERATION_FAILED: '生成失败，请稍后重试。',
-  WATCHDOG_TIMEOUT: '任务执行超时，系统已终止该任务。',
-  WORKER_EXECUTION_ERROR: '任务执行失败，请稍后重试。',
-  INTERNAL_ERROR: '系统内部错误，请稍后重试。',
+/** Customer-facing error messages (NucleusArt is English-only). */
+export const USER_ERROR_MESSAGES: Record<UnifiedErrorCode, string> = {
+  UNAUTHORIZED: 'Please sign in and try again.',
+  FORBIDDEN: "You don't have permission to do that.",
+  NOT_FOUND: "We couldn't find what you were looking for.",
+  INVALID_PARAMS: 'Something in the request is not valid. Please check and try again.',
+  MISSING_CONFIG: 'This feature is not available right now. Please contact support.',
+  CONFLICT: 'This item changed in the meantime. Please refresh and try again.',
+  TASK_NOT_READY: 'Still working on it — please wait a moment.',
+  NO_RESULT: 'The task finished but produced no result. Please try again.',
+  RATE_LIMIT: "We're experiencing high demand right now. Please try again in a few minutes.",
+  MODEL_NOT_OPEN: 'This model is not available right now. Please choose another model.',
+  MODEL_NOT_REGISTERED: 'This model is not available. Please choose another model in Model preferences.',
+  MODEL_NOT_CONFIGURED: 'No model is selected for this step. Please choose one in Model preferences.',
+  QUOTA_EXCEEDED: "We're experiencing high demand right now. Please try again shortly.",
+  EXTERNAL_ERROR: 'The AI service is temporarily unavailable. Please try again shortly.',
+  NETWORK_ERROR: 'Network problem. Please check your connection and try again.',
+  EMPTY_RESPONSE: 'The AI returned an empty result. Please try again.',
+  INSUFFICIENT_BALANCE: "You don't have enough credits for this. Upgrade your plan or top up to continue.",
+  SENSITIVE_CONTENT: 'This content may break our content rules. Please adjust it and try again.',
+  GENERATION_TIMEOUT: 'Generation took too long. Please try again.',
+  VIDEO_API_FORMAT_UNSUPPORTED: "This video format isn't supported yet.",
+  GENERATION_FAILED: 'Generation failed. Please try again.',
+  WATCHDOG_TIMEOUT: 'This task took too long and was stopped. Please try again.',
+  WORKER_EXECUTION_ERROR: 'The task failed. Please try again.',
+  INTERNAL_ERROR: 'Something went wrong on our side. Please try again.',
 }
 
+/** @deprecated kept for existing imports; messages are English. */
+export const USER_ERROR_MESSAGES_ZH = USER_ERROR_MESSAGES
+
 export function getUserMessageByCode(code: UnifiedErrorCode) {
-  return USER_ERROR_MESSAGES_ZH[code]
+  return USER_ERROR_MESSAGES[code]
 }

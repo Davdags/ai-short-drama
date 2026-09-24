@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { shouldShowError } from '@/lib/error-utils'
 import { resolveTaskPresentationState } from '@/lib/task/presentation'
 import { getErrorMessage } from '../promptStageRuntime.utils'
+import { notifyAlert } from '@/lib/ui/notify'
 
 interface UsePromptAppendFlowParams {
   onAppendContent?: (content: string) => Promise<void>
@@ -29,7 +30,7 @@ export function usePromptAppendFlow({
   const handleAppendSubmit = async () => {
     if (!onAppendContent) return
     if (!appendContent.trim()) {
-      alert(t('prompts.enterContinuation'))
+      notifyAlert(t('prompts.enterContinuation'))
       return
     }
 
@@ -37,10 +38,10 @@ export function usePromptAppendFlow({
     try {
       await onAppendContent(appendContent.trim())
       setAppendContent('')
-      alert(t('prompts.appendSuccess'))
+      notifyAlert(t('prompts.appendSuccess'))
     } catch (error: unknown) {
       if (shouldShowError(error)) {
-        alert(t('prompts.appendFailed', { error: getErrorMessage(error, t('common.unknownError')) }))
+        notifyAlert(t('prompts.appendFailed', { error: getErrorMessage(error, t('common.unknownError')) }))
       }
     } finally {
       setIsAppending(false)

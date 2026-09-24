@@ -2,7 +2,7 @@ import type { Job } from 'bullmq'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { TASK_TYPE, type TaskJobData } from '@/lib/task/types'
 
-type WorkerProcessor = (job: Job<TaskJobData>) => Promise<unknown>
+type WorkerProcessor = (job: Job<TaskJobData>, token?: string) => Promise<unknown>
 
 const workerState = vi.hoisted(() => ({
   processor: null as WorkerProcessor | null,
@@ -23,16 +23,12 @@ const handlerMock = vi.hoisted(() => ({
   handlePanelVariantTask: vi.fn(async () => ({ ok: true })),
 }))
 
-const configServiceMock = vi.hoisted(() => ({
-  getUserWorkflowConcurrencyConfig: vi.fn(async () => ({
-    analysis: 5,
-    image: 5,
-    video: 5,
-  })),
+const planLimitsMock = vi.hoisted(() => ({
+  getUserParallelLimit: vi.fn(async () => 2),
 }))
 
 const gateMock = vi.hoisted(() => ({
-  withUserConcurrencyGate: vi.fn(async <T>(input: {
+  runWithUserSlot: vi.fn(async <T>(input: {
     run: () => Promise<T>
   }) => await input.run()),
 }))
@@ -58,8 +54,8 @@ vi.mock('bullmq', () => ({
 
 vi.mock('@/lib/redis', () => ({ queueRedis: {} }))
 vi.mock('@/lib/workers/shared', () => sharedMock)
-vi.mock('@/lib/config-service', () => configServiceMock)
-vi.mock('@/lib/workers/user-concurrency-gate', () => gateMock)
+vi.mock('@/lib/billing/plan-limits', () => planLimitsMock)
+vi.mock('@/lib/workers/user-slot-gate', () => gateMock)
 vi.mock('@/lib/workers/handlers/image-task-handlers', () => handlerMock)
 
 function buildJob(type: TaskJobData['type']): Job<TaskJobData> {
@@ -87,18 +83,20 @@ describe('worker image concurrency behavior', () => {
     mod.createImageWorker()
   })
 
-  it('reads user image concurrency and applies gate before processing', async () => {
+  it('applies the user plan limit through the fair slot gate before processing', async () => {
     const processor = workerState.processor
     expect(processor).toBeTruthy()
 
     const job = buildJob(TASK_TYPE.IMAGE_PANEL)
-    await processor!(job)
+    await processor!(job, 'lock-token')
 
-    expect(configServiceMock.getUserWorkflowConcurrencyConfig).toHaveBeenCalledWith('user-1')
-    expect(gateMock.withUserConcurrencyGate).toHaveBeenCalledWith(expect.objectContaining({
+    expect(planLimitsMock.getUserParallelLimit).toHaveBeenCalledWith('user-1', 'image')
+    expect(gateMock.runWithUserSlot).toHaveBeenCalledWith(expect.objectContaining({
+      job,
+      token: 'lock-token',
       scope: 'image',
       userId: 'user-1',
-      limit: 5,
+      limit: 2,
     }))
     expect(handlerMock.handlePanelImageTask).toHaveBeenCalledWith(job)
   })

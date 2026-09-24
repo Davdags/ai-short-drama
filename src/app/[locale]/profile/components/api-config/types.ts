@@ -174,13 +174,15 @@ export const PRESET_MODELS: PresetModel[] = [
     { modelId: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro', type: 'llm', provider: 'evolink' },
     { modelId: 'gpt-5.4', name: 'GPT-5.4', type: 'llm', provider: 'evolink' },
     { modelId: 'gemini-3.1-flash-lite-preview', name: 'Gemini 3.1 Flash Lite', type: 'llm', provider: 'evolink' },
-    { modelId: 'gemini-3.0-flash-preview', name: 'Gemini 3.0 Flash', type: 'llm', provider: 'evolink' },
+    { modelId: 'gemini-3-flash-preview', name: 'Gemini 3.0 Flash', type: 'llm', provider: 'evolink' },
+    { modelId: 'claude-opus-5-5', name: 'Claude Opus 5.5', type: 'llm', provider: 'evolink' },
+    { modelId: 'claude-sonnet-5', name: 'Claude Sonnet 5', type: 'llm', provider: 'evolink' },
     { modelId: 'claude-opus-4-6', name: 'Claude Opus 4.6', type: 'llm', provider: 'evolink' },
     { modelId: 'claude-sonnet-4-6', name: 'Claude Sonnet 4.6', type: 'llm', provider: 'evolink' },
     // EvoLink 图像模型
     { modelId: 'gemini-3.1-flash-image-preview', name: 'NanoBanana 2', type: 'image', provider: 'evolink' },
     { modelId: 'gemini-3-pro-image-preview', name: 'NanoBanana Pro', type: 'image', provider: 'evolink' },
-    { modelId: 'seedream-5.0-lite', name: 'Seedream 5.0 Lite', type: 'image', provider: 'evolink' },
+    { modelId: 'doubao-seedream-5.0-lite', name: 'Seedream 5.0 Lite', type: 'image', provider: 'evolink' },
     { modelId: 'z-image-turbo', name: 'Z-Image-Turbo', type: 'image', provider: 'evolink' },
     { modelId: 'gpt-image-2', name: 'GPT Image 2', type: 'image', provider: 'evolink' },
     { modelId: 'gpt-image-2-beta', name: 'GPT Image 2 Beta', type: 'image', provider: 'evolink' },
@@ -404,7 +406,7 @@ export const PROVIDER_TUTORIALS: ProviderTutorial[] = [
         steps: [
             {
                 text: 'evolink_step1',
-                url: 'https://aidrama.dev/dashboard/keys'
+                url: 'https://evolink.ai/dashboard/keys'
             }
         ]
     },

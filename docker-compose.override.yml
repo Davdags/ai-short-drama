@@ -1,0 +1,32 @@
+# Local override — NOT part of the upstream repo.
+#
+# 1. MinIO removed their images from Docker Hub; quay.io is MinIO's official
+#    registry and still publishes the identical pinned tag.
+#
+# 2. Queue concurrency reduced from the upstream defaults (50/50/20/50) for a
+#    single-user local setup. DATABASE_URL also widens the Prisma pool.
+#
+# BILLING_MODE is intentionally NOT overridden (upstream default: OFF).
+# Non-OFF modes reject saving any default model missing from the pricing
+# catalog — which includes EvoLink's speech, voice design and lip sync models —
+# so the settings page could not save at all. Real costs come from EvoLink's
+# itemized usage logs instead.
+services:
+  minio:
+    image: quay.io/minio/minio:RELEASE.2025-02-28T09-55-16Z
+
+  app:
+    environment:
+      DATABASE_URL: "mysql://root:aidrama-studio123@mysql:3306/aidrama-studio?connection_limit=30&pool_timeout=30&connect_timeout=15"
+      QUEUE_CONCURRENCY_IMAGE: "4"
+      QUEUE_CONCURRENCY_VIDEO: "4"
+      QUEUE_CONCURRENCY_VOICE: "2"
+      QUEUE_CONCURRENCY_TEXT: "4"
+      # Email (password resets) and Google sign-in — read from .env; features stay off while blank.
+      RESEND_API_KEY: "${RESEND_API_KEY:-}"
+      EMAIL_FROM: "${EMAIL_FROM:-}"
+      GOOGLE_CLIENT_ID: "${GOOGLE_CLIENT_ID:-}"
+      GOOGLE_CLIENT_SECRET: "${GOOGLE_CLIENT_SECRET:-}"
+      EVOLINK_API_KEYS: "${EVOLINK_API_KEYS:-}"
+      ADMIN_USERNAMES: "${ADMIN_USERNAMES:-}"
+      ALERT_EMAIL: "${ALERT_EMAIL:-}"

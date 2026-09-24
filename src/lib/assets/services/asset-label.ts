@@ -17,7 +17,7 @@ export function renderLabelText(input: {
   variantLabel?: string | null
 }): string {
   if (input.kind === 'character') {
-    return `${input.assetName} - ${input.variantLabel || '初始形象'}`
+    return `${input.assetName} - ${input.variantLabel || 'Initial look'}`
   }
   return input.assetName
 }

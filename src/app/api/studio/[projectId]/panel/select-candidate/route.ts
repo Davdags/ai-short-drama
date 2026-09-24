@@ -62,7 +62,7 @@ export const POST = apiHandler(async (
 
     return NextResponse.json({
       success: true,
-      message: '已取消选择'
+      message: 'Selection cancelled'
     })
   }
 
@@ -130,6 +130,6 @@ export const POST = apiHandler(async (
     success: true,
     imageUrl: signedUrl,
     cosKey: finalImageKey,
-    message: '已选择图片'
+    message: 'Image selected'
   })
 })

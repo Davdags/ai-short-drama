@@ -79,3 +79,8 @@ scripts/tmp-*
 # ── GitHub CI workflows ───────────────────────────────────────────────────────
 .github/*
 !.github/workflows/
+
+# Production secrets — never commit (live API keys, DB passwords)
+deploy/.env.production
+deploy/.env.production.local
+ad-creatives/

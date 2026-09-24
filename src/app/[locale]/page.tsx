@@ -93,7 +93,7 @@ export default function Home() {
             <h1 className="font-mono text-5xl md:text-6xl lg:text-7xl font-normal tracking-tight leading-[1.15] text-[#171717] mb-6">
               {t('hero.titleLine1')}
               <br />
-              <span className="bg-gradient-to-r from-blue-500 to-violet-500 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-[#8020fc] via-[#a13cf0] to-[#5b3df5] bg-clip-text text-transparent">
                 {t('hero.titleHighlight')}
               </span>
               {t('hero.titleSuffix')}
@@ -108,7 +108,7 @@ export default function Home() {
             <div className="flex flex-col items-center gap-3">
               <Link
                 href={{ pathname: session ? '/workspace' : '/auth/signup' }}
-                className="px-10 py-4 rounded-full text-base font-semibold bg-black text-white hover:bg-[#333] transition-all duration-200"
+                className="px-10 py-4 rounded-full text-base font-semibold bg-gradient-to-r from-[#8020fc] to-[#5b3df5] text-white shadow-lg shadow-[#8020fc]/25 hover:shadow-xl hover:shadow-[#8020fc]/40 hover:brightness-110 transition-all duration-200"
               >
                 {session ? t('hero.ctaLoggedIn') : t('hero.ctaLoggedOut')}
               </Link>

@@ -13,6 +13,9 @@ import { WorkspaceStageRuntimeProvider } from './WorkspaceStageRuntimeContext'
 import { useStudioWorkspaceController } from './hooks/useStudioWorkspaceController'
 import type { StudioWorkspaceProps } from './types'
 import type { AppIconName } from '@/components/ui/icons'
+import { useMemo } from 'react'
+import { computeWorkspaceProgress, stageBlocker, type WorkspaceStageId } from '@/lib/studio/workspace-progress'
+import { StageBlockedNotice, WorkspaceNextStep } from './components/WorkspaceNextStep'
 import '@/styles/animations.css'
 
 const stageIconMap: Record<string, AppIconName> = {
@@ -62,6 +65,35 @@ function StudioWorkspaceContent(props: StudioWorkspaceProps) {
     scriptToStoryboardActive &&
     vm.execution.scriptToStoryboardConsoleMinimized
 
+  // Where this project stands and the one thing to do next (step bar + next-step card).
+  const studioData = project.studioData as {
+    characters?: Array<{ name: string; appearances?: Array<{ imageUrl?: string | null }> }>
+    locations?: Array<{ name: string; images?: Array<{ imageUrl?: string | null }> }>
+  } | null | undefined
+  const episode = props.episode
+  const progress = useMemo(() => computeWorkspaceProgress({
+    storyText: episode?.novelText,
+    clipCount: episode?.clips?.length ?? 0,
+    characters: (studioData?.characters ?? []).map((character) => ({
+      name: character.name,
+      hasImage: (character.appearances ?? []).some((appearance) => Boolean(appearance.imageUrl)),
+    })),
+    locations: (studioData?.locations ?? []).map((location) => ({
+      name: location.name,
+      hasImage: (location.images ?? []).some((image) => Boolean(image.imageUrl)),
+    })),
+    panels: (episode?.storyboards ?? []).flatMap((storyboard) => (storyboard.panels ?? []).map((panel) => ({
+      hasImage: Boolean(panel.imageUrl),
+      hasVideo: Boolean(panel.videoUrl),
+    }))),
+  }), [episode, studioData])
+  const writingBusy = storyToScriptActive || scriptToStoryboardActive
+  const currentStage = vm.stageNav.currentStage
+  const blocker = !writingBusy && (currentStage === 'storyboard' || currentStage === 'videos')
+    ? stageBlocker(currentStage as WorkspaceStageId, progress)
+    : null
+  const stepDone = new Map(progress.steps.map((step) => [step.id as string, step.state === 'done']))
+
   const runBadges: { id: string; label: string; onClick: () => void }[] = []
 
   if (showStoryToScriptMinBadge) {
@@ -91,17 +123,19 @@ function StudioWorkspaceContent(props: StudioWorkspaceProps) {
       label: item.label,
       icon: stageIconMap[item.id] || 'fileText',
       disabled: item.disabled,
-      status: item.status === 'processing' ? 'processing' as const : item.status === 'ready' ? 'ready' as const : 'idle' as const,
+      // Green once the step is really finished (not merely started), amber while running.
+      status: item.status === 'processing' ? 'processing' as const : stepDone.get(item.id) ? 'ready' as const : 'idle' as const,
     }))
 
   return (
     <>
-    <div className="flex h-full overflow-hidden">
+    <div className="flex h-full flex-col overflow-hidden md:flex-row">
         {/* Left sidebar */}
         <WorkspaceSidebar
           episodes={episodes}
           currentEpisodeId={episodeId ?? null}
           onEpisodeSelect={onEpisodeSelect ?? (() => {})}
+          onEpisodeCreate={onEpisodeCreate}
           stages={sidebarStages}
           currentStage={vm.stageNav.currentStage}
           onStageChange={vm.stageNav.handleStageChange}
@@ -112,9 +146,12 @@ function StudioWorkspaceContent(props: StudioWorkspaceProps) {
         />
 
         {/* Right content area */}
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-6">
           <WorkspaceStageRuntimeProvider value={vm.runtime.stageRuntime}>
-            <WorkspaceStageContent currentStage={vm.stageNav.currentStage} />
+            <WorkspaceNextStep progress={progress} currentStage={currentStage} busy={writingBusy} />
+            {blocker
+              ? <StageBlockedNotice message={blocker.message} button={blocker.button} goTo={blocker.goTo} />
+              : <WorkspaceStageContent currentStage={currentStage} />}
           </WorkspaceStageRuntimeProvider>
         </main>
     </div>

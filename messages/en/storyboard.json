@@ -65,7 +65,7 @@
         "downloading": "Packing...",
         "noImages": "No images to download",
         "downloadAllImages": "Download all images",
-        "generateVideo": "Generate Video →",
+        "generateVideo": "Continue to video →",
         "back": "← Back",
         "concurrencyLimit": "Concurrency limit {count}"
     },

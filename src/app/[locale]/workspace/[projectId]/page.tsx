@@ -18,6 +18,8 @@ import { ModelCapabilityDropdown } from '@/components/ui/config-modals/ModelCapa
 import { AppIcon } from '@/components/ui/icons'
 import { readConfiguredAnalysisModel, shouldGuideToModelSetup } from '@/lib/workspace/model-setup'
 import { useRouter } from '@/i18n/navigation'
+import { notifyAlert } from '@/lib/ui/notify'
+import { notify } from '@/lib/ui/notify'
 
 // 有效的stage值
 const VALID_STAGES = ['config', 'script', 'assets', 'text-storyboard', 'storyboard', 'videos', 'voice', 'editor'] as const
@@ -144,7 +146,9 @@ export default function ProjectDetailPage() {
   useEffect(() => {
     if (!shouldAutoCreateEpisode || autoCreateTriggered.current || loading) return
     autoCreateTriggered.current = true
-    void handleCreateEpisode(`${t('episode')} 1`)
+    handleCreateEpisode(`${t('episode')} 1`).catch((error: unknown) => {
+      notify.error(error, { title: 'We could not set up your first episode', action: { label: 'Reload', onClick: () => window.location.reload() } })
+    })
   }, [shouldAutoCreateEpisode, loading]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const shouldGateImportWizardByModel = shouldShowImportWizard && !isGlobalAssetsView
@@ -257,6 +261,7 @@ export default function ProjectDetailPage() {
       }
     } catch (err: unknown) {
       _ulogError('刷新失败:', err)
+      notify.error(err, { title: 'Your episodes were imported, but the page did not refresh', action: { label: 'Reload', onClick: () => window.location.reload() } })
     }
   }
 
@@ -311,7 +316,7 @@ export default function ProjectDetailPage() {
   const handleSaveDefaultAnalysisModel = async () => {
     const modelKey = analysisModelDraft.trim()
     if (!modelKey) {
-      alert(t('modelSetup.selectModelFirst'))
+      notifyAlert(t('modelSetup.selectModelFirst'))
       return
     }
 
@@ -331,7 +336,7 @@ export default function ProjectDetailPage() {
       setIsModelSetupModalOpen(false)
     } catch (err) {
       _ulogError('[ProjectDetail] 保存默认分析模型失败:', err)
-      alert(t('modelSetup.saveFailed'))
+      notifyAlert(t('modelSetup.saveFailed'))
     } finally {
       setModelSetupSaving(false)
     }
@@ -515,7 +520,11 @@ export default function ProjectDetailPage() {
               onStageChange={updateUrlStage}
               episodes={episodes}
               onEpisodeSelect={handleEpisodeSelect}
-              onEpisodeCreate={() => handleCreateEpisode(`${t('episode')} ${episodes.length + 1}`)}
+              onEpisodeCreate={() => {
+                handleCreateEpisode(`${t('episode')} ${episodes.length + 1}`).catch((error: unknown) => {
+                  notify.error(error, { title: 'The new episode was not created' })
+                })
+              }}
               onEpisodeRename={handleRenameEpisode}
               onEpisodeDelete={handleDeleteEpisode}
             />

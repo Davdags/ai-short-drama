@@ -4,6 +4,7 @@ import { logProjectAction } from '@/lib/logging/semantic'
 import { requireProjectAuthLight, isErrorResponse } from '@/lib/api-auth'
 import { apiHandler, ApiError } from '@/lib/api-errors'
 import { isArtStyleValue } from '@/lib/constants'
+import { isValidShotSeconds, isValidTargetSeconds } from '@/lib/studio/story-length'
 import { attachMediaFieldsToProject } from '@/lib/media/attach'
 import {
   parseModelKeyStrict,
@@ -235,6 +236,8 @@ export const GET = apiHandler(async (
     where: { projectId },
     select: {
       capabilityOverrides: true,
+      targetDurationSec: true,
+      shotLengthSec: true,
       analysisModel: true,
       characterModel: true,
       locationModel: true,
@@ -259,7 +262,9 @@ export const GET = apiHandler(async (
   const cleanedOverrides = sanitizeCapabilityOverrides(storedOverrides, modelContextMap)
 
   return NextResponse.json({
-    capabilityOverrides: cleanedOverrides})
+    capabilityOverrides: cleanedOverrides,
+    targetDurationSec: projectData?.targetDurationSec ?? null,
+    shotLengthSec: projectData?.shotLengthSec ?? null})
 })
 
 // PATCH - 更新小说推文项目配置
@@ -299,6 +304,7 @@ export const PATCH = apiHandler(async (
     'analysisModel', 'characterModel', 'locationModel', 'storyboardModel',
     'editModel', 'videoModel', 'audioModel', 'videoRatio', 'artStyle',
     'ttsRate', 'lipSyncEnabled', 'lipSyncMode', 'capabilityOverrides',
+    'targetDurationSec', 'shotLengthSec',
   ] as const
 
   const updateData: Record<string, unknown> = {}
@@ -311,6 +317,18 @@ export const PATCH = apiHandler(async (
 
     if (field === 'artStyle') {
       updateData[field] = validateArtStyleField(body[field])
+      continue
+    }
+
+    // Story length control: null turns it off; otherwise 15/30/60/90s and 4–15s shots.
+    if (field === 'targetDurationSec' || field === 'shotLengthSec') {
+      const value = body[field]
+      const valid = value === null
+        || (field === 'targetDurationSec' ? isValidTargetSeconds(value) : isValidShotSeconds(value))
+      if (!valid) {
+        throw new ApiError('INVALID_PARAMS', { field, message: `${field} is not a supported value` })
+      }
+      updateData[field] = value
       continue
     }
 

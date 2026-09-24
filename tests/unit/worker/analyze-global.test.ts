@@ -126,7 +126,7 @@ describe('worker analyze-global behavior', () => {
       episodes: [{ id: 'ep-1', name: '第一集', novelText: '' }],
     })
 
-    await expect(handleAnalyzeGlobalTask(buildJob())).rejects.toThrow('没有可分析的内容')
+    await expect(handleAnalyzeGlobalTask(buildJob())).rejects.toThrow('Nothing to analyze yet')
   })
 
   it('success path -> persists every chunk and returns stats summary', async () => {

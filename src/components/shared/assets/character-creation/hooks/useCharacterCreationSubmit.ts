@@ -17,6 +17,7 @@ import {
   useUploadProjectTempMedia,
 } from '@/lib/query/hooks'
 import { useImageGenerationCount } from '@/lib/image-generation/use-image-generation-count'
+import { notifyAlert } from '@/lib/ui/notify'
 
 type Mode = 'asset-hub' | 'project'
 
@@ -122,7 +123,7 @@ export function useCharacterCreationSubmit({
       }
     } catch (error: unknown) {
       if (shouldShowError(error)) {
-        alert(getErrorMessage(error, t('errors.extractDescriptionFailed')))
+        notifyAlert(getErrorMessage(error, t('errors.extractDescriptionFailed')))
       }
     } finally {
       setIsExtracting(false)
@@ -178,7 +179,7 @@ export function useCharacterCreationSubmit({
       onClose()
     } catch (error: unknown) {
       if (shouldShowError(error)) {
-        alert(getErrorMessage(error, t('errors.createFailed')))
+        notifyAlert(getErrorMessage(error, t('errors.createFailed')))
       }
     } finally {
       setIsSubmitting(false)
@@ -216,7 +217,7 @@ export function useCharacterCreationSubmit({
       }
     } catch (error: unknown) {
       if (shouldShowError(error)) {
-        alert(getErrorMessage(error, t('errors.aiDesignFailed')))
+        notifyAlert(getErrorMessage(error, t('errors.aiDesignFailed')))
       }
     } finally {
       setIsAiDesigning(false)
@@ -237,7 +238,7 @@ export function useCharacterCreationSubmit({
         onClose()
       } catch (error: unknown) {
         if (shouldShowError(error)) {
-          alert(getErrorMessage(error, t('errors.addSubAppearanceFailed')))
+          notifyAlert(getErrorMessage(error, t('errors.addSubAppearanceFailed')))
         }
       } finally {
         setIsSubmitting(false)
@@ -265,7 +266,7 @@ export function useCharacterCreationSubmit({
       onClose()
     } catch (error: unknown) {
       if (shouldShowError(error)) {
-        alert(getErrorMessage(error, t('errors.createFailed')))
+        notifyAlert(getErrorMessage(error, t('errors.createFailed')))
       }
     } finally {
       setIsSubmitting(false)
@@ -337,7 +338,7 @@ export function useCharacterCreationSubmit({
       onClose()
     } catch (error: unknown) {
       if (shouldShowError(error)) {
-        alert(getErrorMessage(error, t('errors.createFailed')))
+        notifyAlert(getErrorMessage(error, t('errors.createFailed')))
       }
     } finally {
       setIsSubmitting(false)

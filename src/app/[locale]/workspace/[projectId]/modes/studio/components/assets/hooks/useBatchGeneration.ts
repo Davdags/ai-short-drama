@@ -1,5 +1,6 @@
 'use client'
 import { logError as _ulogError } from '@/lib/logging/core'
+import { notifyAlert } from '@/lib/ui/notify'
 
 /**
  * useBatchGeneration - 批量生成资产图片
@@ -20,6 +21,22 @@ import {
     shouldResolveManualKey,
     type ManualRegenerationBaseline,
 } from './useBatchGeneration.helpers'
+import { notify } from '@/lib/ui/notify'
+import { humanizeErrorMessage } from '@/lib/errors/humanize'
+
+/**
+ * Batch picture generation used to log failures and move on, so customers saw a finished
+ * progress bar and missing pictures. Out-of-credits refusals already open the upgrade prompt.
+ */
+function reportBatchFailures(failures: unknown[], total: number) {
+  if (failures.length === 0) return
+  const messages = failures.map((error) => (error instanceof Error ? error.message : String(error)))
+  if (messages.every((message) => /credit|insufficient/i.test(message))) return
+  notify.warning(
+    `${failures.length} of ${total} pictures could not start. ${humanizeErrorMessage(messages[0], 'Please try again.')}`,
+    { title: 'Some pictures were not created' },
+  )
+}
 
 interface UseBatchGenerationProps {
     projectId: string
@@ -179,7 +196,7 @@ export function useBatchGeneration({
         })
 
         if (tasks.length === 0) {
-            alert(t('toolbar.generateAllNoop'))
+            notifyAlert(t('toolbar.generateAllNoop'))
             return
         }
 
@@ -199,6 +216,7 @@ export function useBatchGeneration({
             return next
         })
 
+        const failures: unknown[] = []
         try {
             await Promise.all(
                 tasks.map(async (task) => {
@@ -214,6 +232,7 @@ export function useBatchGeneration({
                         setBatchProgress(prev => ({ ...prev, current: prev.current + 1 }))
                     } catch (error) {
                         _ulogError(`Failed to generate ${task.type} ${task.id}:`, error)
+                        failures.push(error)
                         setBatchProgress(prev => ({ ...prev, current: prev.current + 1 }))
                     } finally {
                         if (submitted) return
@@ -231,6 +250,7 @@ export function useBatchGeneration({
                     }
                 })
             )
+            reportBatchFailures(failures, tasks.length)
         } finally {
             setIsBatchSubmittingAll(false)
             setBatchProgress({ current: 0, total: 0 })
@@ -272,7 +292,7 @@ export function useBatchGeneration({
         })
 
         if (tasks.length === 0) {
-            alert(t('toolbar.noAssetsToGenerate'))
+            notifyAlert(t('toolbar.noAssetsToGenerate'))
             return
         }
 
@@ -292,6 +312,7 @@ export function useBatchGeneration({
             return next
         })
 
+        const failures: unknown[] = []
         try {
             await Promise.all(
                 tasks.map(async (task) => {
@@ -307,6 +328,7 @@ export function useBatchGeneration({
                         setBatchProgress(prev => ({ ...prev, current: prev.current + 1 }))
                     } catch (error) {
                         _ulogError(`Failed to generate ${task.type} ${task.id}:`, error)
+                        failures.push(error)
                         setBatchProgress(prev => ({ ...prev, current: prev.current + 1 }))
                     } finally {
                         if (submitted) return
@@ -324,6 +346,7 @@ export function useBatchGeneration({
                     }
                 })
             )
+            reportBatchFailures(failures, tasks.length)
         } finally {
             setIsBatchSubmittingAll(false)
             setBatchProgress({ current: 0, total: 0 })

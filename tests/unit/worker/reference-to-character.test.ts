@@ -176,7 +176,8 @@ describe('worker reference-to-character', () => {
     const result = await handleReferenceToCharacterTask(job)
 
     expect(result).toEqual(expect.objectContaining({ success: true }))
-    expect(generatorApiMock.generateImage).toHaveBeenCalledTimes(3)
+    // One picture per click is the default now (three options cost three times as much).
+    expect(generatorApiMock.generateImage).toHaveBeenCalledTimes(1)
 
     const { prompt, options } = readGenerateCall(0)
     expect(prompt).toContain('冷静黑发角色')
@@ -200,7 +201,8 @@ describe('worker reference-to-character', () => {
     const result = await handleReferenceToCharacterTask(job)
 
     expect(result).toEqual(expect.objectContaining({ success: true }))
-    expect(generatorApiMock.generateImage).toHaveBeenCalledTimes(3)
+    // One picture per click is the default now (three options cost three times as much).
+    expect(generatorApiMock.generateImage).toHaveBeenCalledTimes(1)
 
     const { prompt, options } = readGenerateCall(0)
     expect(prompt).toContain('BASE_REFERENCE_PROMPT')

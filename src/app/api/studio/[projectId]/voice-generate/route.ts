@@ -61,18 +61,18 @@ function validateSpeakerVoiceForProvider(
     if (hasUploadedReference) {
       return {
         ok: false,
-        message: '无音色ID，QwenTTS 必须使用 AI 设计音色',
+        message: 'This speaker has no voice yet. Design an AI voice for them first.',
       }
     }
     return {
       ok: false,
-      message: '请先为该发言人绑定百炼音色',
+      message: 'Please assign a voice to this speaker first.',
     }
   }
 
   return {
     ok: false,
-    message: '请先为该发言人设置参考音频',
+    message: 'Please add reference audio for this speaker first.',
   }
 }
 
@@ -234,7 +234,7 @@ export const POST = apiHandler(async (
           speakerVoices,
           selectedProviderKey,
         )
-        : { ok: false as const, message: '没有需要生成的台词' }
+        : { ok: false as const, message: 'There are no lines to generate.' }
       return NextResponse.json({
         success: true,
         async: true,
@@ -245,7 +245,7 @@ export const POST = apiHandler(async (
       })
     }
     throw new ApiError('INVALID_PARAMS', {
-      message: '没有需要生成的台词',
+      message: 'There are no lines to generate.',
     })
   }
 

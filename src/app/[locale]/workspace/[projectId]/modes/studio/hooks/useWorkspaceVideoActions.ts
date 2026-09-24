@@ -1,9 +1,11 @@
 'use client'
 
 import { logInfo as _ulogInfo, logError as _ulogError } from '@/lib/logging/core'
+import { notify } from '@/lib/ui/notify'
 import { useGenerateVideo, useBatchGenerateVideos } from '@/lib/query/hooks/useStoryboards'
 import { useUpdateProjectPanelVideoPrompt, useUpdateProjectClip, useUpdateProjectConfig } from '@/lib/query/hooks'
 import type { BatchVideoGenerationParams, VideoGenerationOptions } from '../components/video'
+import { notifyAlert } from '@/lib/ui/notify'
 
 interface UseWorkspaceVideoActionsParams {
   projectId: string
@@ -53,7 +55,7 @@ export function useWorkspaceVideoActions({
   ) => {
     const normalizedVideoModel = typeof videoModel === 'string' ? videoModel.trim() : ''
     if (!normalizedVideoModel) {
-      alert('Video model is required')
+      notifyAlert('Choose a video model first.')
       return
     }
     try {
@@ -70,19 +72,19 @@ export function useWorkspaceVideoActions({
         _ulogInfo(t('execution.requestAborted'))
         return
       }
-      alert(`${t('execution.generationFailed')}: ${getErrorMessage(err)}`)
+      notifyAlert(`${t('execution.generationFailed')}: ${getErrorMessage(err)}`)
       throw err
     }
   }
 
   const handleGenerateAllVideos = async (options?: BatchVideoGenerationParams) => {
     if (!episodeId) {
-      alert(t('execution.selectEpisode'))
+      notifyAlert(t('execution.selectEpisode'))
       return
     }
     const normalizedVideoModel = typeof options?.videoModel === 'string' ? options.videoModel.trim() : ''
     if (!normalizedVideoModel) {
-      alert('Video model is required')
+      notifyAlert('Choose a video model first.')
       return
     }
 
@@ -96,7 +98,7 @@ export function useWorkspaceVideoActions({
         _ulogInfo(t('execution.requestAborted'))
         return
       }
-      alert(`${t('execution.batchVideoFailed')}: ${getErrorMessage(err)}`)
+      notifyAlert(`${t('execution.batchVideoFailed')}: ${getErrorMessage(err)}`)
       throw err
     }
   }
@@ -120,6 +122,7 @@ export function useWorkspaceVideoActions({
       })
     } catch (err: unknown) {
       _ulogError(`${t('execution.updateFailed')}:`, err)
+      notify.error(err, { title: 'The video model was not changed' })
     }
   }
 
@@ -133,7 +136,7 @@ export function useWorkspaceVideoActions({
       await updateProjectClipMutation.mutateAsync({ clipId, data, episodeId })
     } catch (err: unknown) {
       _ulogError(`${t('execution.updateFailed')}:`, err)
-      alert(`${t('execution.saveFailed')}: ${getErrorMessage(err)}`)
+      notifyAlert(`${t('execution.saveFailed')}: ${getErrorMessage(err)}`)
     }
   }
 

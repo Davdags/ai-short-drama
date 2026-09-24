@@ -201,8 +201,6 @@ export function DefaultModelCards(allProps: DefaultModelCardsProps) {
         locale,
         updateDefaultModel,
         extractCapabilityFieldsFromModel,
-        workflowConcurrency,
-        handleWorkflowConcurrencyChange,
     } = allProps
 
     // Pipeline unified override state
@@ -277,17 +275,6 @@ export function DefaultModelCards(allProps: DefaultModelCardsProps) {
                     <div className="border border-[#e5e5e5] rounded-lg p-4 space-y-3">
                         <div className="flex items-center justify-between">
                             <h4 className="text-xs font-medium text-[#171717]">{t('defaultModelSection.coreTextTitle')}</h4>
-                            <div className="flex items-center gap-1.5">
-                                <span className="text-xs text-[#737373]">{t('workflowConcurrency.analysis')}</span>
-                                <input
-                                    type="number"
-                                    min={1}
-                                    step={1}
-                                    value={workflowConcurrency.analysis}
-                                    onChange={(event) => handleWorkflowConcurrencyChange('analysis', event.target.value)}
-                                    className="w-12 h-7 border border-[#e5e5e5] rounded px-1.5 text-xs text-center focus:outline-none focus:border-black"
-                                />
-                            </div>
                         </div>
                         <p className="text-xs text-[#737373]">{t('defaultModelDesc.analysisModel')}</p>
                         <SmartSelector
@@ -302,17 +289,6 @@ export function DefaultModelCards(allProps: DefaultModelCardsProps) {
                     <div className="border border-[#e5e5e5] rounded-lg p-4 space-y-3">
                         <div className="flex items-center justify-between">
                             <h4 className="text-xs font-medium text-[#171717]">{t('defaultModelSection.coreVideoTitle')}</h4>
-                            <div className="flex items-center gap-1.5">
-                                <span className="text-xs text-[#737373]">{t('workflowConcurrency.video')}</span>
-                                <input
-                                    type="number"
-                                    min={1}
-                                    step={1}
-                                    value={workflowConcurrency.video}
-                                    onChange={(event) => handleWorkflowConcurrencyChange('video', event.target.value)}
-                                    className="w-12 h-7 border border-[#e5e5e5] rounded px-1.5 text-xs text-center focus:outline-none focus:border-black"
-                                />
-                            </div>
                         </div>
                         <p className="text-xs text-[#737373]">{t('defaultModelDesc.videoModel')}</p>
                         <SmartSelector
@@ -335,17 +311,6 @@ export function DefaultModelCards(allProps: DefaultModelCardsProps) {
                         <div>
                             <h4 className="text-xs font-medium text-[#171717]">{t('defaultModelSection.unifiedOverride')}</h4>
                             <p className="text-xs text-[#737373] mt-0.5">{t('defaultModelSection.unifiedOverrideHint')}</p>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                            <span className="text-xs text-[#737373]">{t('workflowConcurrency.image')}</span>
-                            <input
-                                type="number"
-                                min={1}
-                                step={1}
-                                value={workflowConcurrency.image}
-                                onChange={(event) => handleWorkflowConcurrencyChange('image', event.target.value)}
-                                className="w-12 h-7 border border-[#e5e5e5] rounded px-1.5 text-xs text-center focus:outline-none focus:border-black"
-                            />
                         </div>
                     </div>
                     <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-[#fafafa] border border-[#e5e5e5] text-[#525252]">

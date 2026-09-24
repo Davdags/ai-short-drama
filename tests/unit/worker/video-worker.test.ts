@@ -38,8 +38,11 @@ const configServiceMock = vi.hoisted(() => ({
     video: 5,
   })),
 }))
+const planLimitsMock = vi.hoisted(() => ({
+  getUserParallelLimit: vi.fn(async () => 1),
+}))
 const concurrencyGateMock = vi.hoisted(() => ({
-  withUserConcurrencyGate: vi.fn(async <T>(input: {
+  runWithUserSlot: vi.fn(async <T>(input: {
     run: () => Promise<T>
   }) => await input.run()),
 }))
@@ -97,7 +100,8 @@ vi.mock('@/lib/api-config', () => ({
   getProviderConfig: vi.fn(async () => ({ apiKey: 'api-key' })),
 }))
 vi.mock('@/lib/config-service', () => configServiceMock)
-vi.mock('@/lib/workers/user-concurrency-gate', () => concurrencyGateMock)
+vi.mock('@/lib/workers/user-slot-gate', () => concurrencyGateMock)
+vi.mock('@/lib/billing/plan-limits', () => planLimitsMock)
 
 function buildPanel(overrides?: Partial<PanelRow>): PanelRow {
   return {

@@ -1,0 +1,4 @@
+# Shell-style scripts must keep LF: a shebang followed by CRLF breaks the esbuild
+# transform vitest uses, which made the guard tests fail to load on Windows.
+*.mjs text eol=lf
+*.sh  text eol=lf

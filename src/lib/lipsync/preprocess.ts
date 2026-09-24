@@ -108,6 +108,15 @@ function parseWavInfo(buffer: Buffer): WavInfo | null {
     const chunkId = buffer.subarray(offset, offset + 4).toString('ascii')
     const chunkSize = buffer.readUInt32LE(offset + 4)
     const chunkStart = offset + 8
+
+    if (chunkId === 'data') {
+      // Streaming WAVs (e.g. TTS output) carry a placeholder data size because the
+      // length is unknown when the header is written; trust the bytes actually present.
+      dataSize = Math.min(chunkSize, buffer.length - chunkStart)
+      dataOffset = chunkStart
+      break
+    }
+
     const chunkEnd = chunkStart + chunkSize
     if (chunkEnd > buffer.length) return null
 
@@ -115,10 +124,6 @@ function parseWavInfo(buffer: Buffer): WavInfo | null {
       if (chunkSize < 16) return null
       byteRate = buffer.readUInt32LE(chunkStart + 8)
       blockAlign = buffer.readUInt16LE(chunkStart + 12)
-    } else if (chunkId === 'data') {
-      dataSize = chunkSize
-      dataOffset = chunkStart
-      break
     }
 
     offset = chunkEnd + (chunkSize % 2)

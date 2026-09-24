@@ -7,11 +7,14 @@ import {
   resolveEffectiveVideoCapabilityFields,
 } from '@/lib/model-capabilities/video-effective'
 import { projectVideoPricingTiersByFixedSelections } from '@/lib/model-pricing/video-tier'
+import { MIN_SHOT_SECONDS, snapToAllowedDuration } from '@/lib/studio/story-length'
 
 interface UsePanelVideoModelParams {
   defaultVideoModel: string
   capabilityOverrides?: CapabilitySelections
   userVideoModels?: VideoModelOption[]
+  /** The panel's planned shot length; used as the default clip duration (story length control). */
+  panelDurationSeconds?: number | null
 }
 
 interface CapabilityField {
@@ -67,6 +70,7 @@ export function usePanelVideoModel({
   defaultVideoModel,
   capabilityOverrides,
   userVideoModels,
+  panelDurationSeconds,
 }: UsePanelVideoModelParams) {
   const [selectedModel, setSelectedModel] = useState(defaultVideoModel || '')
   const [generationOptions, setGenerationOptions] = useState<VideoGenerationOptions>(() =>
@@ -107,10 +111,20 @@ export function usePanelVideoModel({
     [pricingTiers, selectedOption?.capabilities?.video],
   )
 
-  const selectedModelOverrides = useMemo(
-    () => readSelectionForModel(capabilityOverrides, selectedModel),
-    [capabilityOverrides, selectedModel],
-  )
+  const selectedModelOverrides = useMemo(() => {
+    const overrides = readSelectionForModel(capabilityOverrides, selectedModel)
+    // Default the clip length to the panel's planned shot length, snapped to what the model supports.
+    const durationOptions = selectedOption?.capabilities?.video?.durationOptions
+    if (
+      typeof panelDurationSeconds === 'number'
+      && panelDurationSeconds >= MIN_SHOT_SECONDS
+      && Array.isArray(durationOptions)
+      && durationOptions.length > 0
+    ) {
+      return { ...overrides, duration: snapToAllowedDuration(panelDurationSeconds, durationOptions as number[]) }
+    }
+    return overrides
+  }, [capabilityOverrides, selectedModel, selectedOption?.capabilities?.video?.durationOptions, panelDurationSeconds])
   const selectedModelOverridesSignature = useMemo(
     () => JSON.stringify(selectedModelOverrides),
     [selectedModelOverrides],

@@ -51,3 +51,7 @@ debug-request.json
 AGENTS.md
 docs
 agent
+
+# Production secrets (kept on the server only)
+deploy/.env*
+!deploy/.env.production.example

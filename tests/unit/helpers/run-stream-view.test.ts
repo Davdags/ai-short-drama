@@ -82,7 +82,7 @@ describe('run stream view', () => {
       clock: Date.now(),
     })
 
-    expect(view.outputText).toContain('【错误】')
+    expect(view.outputText).toContain('[Error]')
     expect(view.outputText).toContain('fetch failed sending request')
   })
 
@@ -102,7 +102,7 @@ describe('run stream view', () => {
       clock: Date.now(),
     })
 
-    expect(view.outputText).toBe('【错误】\nNETWORK_ERROR')
+    expect(view.outputText).toBe('[Error]\nNETWORK_ERROR')
   })
 
   it('keeps failed run visible until user reset', () => {

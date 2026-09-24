@@ -1,3 +1,7 @@
+# Own project name: without it, this stack shares the dev project name, so
+# "down --remove-orphans" in the test setup deleted the local dev containers.
+name: aidrama-studio-test
+
 services:
   mysql:
     image: mysql:8.0

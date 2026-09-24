@@ -11,6 +11,7 @@ import {
   useUpdateProjectAppearanceDescription,
   useUpdateProjectLocationDescription,
 } from '@/lib/query/hooks'
+import { notifyAlert } from '@/lib/ui/notify'
 
 type ToastType = 'success' | 'warning' | 'error'
 
@@ -175,7 +176,7 @@ export function useAssetsImageEdit({
       await Promise.resolve(onRefresh())
     } catch (error: unknown) {
       if (!isAbortError(error)) {
-        alert(`${t('character.updateFailed')}: ${getErrorMessage(error)}`)
+        notifyAlert(`${t('character.updateFailed')}: ${getErrorMessage(error)}`)
       }
     }
   }, [closeEditingAppearance, editingAppearance, onRefresh, t, updateAppearanceDescription])
@@ -191,7 +192,7 @@ export function useAssetsImageEdit({
       await Promise.resolve(onRefresh())
     } catch (error: unknown) {
       if (!isAbortError(error)) {
-        alert(`${t('location.updateFailed')}: ${getErrorMessage(error)}`)
+        notifyAlert(`${t('location.updateFailed')}: ${getErrorMessage(error)}`)
       }
     }
   }, [closeEditingLocation, editingLocation, onRefresh, t, updateLocationDescription])

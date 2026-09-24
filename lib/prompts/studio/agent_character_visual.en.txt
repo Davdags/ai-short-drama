@@ -11,7 +11,7 @@ Rules:
 4. Respect era_period and costume_tier.
 5. If primary_identifier exists, include it clearly in each main description.
 6. Do not include expression, action, background, or plot narration.
-7. Do not include skin color, eye color, or lip color.
+7. Always state the character’s apparent ethnicity and skin tone, taken from the profile or inferred from their name, the story’s setting and culture (for example, Nigerian names in a Lagos company → Black Nigerian). Without it, image models default to one look for everyone. Do not describe eye color or lip color.
 
 Appearance strategy:
 - Initial appearance should be complete and self-contained.
@@ -42,4 +42,4 @@ Strict constraints:
 1. JSON only.
 2. Keep names exactly aligned with input profiles.
 3. Each descriptions array must contain at least 3 valid English strings.
-4. ⚠️ JSON SAFETY: All quotation marks in text (""''「」 etc.) MUST be converted to corner brackets「」in JSON string values. NEVER use raw ASCII double quotes " inside string values.
+4. ⚠️ JSON SAFETY: All quotation marks in text (straight " and ' quotes) MUST be converted to curly quotes “ ” in JSON string values. NEVER use raw ASCII double quotes " inside string values.

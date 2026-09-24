@@ -39,7 +39,7 @@ export function deriveRunStreamView(args: {
     const stepOutput = getStageOutput(selectedStep)
     if (stepOutput) return stepOutput
     if (runState?.status === 'failed' && runState.errorMessage) {
-      return `【错误】\n${runState.errorMessage}`
+      return `[Error]\n${runState.errorMessage}`
     }
     return ''
   })()
@@ -50,12 +50,12 @@ export function deriveRunStreamView(args: {
     subtitle: (() => {
       const relationText =
         step.status === 'blocked' && step.blockedBy.length > 0
-          ? `等待: ${step.blockedBy.join(', ')}`
+          ? `Waiting for: ${step.blockedBy.join(', ')}`
           : step.dependsOn.length > 0
-            ? `依赖: ${step.dependsOn.join(', ')}`
+            ? `Depends on: ${step.dependsOn.join(', ')}`
             : ''
       const parallelText = step.groupId && step.parallelKey
-        ? `并行组: ${step.groupId}/${step.parallelKey}`
+        ? `Parallel group: ${step.groupId}/${step.parallelKey}`
         : ''
       const parts = [relationText, parallelText, step.message || ''].filter(Boolean)
       return parts.length > 0 ? parts.join(' | ') : undefined
@@ -98,10 +98,10 @@ export function deriveRunStreamView(args: {
           ? 'progress.runtime.llm.failed'
           : activeStep.status === 'blocked'
             ? activeStep.blockedBy.length > 0
-              ? `等待依赖步骤: ${activeStep.blockedBy.join(', ')}`
+              ? `Waiting for: ${activeStep.blockedBy.join(', ')}`
               : 'progress.runtime.waitingExecution'
             : activeStep.status === 'stale'
-              ? '结果已过期，请按需重试'
+              ? 'This result is out of date. Retry if needed.'
           : activeStep.message || 'progress.runtime.llm.processing'
 
   void clock

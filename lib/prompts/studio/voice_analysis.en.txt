@@ -36,4 +36,4 @@ Rules:
 6. Use canonical names from character library when possible.
 7. If there is no spoken dialogue that should be voiced, return [].
 8. Return strict JSON only, no markdown.
-9. ⚠️ JSON SAFETY: All quotation marks in dialogue (""''「」 etc.) MUST be converted to corner brackets「」in JSON string values. NEVER use raw ASCII double quotes " inside string values.
+9. ⚠️ JSON SAFETY: All quotation marks in dialogue (straight " and ' quotes) MUST be converted to curly quotes “ ” in JSON string values. NEVER use raw ASCII double quotes " inside string values.

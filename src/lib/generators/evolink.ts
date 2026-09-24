@@ -12,6 +12,8 @@ import { generateEvolinkAudio } from '@/lib/providers/evolink'
 import { getProviderConfig } from '@/lib/api-config'
 import { EVOLINK_API_BASE } from '@/lib/providers/evolink/constants'
 import { resolveToExternalUrl } from '@/lib/providers/evolink/url-resolver'
+import { markCentralEvolinkKeyRateLimited } from '@/lib/providers/evolink/central'
+import { waitForEvolinkRequestSlot } from '@/lib/providers/evolink/rate-limiter'
 
 const EVOLINK_IMAGE_ALLOWED_OPTIONS = new Set([
   'provider',
@@ -76,7 +78,7 @@ export class EvolinkImageGenerator extends BaseImageGenerator {
 
     // 将参考图转为 S3 presigned URL（R2 公网可访问）
     if (referenceImages.length > 0) {
-      const resolved = await Promise.all(referenceImages.map(resolveToExternalUrl))
+      const resolved = await Promise.all(referenceImages.map((url) => resolveToExternalUrl(url, { apiKey })))
       const validUrls = resolved.filter((u): u is string => !!u)
       if (validUrls.length > 0) {
         body.image_urls = validUrls
@@ -94,6 +96,7 @@ export class EvolinkImageGenerator extends BaseImageGenerator {
       },
     })
 
+    await waitForEvolinkRequestSlot(optModelId)
     const response = await fetch(`${EVOLINK_API_BASE}/images/generations`, {
       method: 'POST',
       headers: {
@@ -105,6 +108,7 @@ export class EvolinkImageGenerator extends BaseImageGenerator {
     })
 
     if (!response.ok) {
+      if (response.status === 429) markCentralEvolinkKeyRateLimited(apiKey)
       const errorText = await response.text()
       throw new Error(`EVOLINK_IMAGE_SUBMIT_FAILED(${response.status}): ${errorText}`)
     }
@@ -200,24 +204,25 @@ export class EvolinkVideoGenerator extends BaseVideoGenerator {
       action: 'evolink_video_generate',
     })
 
-    // Seedance 2.0 smart routing: auto-select variant based on input
+    // Seedance 2.0 / 2.5 smart routing: auto-select variant based on input
     let resolvedModelId = optModelId
-    if (optModelId === 'seedance-2.0') {
-      const isFast = quality === 'fast'
+    if (optModelId === 'seedance-2.0' || optModelId === 'seedance-2.5') {
+      // Only Seedance 2.0 has Fast variants.
+      const isFast = quality === 'fast' && optModelId === 'seedance-2.0'
       const fastPart = isFast ? '-fast' : ''
       const hasImage = !!imageUrl
       const hasLastFrame = !!lastFrameImageUrl
 
       if (!hasImage) {
         // No image → pure text-to-video
-        resolvedModelId = `seedance-2.0${fastPart}-text-to-video`
+        resolvedModelId = `${optModelId}${fastPart}-text-to-video`
       } else if (videoUrls?.length || audioUrls?.length) {
         // Has video or audio reference media → multi-modal reference-to-video
         // i2v handles single/dual image natively; ref2v is only needed for video/audio references
-        resolvedModelId = `seedance-2.0${fastPart}-reference-to-video`
+        resolvedModelId = `${optModelId}${fastPart}-reference-to-video`
       } else {
         // image(s) only → i2v (1 image = first frame, 2 images = first+last frame natively)
-        resolvedModelId = `seedance-2.0${fastPart}-image-to-video`
+        resolvedModelId = `${optModelId}${fastPart}-image-to-video`
       }
     }
 
@@ -228,10 +233,11 @@ export class EvolinkVideoGenerator extends BaseVideoGenerator {
     const isSeedanceT2V = isSeedance && resolvedModelId.includes('-text-to-video')
     const isSeedanceRef2V = isSeedance && resolvedModelId.includes('-reference-to-video')
 
-    // Clamp duration to API-enforced 4–15s range for Seedance 2.0 variants
+    // Clamp duration to the API-enforced range: Seedance 2.0 4–15s, Seedance 2.5 4–30s
     let effectiveDuration = duration
-    if (isSeedance && resolvedModelId.includes('seedance-2.0') && typeof effectiveDuration === 'number') {
-      effectiveDuration = Math.max(4, Math.min(15, effectiveDuration))
+    const isSeedance25 = resolvedModelId.startsWith('seedance-2.5')
+    if (isSeedance && (isSeedance25 || resolvedModelId.includes('seedance-2.0')) && typeof effectiveDuration === 'number') {
+      effectiveDuration = Math.max(4, Math.min(isSeedance25 ? 30 : 15, effectiveDuration))
     }
 
     // Guard: ref2v audio-only is rejected by the API (needs at least 1 image or video)
@@ -245,8 +251,8 @@ export class EvolinkVideoGenerator extends BaseVideoGenerator {
     }
 
     // 将图片转为 S3 presigned URL（R2 公网可访问）
-    const safeImageUrl = imageUrl ? await resolveToExternalUrl(imageUrl) : undefined
-    const safeLastFrameUrl = lastFrameImageUrl ? await resolveToExternalUrl(lastFrameImageUrl) : undefined
+    const safeImageUrl = imageUrl ? await resolveToExternalUrl(imageUrl, { apiKey }) : undefined
+    const safeLastFrameUrl = lastFrameImageUrl ? await resolveToExternalUrl(lastFrameImageUrl, { apiKey }) : undefined
 
     if (isKling) {
       if (safeImageUrl) {
@@ -269,14 +275,14 @@ export class EvolinkVideoGenerator extends BaseVideoGenerator {
     // Seedance 2.0 reference-to-video：视频 & 音频参考素材
     if (isSeedanceRef2V) {
       if (videoUrls && videoUrls.length > 0) {
-        const safeVideoUrls = await Promise.all(videoUrls.map(resolveToExternalUrl))
+        const safeVideoUrls = await Promise.all(videoUrls.map((url) => resolveToExternalUrl(url, { apiKey })))
         const validVideoUrls = safeVideoUrls.filter((u): u is string => !!u)
         if (validVideoUrls.length > 0) {
           body.video_urls = validVideoUrls
         }
       }
       if (audioUrls && audioUrls.length > 0) {
-        const safeAudioUrls = await Promise.all(audioUrls.map(resolveToExternalUrl))
+        const safeAudioUrls = await Promise.all(audioUrls.map((url) => resolveToExternalUrl(url, { apiKey })))
         const validAudioUrls = safeAudioUrls.filter((u): u is string => !!u)
         if (validAudioUrls.length > 0) {
           body.audio_urls = validAudioUrls
@@ -292,8 +298,9 @@ export class EvolinkVideoGenerator extends BaseVideoGenerator {
     if (typeof effectiveDuration === 'number') {
       body.duration = effectiveDuration
     }
-    // Wan 2.6 不支持 aspect_ratio
-    if (aspectRatio && !isWan) {
+    // Wan 2.6 不支持 aspect_ratio; Seedance 2.5 image-to-video only accepts adaptive framing
+    const isSeedance25I2V = isSeedance25 && resolvedModelId.includes('-image-to-video')
+    if (aspectRatio && !isWan && !isSeedance25I2V) {
       body.aspect_ratio = aspectRatio
     }
     if (resolution) {
@@ -321,6 +328,7 @@ export class EvolinkVideoGenerator extends BaseVideoGenerator {
       },
     })
 
+    await waitForEvolinkRequestSlot(resolvedModelId)
     const response = await fetch(`${EVOLINK_API_BASE}/videos/generations`, {
       method: 'POST',
       headers: {
@@ -332,6 +340,7 @@ export class EvolinkVideoGenerator extends BaseVideoGenerator {
     })
 
     if (!response.ok) {
+      if (response.status === 429) markCentralEvolinkKeyRateLimited(apiKey)
       const errorText = await response.text()
       throw new Error(`EVOLINK_VIDEO_SUBMIT_FAILED(${response.status}): ${errorText}`)
     }

@@ -19,6 +19,8 @@ import {
 import { findBuiltinCapabilities } from '@/lib/model-capabilities/catalog'
 import { findBuiltinPricingCatalogEntry } from '@/lib/model-pricing/catalog'
 import { EVOLINK_MODEL_PRESETS } from '@/lib/providers/evolink/presets'
+import { CENTRAL_EVOLINK_PROVIDER_ID, isCentralEvolinkEnabled } from '@/lib/providers/evolink/central'
+import { isModelPriced } from '@/lib/api-config'
 import type { VideoPricingTier } from '@/lib/model-pricing/video-tier'
 
 type StoredModelType = UnifiedModelType | string
@@ -181,8 +183,13 @@ export const GET = apiHandler(async () => {
     select: { customModels: true, customProviders: true },
   })
 
+  // Central EvoLink account: everyone sees the platform provider, never stored keys.
+  const central = isCentralEvolinkEnabled()
   const modelsRaw: StoredModel[] = parseStoredModels(pref?.customModels)
-  const providers: StoredProvider[] = parseStoredProviders(pref?.customProviders)
+    .filter((model) => !central || getProviderKey(toProvider(model) || '') === CENTRAL_EVOLINK_PROVIDER_ID)
+  const providers: StoredProvider[] = central
+    ? [{ id: CENTRAL_EVOLINK_PROVIDER_ID, name: 'EvoLink', apiKey: 'central' } as StoredProvider]
+    : parseStoredProviders(pref?.customProviders)
 
   const providerNameMap = new Map<string, string>()
   const providerIdsWithApiKey = new Set<string>()
@@ -275,6 +282,16 @@ export const GET = apiHandler(async () => {
       }
 
       grouped[preset.type].push(option)
+    }
+  }
+
+  if (central) {
+    // Only offer models the platform can bill for.
+    for (const type of Object.keys(grouped) as Array<keyof UserModelsPayload>) {
+      grouped[type] = grouped[type].filter((option) => {
+        const modelId = option.value.split('::')[1] || ''
+        return isModelPriced({ type, provider: option.provider || '', modelId })
+      })
     }
   }
 

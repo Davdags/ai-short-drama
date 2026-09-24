@@ -18,7 +18,8 @@ describe('apiFetch locale header injection', () => {
 
     const init = fetchMock.mock.calls[0]?.[1]
     const headers = new Headers(init?.headers)
-    expect(headers.get('Accept-Language')).toBe('zh')
+    // English-only product: with no locale in the path, requests default to English.
+    expect(headers.get('Accept-Language')).toBe('en')
   })
 
   it('uses pathname locale and does not override explicit Accept-Language', async () => {

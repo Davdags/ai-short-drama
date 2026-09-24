@@ -133,7 +133,7 @@ export const POST = apiHandler(async (
         data: {
             characterId,
             appearanceIndex: newIndex,
-            changeReason: changeReason || '形象变化',
+            changeReason: changeReason || 'New look',
             artStyle: fallbackArtStyle,
             description: description.trim(),
             descriptions: JSON.stringify([description.trim()]),

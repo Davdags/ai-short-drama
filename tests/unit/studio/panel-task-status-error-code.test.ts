@@ -31,6 +31,6 @@ describe('panel task status error code mapping', () => {
     })
 
     expect(result.panelErrorDisplay?.code).toBe('VIDEO_API_FORMAT_UNSUPPORTED')
-    expect(result.panelErrorDisplay?.message).toBe('当前视频接口格式暂不支持。')
+    expect(result.panelErrorDisplay?.message).toBe("This video format isn't supported yet.")
   })
 })

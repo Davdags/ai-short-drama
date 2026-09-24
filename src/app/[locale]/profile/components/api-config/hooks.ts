@@ -23,6 +23,7 @@ import {
     DEFAULT_VIDEO_WORKFLOW_CONCURRENCY,
     normalizeWorkflowConcurrencyValue,
 } from '@/lib/workflow-concurrency'
+import { notifyAlert } from '@/lib/ui/notify'
 
 interface DefaultModels {
     analysisModel?: string
@@ -583,7 +584,7 @@ export function useProviders(): UseProvidersReturn {
         setProviders(prev => {
             const normalizedProviderId = provider.id.toLowerCase()
             if (prev.some((p) => p.id.toLowerCase() === normalizedProviderId)) {
-                alert(t('providerIdExists'))
+                notifyAlert(t('providerIdExists'))
                 return prev
             }
             const newProvider: Provider = { ...provider, hasApiKey: !!provider.apiKey }
@@ -604,7 +605,7 @@ export function useProviders(): UseProvidersReturn {
 
     const deleteProvider = useCallback((providerId: string) => {
         if (PRESET_PROVIDERS.find(p => p.id === providerId)) {
-            alert(t('presetProviderCannotDelete'))
+            notifyAlert(t('presetProviderCannotDelete'))
             return
         }
         if (confirm(t('confirmDeleteProvider'))) {
@@ -732,7 +733,7 @@ export function useProviders(): UseProvidersReturn {
             const presetModelKey = encodeModelKey(model.provider, model.modelId)
             return presetModelKey === modelKey && (providerId ? model.provider === providerId : true)
         })) {
-            alert(t('presetModelCannotDelete'))
+            notifyAlert(t('presetModelCannotDelete'))
             return
         }
         if (confirm(t('confirmDeleteModel'))) {

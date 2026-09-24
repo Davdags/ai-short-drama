@@ -13,6 +13,7 @@ import type {
   SpeakerVoiceEntry,
   VoiceLine,
 } from './types'
+import { notifyAlert } from '@/lib/ui/notify'
 
 interface MutationLike<TInput = unknown, TOutput = unknown> {
   mutateAsync: (input: TInput) => Promise<TOutput>
@@ -101,7 +102,7 @@ export function useVoiceGenerationActions({
       notifyVoiceLinesChanged()
     } catch (error: unknown) {
       if (shouldShowError(error)) {
-        alert(`${t('errors.analyzeFailed')}: ${getErrorMessage(error)}`)
+        notifyAlert(`${t('errors.analyzeFailed')}: ${getErrorMessage(error)}`)
       }
     } finally {
       setAnalyzing(false)
@@ -141,11 +142,11 @@ export function useVoiceGenerationActions({
       notifyVoiceLinesChanged()
     } catch (error: unknown) {
       if (getErrorStatus(error) === 402) {
-        alert(`${t('alerts.insufficientBalance')}\n\n${getErrorMessage(error) || t('alerts.insufficientBalanceMsg')}`)
+        notifyAlert(`${t('alerts.insufficientBalance')}\n\n${getErrorMessage(error) || t('alerts.insufficientBalanceMsg')}`)
         return
       }
       if (shouldShowError(error)) {
-        alert(`${t('errors.generateFailed')}: ${getErrorMessage(error)}`)
+        notifyAlert(`${t('errors.generateFailed')}: ${getErrorMessage(error)}`)
       }
     } finally {
       if (handoffToTaskState) return
@@ -180,7 +181,7 @@ export function useVoiceGenerationActions({
     })
 
     if (linesToGenerate.length === 0) {
-      alert(t('alerts.noLinesToGenerate'))
+      notifyAlert(t('alerts.noLinesToGenerate'))
       return
     }
 
@@ -201,7 +202,7 @@ export function useVoiceGenerationActions({
           for (const lineId of lineIds) delete next[lineId]
           return next
         })
-        alert(data?.error || t('alerts.noLinesToGenerate'))
+        notifyAlert(data?.error || t('alerts.noLinesToGenerate'))
         return
       }
 
@@ -250,11 +251,11 @@ export function useVoiceGenerationActions({
       notifyVoiceLinesChanged()
     } catch (error: unknown) {
       if (getErrorStatus(error) === 402) {
-        alert(`${t('alerts.insufficientBalance')}\n\n${getErrorMessage(error) || t('alerts.insufficientBalanceMsg')}`)
+        notifyAlert(`${t('alerts.insufficientBalance')}\n\n${getErrorMessage(error) || t('alerts.insufficientBalanceMsg')}`)
         return
       }
       if (shouldShowError(error)) {
-        alert(`${t('errors.batchFailed')}: ${getErrorMessage(error)}`)
+        notifyAlert(`${t('errors.batchFailed')}: ${getErrorMessage(error)}`)
       }
     } finally {
       setIsBatchSubmittingAll(false)
@@ -289,14 +290,14 @@ export function useVoiceGenerationActions({
       const url = window.URL.createObjectURL(blob)
       const anchor = document.createElement('a')
       anchor.href = url
-      anchor.download = `配音_${new Date().toISOString().slice(0, 10)}.zip`
+      anchor.download = `voices_${new Date().toISOString().slice(0, 10)}.zip`
       document.body.appendChild(anchor)
       anchor.click()
       window.URL.revokeObjectURL(url)
       document.body.removeChild(anchor)
     } catch (error: unknown) {
       if (shouldShowError(error)) {
-        alert(`${t('errors.downloadFailed')}: ${getErrorMessage(error)}`)
+        notifyAlert(`${t('errors.downloadFailed')}: ${getErrorMessage(error)}`)
       }
     } finally {
       setIsDownloading(false)

@@ -3,9 +3,9 @@ import { prisma } from '@/lib/prisma'
 import { queueRedis } from '@/lib/redis'
 import { QUEUE_NAME } from '@/lib/task/queues'
 import { TASK_TYPE, type TaskJobData } from '@/lib/task/types'
-import { getUserWorkflowConcurrencyConfig } from '@/lib/config-service'
 import { reportTaskProgress, withTaskLifecycle } from './shared'
-import { withUserConcurrencyGate } from './user-concurrency-gate'
+import { runWithUserSlot } from './user-slot-gate'
+import { getUserParallelLimit } from '@/lib/billing/plan-limits'
 import {
   assertTaskActive,
   getProjectModels,
@@ -19,6 +19,7 @@ import { resolveBuiltinCapabilitiesByModelKey } from '@/lib/model-capabilities/l
 import { parseModelKeyStrict } from '@/lib/model-config-contract'
 import { getProviderConfig } from '@/lib/api-config'
 import { handleMergeEpisodeVideosTask } from './handlers/merge-videos'
+import { buildVideoAudioDirective, isSoundOn } from '@/lib/video/dialogue-prompt'
 
 type AnyObj = Record<string, unknown>
 type VideoOptionValue = string | number | boolean
@@ -76,6 +77,37 @@ async function getPanelForVideoTask(job: Job<TaskJobData>) {
   const panel = await fetchPanelByStoryboardIndex(storyboardId, Number(panelIndex))
   if (!panel) throw new Error('Panel not found by storyboardId/panelIndex')
   return panel
+}
+
+/**
+ * Sound on (and the model generates audio): state the shot's exact dialogue, or that it is
+ * silent, so the model doesn't invent speech. Sound off: no change.
+ */
+async function resolveAudioDirective(
+  job: Job<TaskJobData>,
+  panel: PanelRecord,
+  model: string,
+  requestedGenerateAudio: boolean | undefined,
+): Promise<string> {
+  const videoCapabilities = resolveBuiltinCapabilitiesByModelKey('video', model)?.video
+  if (videoCapabilities?.supportGenerateAudio !== true) return ''
+  if (!isSoundOn(requestedGenerateAudio, videoCapabilities.generateAudioOptions)) return ''
+
+  const [lines, episodeLineCount] = await Promise.all([
+    prisma.studioVoiceLine.findMany({
+      where: { matchedPanelId: panel.id },
+      orderBy: { lineIndex: 'asc' },
+      select: { speaker: true, content: true },
+    }),
+    job.data.episodeId
+      ? prisma.studioVoiceLine.count({ where: { episodeId: job.data.episodeId } })
+      : Promise.resolve(0),
+  ])
+  return buildVideoAudioDirective({
+    lines,
+    episodeHasVoiceLines: episodeLineCount > 0,
+    sourceText: panel.srtSegment,
+  })
 }
 
 async function generateVideoForPanel(
@@ -142,12 +174,14 @@ async function generateVideoForPanel(
     }
   }
 
+  const finalPrompt = prompt + await resolveAudioDirective(job, panel, model, requestedGenerateAudio)
+
   const generatedVideo = await resolveVideoSourceFromGeneration(job, {
     userId: job.data.userId,
     modelId: model,
     imageUrl: sourceImageBase64,
     options: {
-      prompt,
+      prompt: finalPrompt,
       ...(projectVideoRatio ? { aspectRatio: projectVideoRatio } : {}),
       ...generationOptions,
       generationMode,
@@ -299,34 +333,22 @@ async function processVideoTask(job: Job<TaskJobData>) {
   }
 }
 
-// MERGE is CPU-bound and free (non-billable). A dedicated per-user scope
-// prevents a single user from saturating the video gate with merge tasks and
-// starving their own (or other users') billable video_panel / lip_sync work.
-const MERGE_PER_USER_LIMIT = Math.max(
-  1,
-  Number.parseInt(process.env.MERGE_VIDEOS_PER_USER_LIMIT || '1', 10) || 1,
-)
-
+// MERGE is CPU-bound: it has its own per-user scope (see plan-limits) so exports never
+// starve a user's billable video_panel / lip_sync work.
 export function createVideoWorker() {
   return new Worker<TaskJobData>(
     QUEUE_NAME.VIDEO,
-    async (job) => await withTaskLifecycle(job, async (taskJob) => {
-      if (taskJob.data.type === TASK_TYPE.MERGE_EPISODE_VIDEOS) {
-        return await withUserConcurrencyGate({
-          scope: 'merge',
-          userId: taskJob.data.userId,
-          limit: MERGE_PER_USER_LIMIT,
-          run: async () => await processVideoTask(taskJob),
-        })
-      }
-      const workflowConcurrency = await getUserWorkflowConcurrencyConfig(taskJob.data.userId)
-      return await withUserConcurrencyGate({
-        scope: 'video',
-        userId: taskJob.data.userId,
-        limit: workflowConcurrency.video,
-        run: async () => await processVideoTask(taskJob),
+    async (job, token) => {
+      const scope = job.data.type === TASK_TYPE.MERGE_EPISODE_VIDEOS ? 'merge' : 'video'
+      return await runWithUserSlot({
+        job,
+        token,
+        scope,
+        userId: job.data.userId,
+        limit: await getUserParallelLimit(job.data.userId, scope),
+        run: async () => await withTaskLifecycle(job, processVideoTask),
       })
-    }),
+    },
     {
       connection: queueRedis,
       concurrency: Number.parseInt(process.env.QUEUE_CONCURRENCY_VIDEO || '4', 10) || 4,

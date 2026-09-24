@@ -45,7 +45,37 @@ export default function WorkspaceSidebar({
   projectName,
 }: WorkspaceSidebarProps) {
   return (
-    <aside className="w-[200px] h-full flex-shrink-0 bg-white border-r border-[#e5e5e5] flex flex-col overflow-y-auto">
+    <>
+    {/* Phones: one compact row — episode, cast/assets, settings. The step bar in the page
+        replaces the stage list, which took half the screen. */}
+    <div className="flex items-center gap-2 border-b border-[#e5e5e5] bg-white px-3 py-2 md:hidden">
+      <select
+        value={currentEpisodeId ?? ''}
+        onChange={(e) => onEpisodeSelect(e.target.value)}
+        aria-label="Episode"
+        className="min-w-0 flex-1 rounded-lg border border-[#e5e5e5] bg-[#f5f5f5] px-2 py-1.5 text-sm text-[#525252] outline-none"
+      >
+        {episodes.map((ep) => (
+          <option key={ep.id} value={ep.id}>EP{ep.episodeNumber} {ep.name}</option>
+        ))}
+      </select>
+      {onEpisodeCreate && (
+        <button onClick={onEpisodeCreate} aria-label="New episode" className="flex h-9 w-9 items-center justify-center rounded-lg text-[#525252] hover:bg-[#f5f5f5]">
+          <AppIcon name="plus" className="h-4 w-4" />
+        </button>
+      )}
+      {onOpenAssetLibrary && (
+        <button onClick={onOpenAssetLibrary} aria-label="Asset Library" className="flex h-9 w-9 items-center justify-center rounded-lg text-[#525252] hover:bg-[#f5f5f5]">
+          <AppIcon name="folderOpen" className="h-4 w-4" />
+        </button>
+      )}
+      {onOpenSettings && (
+        <button onClick={onOpenSettings} aria-label="Settings" className="flex h-9 w-9 items-center justify-center rounded-lg text-[#525252] hover:bg-[#f5f5f5]">
+          <AppIcon name="settingsHex" className="h-4 w-4" />
+        </button>
+      )}
+    </div>
+    <aside className="hidden md:flex w-[200px] h-full flex-shrink-0 bg-white border-r border-[#e5e5e5] flex-col overflow-y-auto">
       {/* Project / Episode */}
       <div className="p-4 border-b border-[#e5e5e5]">
         {projectName && (
@@ -136,5 +166,6 @@ export default function WorkspaceSidebar({
         )}
       </div>
     </aside>
+    </>
   )
 }

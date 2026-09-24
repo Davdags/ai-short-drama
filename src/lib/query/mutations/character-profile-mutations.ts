@@ -101,7 +101,7 @@ export function useUploadProjectTempMedia() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload),
                 },
-                '上传失败',
+                'Upload failed',
             )
         },
     })
@@ -207,7 +207,7 @@ export function useConfirmProjectCharacterSelection(projectId: string) {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ characterId, appearanceId }),
                 },
-                '确认选择失败',
+                'Could not confirm the selection',
             ),
         onSettled: invalidateProjectAssets,
     })
@@ -234,7 +234,7 @@ export function useConfirmProjectCharacterProfile(projectId: string) {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload),
                 },
-                '确认失败',
+                'Could not confirm',
             )
             return await resolveTaskResponse<{
                 success?: boolean
@@ -266,7 +266,7 @@ export function useBatchConfirmProjectCharacterProfiles(projectId: string) {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                 },
-                '批量确认失败',
+                'Could not confirm all',
             )
             return await resolveTaskResponse<{
                 success?: boolean

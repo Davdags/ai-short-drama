@@ -44,6 +44,18 @@ export const AUTH_REGISTER_LIMIT: RateLimitConfig = {
     maxRequests: 3,
 }
 
+/** Password reset requests and submissions: at most 5 per 10 minutes */
+export const AUTH_PASSWORD_RESET_LIMIT: RateLimitConfig = {
+    windowSeconds: 600,
+    maxRequests: 5,
+}
+
+/** Referral-link click tracking (public). */
+export const AFFILIATE_CLICK_LIMIT: RateLimitConfig = {
+    windowSeconds: 60,
+    maxRequests: 20,
+}
+
 // ============================================================
 // 核心逻辑
 // ============================================================

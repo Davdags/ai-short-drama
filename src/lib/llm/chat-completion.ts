@@ -36,6 +36,7 @@ import {
 } from './runtime-shared'
 import { completeBailianLlm } from '@/lib/providers/bailian'
 import { completeSiliconFlowLlm } from '@/lib/providers/siliconflow'
+import { waitForEvolinkRequestSlot } from '@/lib/providers/evolink/rate-limiter'
 
 const OFFICIAL_ONLY_PROVIDER_KEYS = new Set(['bailian', 'siliconflow'])
 
@@ -72,7 +73,7 @@ export async function chatCompletion(
 
   if (!model) {
     _ulogError('[LLM] 模型未配置，调用栈:', new Error().stack)
-    throw new Error('ANALYSIS_MODEL_NOT_CONFIGURED: 请先在设置页面配置分析模型')
+    throw new Error('ANALYSIS_MODEL_NOT_CONFIGURED: Please choose an analysis model in Model preferences first')
   }
 
   const selection = await resolveLlmRuntimeModel(userId, model)
@@ -80,6 +81,7 @@ export async function chatCompletion(
   const provider = selection.provider
   const providerKey = getProviderKey(provider).toLowerCase()
   const providerConfig = await getProviderConfig(userId, provider)
+  if (providerKey === 'evolink') await waitForEvolinkRequestSlot(resolvedModelId)
   const gatewayRoute = OFFICIAL_ONLY_PROVIDER_KEYS.has(providerKey)
     ? 'official'
     : (providerConfig.gatewayRoute || resolveModelGatewayRoute(provider))
@@ -498,7 +500,7 @@ export async function chatCompletion(
       const errorBody = toRecord(toRecord(error)?.error) || toRecord(error)
       if (errorBody?.message === 'PROHIBITED_CONTENT' || errorBody?.code === 502) {
         _ulogError('[LLM] ❌ 内容安全检测失败 - Google AI Studio 拒绝处理此内容')
-        throw new Error('SENSITIVE_CONTENT: 内容包含敏感信息,无法处理。请修改内容后重试')
+        throw new Error('SENSITIVE_CONTENT: This content may break our content rules. Please adjust it and try again')
       }
 
       // Google Gemini 返回空响应时，视为可重试错误（不抛出，继续重试循环）
@@ -518,5 +520,5 @@ export async function chatCompletion(
     }
   }
 
-  throw lastError || new Error('LLM 调用失败')
+  throw lastError || new Error('The AI request failed')
 }

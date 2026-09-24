@@ -23,6 +23,7 @@ import type { NormalizedError } from '@/lib/errors/types'
 import { mapTaskSSEEventToRunEvents } from '@/lib/run-runtime/task-bridge'
 import { publishRunEvent } from '@/lib/run-runtime/publisher'
 import { RUN_EVENT_TYPE } from '@/lib/run-runtime/types'
+import { notifyGenerationFailed } from '@/lib/email/notifications'
 
 function toObject(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {}
@@ -636,6 +637,10 @@ export async function withTaskLifecycle(job: Job<TaskJobData>, handler: (job: Jo
       },
     })
 
+    if (billingInfo?.billable) {
+      void notifyGenerationFailed({ userId: data.userId, creditsRefunded: billingInfo.status === 'rolled_back' })
+    }
+
     // Re-throw as UnrecoverableError so BullMQ records the job as failed
     // (without this, BullMQ thinks the job succeeded and never logs failure)
     // UnrecoverableError prevents BullMQ auto-retry since we already handle task state in app layer
@@ -673,6 +678,15 @@ export async function reportTaskProgress(job: Job<TaskJobData>, progress: number
       ...nextPayload,
     },
   })
+
+  // tryUpdateTaskProgress replaces task.payload wholesale, so carry the original
+  // meta (notably locale) forward — the watchdog needs it to re-enqueue a stalled task.
+  const originalMeta = toObject(toObject(job.data.payload).meta)
+  nextPayload.meta = {
+    ...originalMeta,
+    ...toObject(nextPayload.meta),
+    locale: job.data.locale || originalMeta.locale,
+  }
 
   const updated = await tryUpdateTaskProgress(job.data.taskId, value, nextPayload)
   if (!updated) {

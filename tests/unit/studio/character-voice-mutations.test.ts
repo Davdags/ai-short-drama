@@ -70,7 +70,7 @@ describe('project character voice mutations', () => {
           customVoiceUrl: 'https://example.com/audio.wav',
         }),
       },
-      '更新音色失败',
+      'Could not update the voice',
     )
   })
 })

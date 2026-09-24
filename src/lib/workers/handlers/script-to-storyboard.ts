@@ -38,6 +38,7 @@ import {
   parseStoryboardRetryTarget,
   runScriptToStoryboardAtomicRetry,
 } from './script-to-storyboard-atomic-retry'
+import { resolveStoryLengthPlan } from '@/lib/studio/story-length'
 
 type AnyObj = Record<string, unknown>
 const MAX_VOICE_ANALYZE_ATTEMPTS = 2
@@ -332,7 +333,10 @@ export async function handleScriptToStoryboardTask(job: Job<TaskJobData>) {
                     location: clip.location,
                     props: readNullableText(clip as unknown as Record<string, unknown>, 'props'),
                     screenplay: clip.screenplay,
+                    duration: clip.duration ?? null,
                   })),
+                  shotSeconds: resolveStoryLengthPlan(novelData)?.shotSeconds ?? null,
+                  locale: job.data.locale,
                   studioData: {
                     characters: novelData.characters || [],
                     locations: (novelData.locations || []).filter((item) => readAssetKind(item as unknown as Record<string, unknown>) !== 'prop'),

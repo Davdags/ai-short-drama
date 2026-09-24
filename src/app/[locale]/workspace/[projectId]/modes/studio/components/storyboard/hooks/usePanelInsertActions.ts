@@ -6,6 +6,7 @@ import { useCallback, useState } from 'react'
 import { useInsertProjectPanel } from '@/lib/query/hooks'
 import { waitForTaskResult } from '@/lib/task/client'
 import { getErrorMessage, isAbortError, type InsertPanelMutationResult } from './panel-operations-shared'
+import { notifyAlert } from '@/lib/ui/notify'
 
 interface UsePanelInsertActionsProps {
   projectId: string
@@ -61,7 +62,7 @@ export function usePanelInsertActions({
         return
       }
       _ulogError('插入分镜失败:', error)
-      alert(
+      notifyAlert(
         t('messages.insertPanelFailed', {
           error: getErrorMessage(error, t('common.unknownError')),
         }),

@@ -9,6 +9,7 @@ import { MediaImageWithLoading } from '@/components/media/MediaImageWithLoading'
 import ImageEditModalSelectedAssets from './ImageEditModalSelectedAssets'
 import ImageEditModalAssetPicker from './ImageEditModalAssetPicker'
 import { AppIcon } from '@/components/ui/icons'
+import { notifyAlert } from '@/lib/ui/notify'
 
 interface ImageEditModalProps {
   projectId: string
@@ -86,7 +87,7 @@ export default function ImageEditModal({
 
   const handleSubmit = () => {
     if (!editPrompt.trim()) {
-      alert(t('prompts.enterInstruction'))
+      notifyAlert(t('prompts.enterInstruction'))
       return
     }
     onSubmit(editPrompt, editImages, selectedAssets)

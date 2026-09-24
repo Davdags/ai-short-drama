@@ -12,6 +12,7 @@ import {
   isAbortError,
   updatePanelImageUrlInStoryboards,
 } from './image-generation-runtime'
+import { notifyAlert } from '@/lib/ui/notify'
 
 interface ModifyPanelMutationLike {
   mutateAsync: (payload: {
@@ -58,7 +59,7 @@ export function usePanelImageModification({
 
       if (!panelId) {
         _ulogError('[modifyPanelImage] Panel not found:', { storyboardId, panelIndex })
-        alert(t('messages.panelNotFound'))
+        notifyAlert(t('messages.panelNotFound'))
         return
       }
 
@@ -95,7 +96,7 @@ export function usePanelImageModification({
           _ulogInfo('请求被中断（可能是页面刷新），后端仍在执行')
           return
         }
-        alert(
+        notifyAlert(
           t('messages.modifyFailed', {
             error: extractErrorMessage(error, t('common.unknownError')),
           }),

@@ -6,6 +6,7 @@ import { logInfo as _ulogInfo, logError as _ulogError } from '@/lib/logging/core
 import type { StudioStoryboard } from '@/types/project'
 import type { StoryboardPanel } from './useStoryboardState'
 import { getErrorMessage } from './storyboard-panel-asset-utils'
+import { notifyAlert } from '@/lib/ui/notify'
 
 interface UseStoryboardBatchPanelGenerationProps {
   sortedStoryboards: StudioStoryboard[]
@@ -92,7 +93,7 @@ export function useStoryboardBatchPanelGeneration({
           .map((result) => result.reason?.message || result.reason)
           .slice(0, 3)
           .join('; ')
-        alert(
+        notifyAlert(
           t('messages.batchGenerateCompleted', {
             succeeded,
             failed,
@@ -104,7 +105,7 @@ export function useStoryboardBatchPanelGeneration({
       }
     } catch (error: unknown) {
       _ulogError('[批量生成] 发生意外错误:', error)
-      alert(
+      notifyAlert(
         t('messages.batchGenerateFailed', {
           error: getErrorMessage(error, t('common.unknownError')),
         }),

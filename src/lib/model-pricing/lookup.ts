@@ -8,6 +8,7 @@ import {
   type BuiltinPricingCatalogEntry,
   type PricingApiType,
 } from '@/lib/model-pricing/catalog'
+import { CENTRAL_EVOLINK_PROVIDER_ID, isCentralEvolinkEnabled } from '@/lib/providers/evolink/central'
 
 export interface PricingResolutionResolved {
   status: 'resolved'
@@ -80,6 +81,14 @@ function resolveEntryByModel(apiType: PricingApiType, model: string): PricingRes
     return { status: 'not_configured' }
   }
   if (candidates.length > 1) {
+    // Central EvoLink mode: every call goes through EvoLink, so a bare model id that other
+    // providers share (e.g. gemini-3-flash-preview under google too) is the EvoLink one.
+    const central = isCentralEvolinkEnabled()
+      ? candidates.find((candidate) => candidate.provider === CENTRAL_EVOLINK_PROVIDER_ID)
+      : undefined
+    if (central) {
+      return { status: 'resolved', entry: central, amount: 0, mode: central.pricing.mode }
+    }
     return {
       status: 'ambiguous_model',
       apiType,

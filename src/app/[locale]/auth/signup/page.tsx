@@ -1,13 +1,20 @@
 'use client'
 
-import { useState } from "react"
-import { signIn } from "next-auth/react"
+import { useEffect, useState } from "react"
+import { getProviders, signIn } from "next-auth/react"
 import { useTranslations } from 'next-intl'
 import PasswordStrengthIndicator from "@/components/auth/PasswordStrengthIndicator"
 import { apiFetch } from '@/lib/api-fetch'
 import { Link, useRouter } from '@/i18n/navigation'
 import { buildAuthenticatedHomeTarget } from '@/lib/home/default-route'
 import { trackEvent } from '@/lib/analytics'
+import { BRAND_NAME, BrandWordmark } from '@/components/BrandWordmark'
+import { AuthBrandPanel, AuthMobileHero } from '@/components/auth/AuthBrandPanel'
+import { PasswordInput } from '@/components/auth/PasswordInput'
+import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton'
+import { SITE } from '@/lib/site-config'
+
+const INPUT_CLASS = 'w-full px-4 py-3 border border-[#e5e5e5] rounded-lg bg-white text-[#171717] placeholder:text-[#a3a3a3] focus:border-[#8020fc] focus:ring-2 focus:ring-[#8020fc]/15 outline-none transition'
 
 function resolveSignupErrorKey(data: Record<string, unknown>): {
   key: string
@@ -20,6 +27,12 @@ function resolveSignupErrorKey(data: Record<string, unknown>): {
 
   if (code === 'CONFLICT' && field === 'name' && reason === 'taken') {
     return { key: 'errors.usernameTaken' }
+  }
+  if (code === 'CONFLICT' && field === 'email' && reason === 'taken') {
+    return { key: 'errors.emailTaken' }
+  }
+  if (code === 'INVALID_PARAMS' && field === 'email') {
+    return { key: reason === 'required' ? 'errors.emailRequired' : 'errors.emailInvalid' }
   }
   if (code === 'INVALID_PARAMS' && field === 'name' && reason === 'required') {
     return { key: 'errors.usernameRequired' }
@@ -43,7 +56,12 @@ export default function SignUp() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
+  const [googleEnabled, setGoogleEnabled] = useState(false)
   const router = useRouter()
+
+  useEffect(() => {
+    getProviders().then((providers) => setGoogleEnabled(Boolean(providers?.google))).catch(() => {})
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -111,26 +129,38 @@ export default function SignUp() {
   return (
     <div className="min-h-screen flex bg-white">
       {/* Left — Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center px-8">
+      <div className="w-full lg:w-1/2 flex items-start sm:items-center justify-center px-5 py-8 sm:px-8 sm:py-12">
         <div className="w-full max-w-sm">
-          <div className="flex items-center gap-2 mb-8">
+          <AuthMobileHero />
+          <Link href={{ pathname: '/' as never }} className="flex items-center gap-2 mb-8 sm:mb-10">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo-small.png" alt="AIDrama" className="h-8 w-auto" />
-            <span className="text-2xl font-bold tracking-tight text-[#171717]">AIDrama</span>
-          </div>
+            <img src="/logo-small.png" alt={BRAND_NAME} className="h-8 w-auto" />
+            <BrandWordmark className="text-2xl font-bold tracking-tight text-[#171717]" />
+          </Link>
 
-          <h1 className="text-2xl font-semibold text-[#171717]">
+          <h1 className="text-3xl font-bold text-[#171717]">
             {t('signup.title')}
           </h1>
           <p className="mt-2 text-[#737373]">
             {t('signup.subtitle')}
           </p>
 
-          <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+          {googleEnabled && (
+            <>
+              <GoogleSignInButton label={t('signup.google')} className="mt-8" />
+              <div className="my-6 flex items-center gap-3 text-xs font-medium text-[#a3a3a3]">
+                <span className="h-px flex-1 bg-[#e5e5e5]" />
+                {t('signin.or')}
+                <span className="h-px flex-1 bg-[#e5e5e5]" />
+              </div>
+            </>
+          )}
+
+          <form onSubmit={handleSubmit} className={`${googleEnabled ? '' : 'mt-8'} space-y-5`}>
             <div>
               <label
                 htmlFor="name"
-                className="block text-sm font-medium text-[#737373] mb-1.5"
+                className="block text-sm font-medium text-[#404040] mb-1.5"
               >
                 {t('signup.usernameLabel')}
               </label>
@@ -142,7 +172,7 @@ export default function SignUp() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                className="w-full px-4 py-3 border border-[#e5e5e5] rounded-md bg-white text-[#171717] placeholder:text-[#a3a3a3] focus:border-black focus:ring-2 focus:ring-black/5 outline-none transition"
+                className={INPUT_CLASS}
                 placeholder={t('signup.usernamePlaceholder')}
               />
             </div>
@@ -150,7 +180,7 @@ export default function SignUp() {
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-[#737373] mb-1.5"
+                className="block text-sm font-medium text-[#404040] mb-1.5"
               >
                 {t('signup.emailLabel')}
               </label>
@@ -161,7 +191,8 @@ export default function SignUp() {
                 autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 border border-[#e5e5e5] rounded-md bg-white text-[#171717] placeholder:text-[#a3a3a3] focus:border-black focus:ring-2 focus:ring-black/5 outline-none transition"
+                required
+                className={INPUT_CLASS}
                 placeholder={t('signup.emailPlaceholder')}
               />
             </div>
@@ -169,7 +200,7 @@ export default function SignUp() {
             <div>
               <label
                 htmlFor="phone"
-                className="block text-sm font-medium text-[#737373] mb-1.5"
+                className="block text-sm font-medium text-[#404040] mb-1.5"
               >
                 {t('signup.phoneLabel')}
               </label>
@@ -180,7 +211,7 @@ export default function SignUp() {
                 autoComplete="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full px-4 py-3 border border-[#e5e5e5] rounded-md bg-white text-[#171717] placeholder:text-[#a3a3a3] focus:border-black focus:ring-2 focus:ring-black/5 outline-none transition"
+                className={INPUT_CLASS}
                 placeholder={t('signup.phonePlaceholder')}
               />
             </div>
@@ -188,19 +219,18 @@ export default function SignUp() {
             <div>
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-[#737373] mb-1.5"
+                className="block text-sm font-medium text-[#404040] mb-1.5"
               >
                 {t('signup.passwordLabel')}
               </label>
-              <input
+              <PasswordInput
                 id="password"
                 name="password"
-                type="password"
                 autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full px-4 py-3 border border-[#e5e5e5] rounded-md bg-white text-[#171717] placeholder:text-[#a3a3a3] focus:border-black focus:ring-2 focus:ring-black/5 outline-none transition"
+                className={INPUT_CLASS}
                 placeholder={t('signup.passwordPlaceholder')}
               />
               <PasswordStrengthIndicator password={password} />
@@ -209,31 +239,30 @@ export default function SignUp() {
             <div>
               <label
                 htmlFor="confirmPassword"
-                className="block text-sm font-medium text-[#737373] mb-1.5"
+                className="block text-sm font-medium text-[#404040] mb-1.5"
               >
                 {t('signup.confirmPasswordLabel')}
               </label>
-              <input
+              <PasswordInput
                 id="confirmPassword"
                 name="confirmPassword"
-                type="password"
                 autoComplete="new-password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
-                className="w-full px-4 py-3 border border-[#e5e5e5] rounded-md bg-white text-[#171717] placeholder:text-[#a3a3a3] focus:border-black focus:ring-2 focus:ring-black/5 outline-none transition"
+                className={INPUT_CLASS}
                 placeholder={t('signup.confirmPasswordPlaceholder')}
               />
             </div>
 
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
+              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
                 {error}
               </div>
             )}
 
             {success && (
-              <div className="bg-emerald-50 border border-emerald-200 text-emerald-600 px-4 py-3 rounded-md text-sm">
+              <div className="bg-emerald-50 border border-emerald-200 text-emerald-600 px-4 py-3 rounded-lg text-sm">
                 {success}
               </div>
             )}
@@ -241,17 +270,23 @@ export default function SignUp() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-black text-white rounded-md font-medium hover:bg-[#262626] transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3 rounded-lg font-semibold text-white bg-gradient-to-r from-[#8020fc] to-[#5b3df5] shadow-lg shadow-[#8020fc]/25 hover:brightness-110 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? t('signup.submitLoading') : t('signup.submit')}
             </button>
           </form>
 
+          <p className="mt-4 text-center text-xs leading-relaxed text-[#a3a3a3]">
+            By creating an account you agree to our{' '}
+            <a href={SITE.termsUrl} className="text-[#737373] underline hover:text-[#8020fc]">Terms of Service</a>{' '}and{' '}
+            <a href={SITE.privacyUrl} className="text-[#737373] underline hover:text-[#8020fc]">Privacy Policy</a>.
+          </p>
+
           <p className="mt-6 text-center text-sm text-[#737373]">
             {t('signup.hasAccount')}{" "}
             <Link
               href={{ pathname: '/auth/signin' }}
-              className="text-black font-medium hover:underline"
+              className="font-semibold text-[#8020fc] hover:underline"
             >
               {t('signup.signinLink')}
             </Link>
@@ -259,20 +294,7 @@ export default function SignUp() {
         </div>
       </div>
 
-      {/* Right — Brand panel */}
-      <div className="hidden lg:flex lg:w-1/2 bg-[#1a1a1a] items-center justify-center rounded-l-3xl relative overflow-hidden">
-        <div className="relative z-10 max-w-md px-12 text-center">
-          <h2 className="text-4xl font-mono font-semibold text-white leading-tight whitespace-pre-line">
-            {t('brand.headline')}
-          </h2>
-          <p className="mt-4 text-gray-400 text-lg">
-            {t('brand.description')}
-          </p>
-        </div>
-
-        {/* Bottom glow decoration */}
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[200px] bg-gradient-to-t from-emerald-500/10 to-transparent rounded-full blur-3xl" />
-      </div>
+      <AuthBrandPanel headline={t('brand.headline')} description={t('brand.description')} />
     </div>
   )
 }

@@ -379,7 +379,7 @@ export function ModelDropdownV4(props: ModelDropdownTestProps) {
                 <div ref={panelRef} style={panelStyle} className="glass-surface-modal rounded-[16px] shadow-[0_16px_50px_rgba(0,0,0,0.12)] border border-[var(--glass-stroke-base)] overflow-hidden flex flex-col bg-white dark:bg-[#1C1C1E]">
                     {/* Top: Models */}
                     <div className="px-3 pt-3 pb-2 bg-[var(--glass-bg-base)]">
-                        <div className="text-[12px] font-bold text-[var(--glass-text-secondary)] mb-2 px-1">选择模型</div>
+                        <div className="text-[12px] font-bold text-[var(--glass-text-secondary)] mb-2 px-1">Choose a model</div>
                         <div className="overflow-y-auto max-h-[160px] custom-scrollbar space-y-1 pr-1">
                             {props.models.map(m => {
                                 const active = m.value === props.value
@@ -402,7 +402,7 @@ export function ModelDropdownV4(props: ModelDropdownTestProps) {
                     {/* Bottom: Settings */}
                     {props.capabilityFields.length > 0 && (
                         <div className="p-4 bg-[var(--glass-bg-surface)] border-t border-[var(--glass-stroke-subtle)] space-y-4">
-                            <div className="text-[12px] font-bold text-[var(--glass-text-secondary)]">参数配置</div>
+                            <div className="text-[12px] font-bold text-[var(--glass-text-secondary)]">Settings</div>
                             {props.capabilityFields.map(field => {
                                 const val = props.capabilityOverrides[field.field] !== undefined ? String(props.capabilityOverrides[field.field]) : String(field.options[0] || '')
 

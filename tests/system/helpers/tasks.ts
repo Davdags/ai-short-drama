@@ -36,13 +36,32 @@ export async function waitForTaskTerminalState(taskId: string, options: WaitTask
   throw new Error(`TASK_WAIT_TIMEOUT: ${taskId}`)
 }
 
-export async function listTaskEventTypes(taskId: string): Promise<TaskEventType[]> {
-  const events = await prisma.taskEvent.findMany({
-    where: { taskId },
-    orderBy: { createdAt: 'asc' },
-    select: { eventType: true },
-  })
-  return events.map((event) => event.eventType as TaskEventType)
+const TERMINAL_EVENT_TYPES = new Set<TaskEventType>([
+  TASK_EVENT_TYPE.COMPLETED,
+  TASK_EVENT_TYPE.FAILED,
+])
+
+/**
+ * The task row turns terminal a moment before its terminal event row is written, so reading
+ * events straight after waitForTaskTerminalState raced and failed on busy machines. Wait
+ * (briefly) for the terminal event before returning.
+ */
+export async function listTaskEventTypes(taskId: string, options: WaitTaskOptions = {}): Promise<TaskEventType[]> {
+  const timeoutMs = options.timeoutMs ?? 5_000
+  const intervalMs = options.intervalMs ?? 100
+  const startedAt = Date.now()
+  let types: TaskEventType[] = []
+  do {
+    const events = await prisma.taskEvent.findMany({
+      where: { taskId },
+      orderBy: { createdAt: 'asc' },
+      select: { eventType: true },
+    })
+    types = events.map((event) => event.eventType as TaskEventType)
+    if (types.some((type) => TERMINAL_EVENT_TYPES.has(type))) return types
+    await sleep(intervalMs)
+  } while (Date.now() - startedAt <= timeoutMs)
+  return types
 }
 
 export function expectLifecycleEvents(types: ReadonlyArray<TaskEventType>, terminal: 'completed' | 'failed') {

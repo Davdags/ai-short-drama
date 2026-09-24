@@ -55,7 +55,7 @@ function LazyVideo({ src }: { src: string }) {
 function WorkflowCard({ workflow, runLabel }: { workflow: WorkflowDefinition; runLabel: string }) {
   return (
     <Link
-      href={`/workflows/${workflow.slug}`}
+      href={{ pathname: `/workflows/${workflow.slug}` } as never}
       className="group relative block bg-white border border-[#e5e5e5] rounded-2xl overflow-hidden transition-all hover:border-[#0a0a0a] hover:-translate-y-0.5"
     >
       {workflow.trending && (

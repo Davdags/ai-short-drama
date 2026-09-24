@@ -1,6 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
+import { notifyAlert } from '@/lib/ui/notify'
 /**
  * 场景卡片组件 - 支持多图片选择
  * 布局：上面名字+描述，下面三张图片
@@ -87,11 +88,11 @@ export default function LocationCard({
       },
       {
         onSuccess: () => {
-          alert(t('image.uploadSuccess'))
+          notifyAlert(t('image.uploadSuccess'))
         },
         onError: (error) => {
           if (shouldShowError(error)) {
-            alert(t('image.uploadFailedError', { error: error.message }))
+            notifyAlert(t('image.uploadFailedError', { error: error.message }))
           }
         },
         onSettled: () => {

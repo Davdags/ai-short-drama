@@ -157,8 +157,10 @@ export const ART_STYLES = [
     value: 'realistic',
     label: 'Realistic',
     preview: 'R',
-    promptZh: '真实电影级画面质感，真实现实场景，色彩饱满通透，画面干净精致，真实感',
-    promptEn: 'Realistic cinematic look, real-world scene fidelity, rich transparent colors, clean and refined image quality.'
+    promptZh: '照片级写实电影剧照：真人演员在真实场景中实拍，电影摄影机35mm镜头拍摄，真实皮肤纹理与毛孔，真实布料与发丝细节，自然光影，自然调色，轻微胶片颗粒，浅景深。不是插画，不是绘画，不是动漫，不是卡通，不是3D渲染，不是CG。',
+    // Customers found the old wording ("realistic cinematic look") came out painted or animated.
+    // Image models need to be told it is a photograph, and told what it must not be.
+    promptEn: 'Photorealistic live-action film still: a real photograph of real actors on a real location, shot on a cinema camera with a 35mm lens. Natural skin texture with visible pores, real fabric and hair detail, motivated natural lighting, natural color grading, subtle film grain, shallow depth of field. Not an illustration, not a painting, not anime, not a cartoon, not a 3D render, not CGI.'
   }
 ]
 
@@ -185,11 +187,17 @@ export function getArtStylePrompt(
   return locale === 'en' ? style.promptEn : style.promptZh
 }
 
-// 角色形象生成的系统后缀（始终添加到提示词末尾，不显示给用户）- 左侧面部特写+右侧三视图
-export const CHARACTER_PROMPT_SUFFIX = '角色设定图，画面分为左右两个区域：【左侧区域】占约1/3宽度，是角色的正面特写（如果是人类则展示完整正脸，如果是动物/生物则展示最具辨识度的正面形态）；【右侧区域】占约2/3宽度，是角色三视图横向排列（从左到右依次为：正面全身、侧面全身、背面全身），三视图高度一致。纯白色背景，无其他元素。'
+// Character sheet layout, always appended to character prompts and hidden from users:
+// face close-up on the left, front/side/back full-body views on the right.
+export const CHARACTER_PROMPT_SUFFIX = 'Character reference sheet. Left third: a front-facing close-up of the face (for an animal or creature, its most recognisable front view). Right two-thirds: three full-body views side by side at the same height, from left to right: front, side, back. Plain white background, nothing else in the frame.'
+
+/** The original Chinese wording, still stripped from prompts saved before it was translated. */
+const LEGACY_CHARACTER_PROMPT_SUFFIX = '角色设定图，画面分为左右两个区域：【左侧区域】占约1/3宽度，是角色的正面特写（如果是人类则展示完整正脸，如果是动物/生物则展示最具辨识度的正面形态）；【右侧区域】占约2/3宽度，是角色三视图横向排列（从左到右依次为：正面全身、侧面全身、背面全身），三视图高度一致。纯白色背景，无其他元素。'
 
 // 场景图片生成的系统后缀（已禁用四视图，直接生成单张场景图）
-export const LOCATION_PROMPT_SUFFIX = ''
+// A location is a set the characters are later placed into, so it is drawn empty. Without
+// this, models filled the office with invented people (one resembled a well-known actor).
+export const LOCATION_PROMPT_SUFFIX = 'Show the location as an empty set: no people, figures or silhouettes anywhere in the frame.'
 
 // 角色图片生成比例（16:9横版，左侧面部特写+右侧全身）
 export const CHARACTER_IMAGE_RATIO = '16:9'
@@ -208,20 +216,24 @@ export const LOCATION_IMAGE_BANANA_RATIO = '1:1'
 // 从提示词中移除角色系统后缀（用于显示给用户）
 export function removeCharacterPromptSuffix(prompt: string): string {
   if (!prompt) return ''
-  return prompt.replace(CHARACTER_PROMPT_SUFFIX, '').trim()
+  return prompt
+    .replace(CHARACTER_PROMPT_SUFFIX, '')
+    .replace(LEGACY_CHARACTER_PROMPT_SUFFIX, '')
+    .replace(/[，,]s*$/, '')
+    .trim()
 }
 
 // 添加角色系统后缀到提示词（用于生成图片）
 export function addCharacterPromptSuffix(prompt: string): string {
   if (!prompt) return CHARACTER_PROMPT_SUFFIX
   const cleanPrompt = removeCharacterPromptSuffix(prompt)
-  return `${cleanPrompt}${cleanPrompt ? '，' : ''}${CHARACTER_PROMPT_SUFFIX}`
+  return `${cleanPrompt}${cleanPrompt ? '. ' : ''}${CHARACTER_PROMPT_SUFFIX}`
 }
 
 // 从提示词中移除场景系统后缀（用于显示给用户）
 export function removeLocationPromptSuffix(prompt: string): string {
   if (!prompt) return ''
-  return prompt.replace(LOCATION_PROMPT_SUFFIX, '').replace(/，$/, '').trim()
+  return prompt.replace(LOCATION_PROMPT_SUFFIX, '').replace(/[，,.]s*$/, '').trim()
 }
 
 // 添加场景系统后缀到提示词（用于生成图片）
@@ -230,7 +242,7 @@ export function addLocationPromptSuffix(prompt: string): string {
   if (!LOCATION_PROMPT_SUFFIX) return prompt || ''
   if (!prompt) return LOCATION_PROMPT_SUFFIX
   const cleanPrompt = removeLocationPromptSuffix(prompt)
-  return `${cleanPrompt}${cleanPrompt ? '，' : ''}${LOCATION_PROMPT_SUFFIX}`
+  return `${cleanPrompt}${cleanPrompt ? '. ' : ''}${LOCATION_PROMPT_SUFFIX}`
 }
 
 /**

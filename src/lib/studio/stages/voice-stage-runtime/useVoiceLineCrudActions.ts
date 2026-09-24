@@ -4,6 +4,7 @@ import { useCallback } from 'react'
 import { shouldShowError } from '@/lib/error-utils'
 import { getErrorMessage } from './utils'
 import type { PendingVoiceGenerationMap, VoiceLine } from './types'
+import { notifyAlert } from '@/lib/ui/notify'
 
 interface MutationLike<TInput = unknown, TOutput = unknown> {
   mutateAsync: (input: TInput) => Promise<TOutput>
@@ -51,7 +52,7 @@ export function useVoiceLineCrudActions({
     const speaker = editingSpeaker.trim()
 
     if (!content || !speaker) {
-      alert(t('errors.invalidLineInput'))
+      notifyAlert(t('errors.invalidLineInput'))
       return
     }
 
@@ -95,7 +96,7 @@ export function useVoiceLineCrudActions({
     } catch (error: unknown) {
       if (shouldShowError(error)) {
         const message = editingLineId ? t('errors.saveFailed') : t('errors.addFailed')
-        alert(`${message}: ${getErrorMessage(error)}`)
+        notifyAlert(`${message}: ${getErrorMessage(error)}`)
       }
     } finally {
       setIsSavingLineEditor(false)
@@ -140,7 +141,7 @@ export function useVoiceLineCrudActions({
       notifyVoiceLinesChanged()
     } catch (error: unknown) {
       if (shouldShowError(error)) {
-        alert(`${t('errors.deleteFailed')}: ${getErrorMessage(error)}`)
+        notifyAlert(`${t('errors.deleteFailed')}: ${getErrorMessage(error)}`)
       }
     }
   }, [
@@ -166,7 +167,7 @@ export function useVoiceLineCrudActions({
       notifyVoiceLinesChanged()
     } catch (error: unknown) {
       if (shouldShowError(error)) {
-        alert(`${t('errors.deleteAudioFailed')}: ${getErrorMessage(error)}`)
+        notifyAlert(`${t('errors.deleteAudioFailed')}: ${getErrorMessage(error)}`)
       }
     }
   }, [notifyVoiceLinesChanged, setVoiceLines, t, updateVoiceLineMutation, voiceLines])
@@ -183,7 +184,7 @@ export function useVoiceLineCrudActions({
       )))
     } catch (error: unknown) {
       if (shouldShowError(error)) {
-        alert(`${t('errors.emotionSaveFailed')}: ${getErrorMessage(error)}`)
+        notifyAlert(`${t('errors.emotionSaveFailed')}: ${getErrorMessage(error)}`)
       }
     }
   }, [setVoiceLines, t, updateVoiceLineMutation])

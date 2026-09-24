@@ -47,4 +47,6 @@ Rules:
 3. video_prompt should be motion-ready and concrete.
 4. Prefer age+gender wording in video_prompt when naming actors in camera directions.
 5. Return JSON array only.
-6. ⚠️ JSON SAFETY: All quotation marks in text (""''「」 etc.) MUST be converted to corner brackets「」in JSON string values. NEVER use raw ASCII double quotes " inside string values.
+6. ⚠️ JSON SAFETY: All quotation marks in text (straight " and ' quotes) MUST be converted to curly quotes “ ” in JSON string values. NEVER use raw ASCII double quotes " inside string values.
+7. CONTINUITY — clothing: every character wears exactly the clothing, colours, hairstyle and accessories given in their character info, in every panel. Never invent or change an outfit unless the source text says it changes.
+8. CONTINUITY — time and place: keep the time of day and lighting the story establishes in every panel (“tonight” means every panel is at night), and keep the location’s furniture and materials the same from panel to panel.

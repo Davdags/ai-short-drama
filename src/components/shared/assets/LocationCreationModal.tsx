@@ -19,6 +19,7 @@ import {
 import { useImageGenerationCount } from '@/lib/image-generation/use-image-generation-count'
 import ImageGenerationInlineCountButton from '@/components/image-generation/ImageGenerationInlineCountButton'
 import { getImageGenerationCountOptions } from '@/lib/image-generation/count'
+import { notifyAlert } from '@/lib/ui/notify'
 
 export interface LocationCreationModalProps {
     mode: 'asset-hub' | 'project'
@@ -122,11 +123,11 @@ export function LocationCreationModal({
             setAiInstruction('')
         } catch (error: unknown) {
             if (getErrorStatus(error) === 402) {
-                alert(getErrorMessage(error, t('errors.insufficientBalance')))
+                notifyAlert(getErrorMessage(error, t('errors.insufficientBalance')))
             } else {
                 _ulogError('AI设计失败:', error)
                 if (shouldShowError(error)) {
-                    alert(getErrorMessage(error, t('errors.aiDesignFailed')))
+                    notifyAlert(getErrorMessage(error, t('errors.aiDesignFailed')))
                 }
             }
         } finally {
@@ -181,9 +182,9 @@ export function LocationCreationModal({
             onClose()
         } catch (error: unknown) {
             if (getErrorStatus(error) === 402) {
-                alert(getErrorMessage(error, t('errors.insufficientBalance')))
+                notifyAlert(getErrorMessage(error, t('errors.insufficientBalance')))
             } else if (shouldShowError(error)) {
-                alert(getErrorMessage(error, t('errors.createFailed')))
+                notifyAlert(getErrorMessage(error, t('errors.createFailed')))
             }
         } finally {
             setIsSubmitting(false)
@@ -235,9 +236,9 @@ export function LocationCreationModal({
             onClose()
         } catch (error: unknown) {
             if (getErrorStatus(error) === 402) {
-                alert(getErrorMessage(error, t('errors.insufficientBalance')))
+                notifyAlert(getErrorMessage(error, t('errors.insufficientBalance')))
             } else if (shouldShowError(error)) {
-                alert(getErrorMessage(error, t('errors.createFailed')))
+                notifyAlert(getErrorMessage(error, t('errors.createFailed')))
             }
         } finally {
             setIsSubmitting(false)

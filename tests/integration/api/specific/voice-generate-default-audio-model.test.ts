@@ -175,7 +175,7 @@ describe('api specific - voice generate default audio model', () => {
     expect(res.status).toBe(400)
 
     const json = await res.json()
-    expect(json.error?.message).toBe('无音色ID，QwenTTS 必须使用 AI 设计音色')
+    expect(json.error?.message).toBe('This speaker has no voice yet. Design an AI voice for them first.')
     expect(submitTaskMock).not.toHaveBeenCalled()
   })
 })

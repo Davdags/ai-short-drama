@@ -6,12 +6,23 @@ import { markTaskFailed } from '@/lib/task/service'
 import { publishTaskEvent } from '@/lib/task/publisher'
 import { TASK_EVENT_TYPE, TASK_TYPE, type TaskType } from '@/lib/task/types'
 import { cleanupAllProjectLogs } from '@/lib/logging/file-writer'
+import { checkEvolinkBalanceAndAlert, fetchEvolinkBalance } from '@/lib/providers/evolink/balance-alert'
+import { listCentralEvolinkKeys } from '@/lib/providers/evolink/central'
+import { sendAdminDailySummary } from '@/lib/email/notifications'
 
 const INTERVAL_MS = Number.parseInt(process.env.WATCHDOG_INTERVAL_MS || '30000', 10) || 30000
 const HEARTBEAT_TIMEOUT_MS = Number.parseInt(process.env.TASK_HEARTBEAT_TIMEOUT_MS || '90000', 10) || 90000
 const TASK_TYPE_SET: ReadonlySet<string> = new Set(Object.values(TASK_TYPE))
 // 每小时执行一次日志清理
 const LOG_CLEANUP_INTERVAL_TICKS = Math.ceil(3600_000 / INTERVAL_MS)
+// Check the central EvoLink balance every 10 minutes
+const BALANCE_CHECK_INTERVAL_TICKS = Math.max(1, Math.ceil(600_000 / INTERVAL_MS))
+async function sendDailySummaryWithBalance() {
+  const key = listCentralEvolinkKeys()[0]
+  const balance = key ? await fetchEvolinkBalance(key).catch(() => null) : null
+  await sendAdminDailySummary({ evolinkCredits: balance?.accountCredits ?? null })
+}
+
 let tickCount = 0
 const logger = createScopedLogger({
   module: 'watchdog',
@@ -193,6 +204,11 @@ async function tick() {
     // 每小时清理一次日志（过滤 24h 前内容）
     if (tickCount % LOG_CLEANUP_INTERVAL_TICKS === 0) {
       void cleanupAllProjectLogs()
+    }
+    if (tickCount % BALANCE_CHECK_INTERVAL_TICKS === 1 || BALANCE_CHECK_INTERVAL_TICKS === 1) {
+      void checkEvolinkBalanceAndAlert()
+      // Owner daily summary: once per day, after 07:00 UTC (the email log prevents repeats).
+      if (new Date().getUTCHours() >= 7) void sendDailySummaryWithBalance()
     }
     logger.info({
       action: 'watchdog.tick.ok',

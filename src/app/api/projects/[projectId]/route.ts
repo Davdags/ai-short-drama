@@ -76,10 +76,21 @@ export const PATCH = apiHandler(async (
     throw new ApiError('FORBIDDEN')
   }
 
+  // Only user-editable fields: never pass the raw body (it could set userId or other internal fields).
+  const data: { name?: string; description?: string | null } = {}
+  if (typeof body?.name === 'string') {
+    const name = body.name.trim()
+    if (!name || name.length > 100) throw new ApiError('INVALID_PARAMS', { field: 'name' })
+    data.name = name
+  }
+  if (body?.description === null || typeof body?.description === 'string') {
+    data.description = typeof body.description === 'string' ? body.description.slice(0, 2000) : null
+  }
+
   // 更新项目
   const updatedProject = await prisma.project.update({
     where: { id: projectId },
-    data: body
+    data,
   })
 
   logProjectAction(

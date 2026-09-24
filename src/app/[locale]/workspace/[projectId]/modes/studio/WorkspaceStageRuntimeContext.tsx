@@ -23,6 +23,7 @@ export interface WorkspaceStageRuntimeValue {
   isStartingScriptToStoryboard: boolean
   videoRatio: string | null | undefined
   artStyle: string | null | undefined
+  analysisModel: string | null | undefined
   videoModel: string | null | undefined
   capabilityOverrides: CapabilitySelections
   userVideoModels: WorkspaceStageVideoModelOption[]

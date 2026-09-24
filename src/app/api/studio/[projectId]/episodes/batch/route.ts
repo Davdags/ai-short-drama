@@ -55,7 +55,7 @@ export const POST = apiHandler(async (
         return NextResponse.json({
             success: true,
             episodes: [],
-            message: '已清空剧集'
+            message: 'Episodes cleared'
         })
     }
 

@@ -56,5 +56,6 @@ Rules:
 2. Keep scene/content order aligned with source text.
 3. Resolve character aliases to canonical names when possible.
 4. Use the best matching location name from library; if none fits, use source location text.
+4b. Time of day: use what the clip text states or clearly implies. If it says nothing, write "continuous" (same as the scene before) — never guess “day”, because a story that began “tonight” would suddenly turn to daylight.
 5. Return strict JSON only.
-6. ⚠️ JSON SAFETY: All quotation marks in dialogue (""''「」 etc.) MUST be converted to corner brackets「」in JSON string values. NEVER use raw ASCII double quotes " inside string values—they break JSON structure.
+6. ⚠️ JSON SAFETY: All quotation marks in dialogue (straight " and ' quotes) MUST be converted to curly quotes “ ” in JSON string values. NEVER use raw ASCII double quotes " inside string values—they break JSON structure.

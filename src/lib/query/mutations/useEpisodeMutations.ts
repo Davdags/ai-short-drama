@@ -22,7 +22,7 @@ export function useListProjectEpisodes(projectId: string) {
           description?: string
           novelText?: string
         }>
-      }>(`/api/studio/${projectId}/episodes`, { method: 'GET' }, '获取剧集失败'),
+      }>(`/api/studio/${projectId}/episodes`, { method: 'GET' }, 'Could not load episodes'),
   })
 }
 
@@ -39,7 +39,7 @@ export function useSplitProjectEpisodes(projectId: string) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         },
-        '分割失败',
+        'Could not split',
       )
       return resolveTaskResponse<{
         episodes: Array<{
@@ -75,7 +75,7 @@ export function useSplitProjectEpisodesByMarkers(projectId: string) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         },
-        '分割失败',
+        'Could not split',
       ),
   })
 }
@@ -102,7 +102,7 @@ export function useSaveProjectEpisodesBatch(projectId: string) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         },
-        '保存剧集失败',
+        'Could not save the episode',
       ),
   })
 }
@@ -251,7 +251,7 @@ export function useDownloadRemoteBlob() {
       await requestBlobWithError(
         url,
         { method: 'GET' },
-        '下载失败',
+        'Download failed',
       ),
   })
 }

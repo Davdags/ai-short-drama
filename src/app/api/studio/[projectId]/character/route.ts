@@ -176,12 +176,12 @@ export const POST = apiHandler(async (
   })
 
   // 创建初始形象（独立表）
-  const descText = description || `${name} 的角色设定`
+  const descText = description || `Character profile for ${name}`
   const appearance = await prisma.characterAppearance.create({
     data: {
       characterId: character.id,
       appearanceIndex: PRIMARY_APPEARANCE_INDEX,
-      changeReason: '初始形象',
+      changeReason: 'Initial look',
       description: descText,
       descriptions: JSON.stringify([descText]),
       imageUrls: encodeImageUrls([]),

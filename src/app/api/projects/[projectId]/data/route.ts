@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { requireUserAuth, isErrorResponse } from '@/lib/api-auth'
 import { apiHandler, ApiError } from '@/lib/api-errors'
 import { attachMediaFieldsToProject } from '@/lib/media/attach'
+import { mergeCapabilitySelectionJson } from '@/lib/model-capabilities/merge-selections'
 
 function readAssetKind(value: Record<string, unknown>): string {
   return typeof value.assetKind === 'string' ? value.assetKind : 'location'
@@ -27,7 +28,8 @@ export const GET = apiHandler(async (
   // 获取基础项目信息
   const project = await prisma.project.findUnique({
     where: { id: projectId },
-    include: { user: true }
+    // Only public owner fields: never send the account record (password hash, email) to the browser.
+    include: { user: { select: { id: true, name: true } } }
   })
 
   if (!project) {
@@ -75,8 +77,14 @@ export const GET = apiHandler(async (
 
   // 转换为稳定媒体 URL（并保留兼容字段）
   const studioDataWithSignedUrls = await attachMediaFieldsToProject(studioData)
+  const userPreference = await prisma.userPreference.findUnique({
+    where: { userId: session.user.id },
+    select: { capabilityDefaults: true },
+  })
   const filteredStudioData = {
     ...studioDataWithSignedUrls,
+    // The Video page reads these; account defaults (e.g. generated audio off) sit under project choices.
+    capabilityOverrides: mergeCapabilitySelectionJson(userPreference?.capabilityDefaults, studioDataWithSignedUrls.capabilityOverrides),
     locations: (studioDataWithSignedUrls.locations || []).filter((item) => readAssetKind(item) !== 'prop'),
     props: (studioDataWithSignedUrls.locations || []).filter((item) => readAssetKind(item) === 'prop'),
   }

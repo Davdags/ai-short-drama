@@ -18,7 +18,7 @@ export function useListProjectEpisodeVideoUrls(projectId: string) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         },
-        '获取视频列表失败',
+        'Could not load videos',
       ),
   })
 }
@@ -40,7 +40,7 @@ export function useUpdateProjectPanelLink(projectId: string) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         },
-        '保存链接状态失败',
+        'Could not save',
       ),
   })
 }

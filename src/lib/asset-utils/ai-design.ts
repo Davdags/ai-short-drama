@@ -47,14 +47,14 @@ export async function aiDesign(options: AIDesignOptions): Promise<AIDesignResult
     if (!userInstruction?.trim()) {
         return {
             success: false,
-            error: assetType === 'character' ? '请输入人物设计需求' : '请输入场景设计需求'
+            error: assetType === 'character' ? 'Please describe the character you want' : 'Please describe the location you want'
         }
     }
 
     if (!analysisModel) {
         return {
             success: false,
-            error: '请先在用户配置中设置分析模型'
+            error: 'Please choose an analysis model in Model preferences first'
         }
     }
 
@@ -71,7 +71,7 @@ export async function aiDesign(options: AIDesignOptions): Promise<AIDesignResult
         })
     } catch {
         _ulogError('[AI Design] 提示词加载失败')
-        return { success: false, error: '系统配置错误' }
+        return { success: false, error: 'System configuration error' }
     }
 
     // 调用 LLM
@@ -88,7 +88,7 @@ export async function aiDesign(options: AIDesignOptions): Promise<AIDesignResult
             action,
             meta: {
                 stepId: action,
-                stepTitle: assetType === 'character' ? '角色设计' : '场景设计',
+                stepTitle: assetType === 'character' ? 'Character design' : 'Location design',
                 stepIndex: 1,
                 stepTotal: 1,
             },
@@ -107,7 +107,7 @@ export async function aiDesign(options: AIDesignOptions): Promise<AIDesignResult
     const aiResponse = completion.text
 
     if (!aiResponse) {
-        return { success: false, error: 'AI返回内容为空' }
+        return { success: false, error: 'The AI returned an empty result' }
     }
 
     // 解析 JSON 响应
@@ -121,16 +121,16 @@ export async function aiDesign(options: AIDesignOptions): Promise<AIDesignResult
                 parsedResponse = JSON.parse(jsonMatch[0])
             } catch {
                 _ulogError('[AI Design] AI 响应解析失败:', aiResponse)
-                return { success: false, error: 'AI返回格式错误' }
+                return { success: false, error: 'The AI returned an invalid format' }
             }
         } else {
             _ulogError('[AI Design] AI 响应解析失败:', aiResponse)
-            return { success: false, error: 'AI返回格式错误' }
+            return { success: false, error: 'The AI returned an invalid format' }
         }
     }
 
     if (!parsedResponse.prompt) {
-        return { success: false, error: 'AI返回缺少prompt字段' }
+        return { success: false, error: 'The AI result is missing its prompt' }
     }
 
     return {

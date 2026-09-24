@@ -1,5 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+// Messages go to the app's notification cards now, not the browser's alert().
+const notifyMock = vi.hoisted(() => ({
+  notifyAlert: vi.fn(),
+  notify: { success: vi.fn(), info: vi.fn(), warning: vi.fn(), error: vi.fn() },
+}))
+vi.mock('@/lib/ui/notify', () => notifyMock)
+
 const {
   generateVideoMutateAsyncMock,
   batchGenerateVideosMutateAsyncMock,
@@ -66,6 +73,6 @@ describe('useWorkspaceVideoActions', () => {
       actions.handleGenerateVideo('storyboard-1', 0, 'veo-3.1'),
     ).rejects.toThrow('video submit failed')
 
-    expect(globalThis.alert).toHaveBeenCalledWith('execution.generationFailed: video submit failed')
+    expect(notifyMock.notifyAlert).toHaveBeenCalledWith('execution.generationFailed: video submit failed')
   })
 })

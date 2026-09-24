@@ -116,7 +116,7 @@ export const GET = apiHandler(async (
     for (const panel of panels) {
       if (panel.imageUrl) {
         images.push({
-          description: panel.description || `镜头`,
+          description: panel.description || `Shot`,
           imageUrl: panel.imageUrl,
           clipIndex: clipIndex >= 0 ? clipIndex : 999,
           panelIndex: panel.panelIndex || 0

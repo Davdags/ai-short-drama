@@ -8,7 +8,7 @@ vi.mock('@/lib/model-pricing/lookup', () => ({
   resolveBuiltinPricing: lookupMock.resolveBuiltinPricing,
 }))
 
-import { calcImage, calcText, calcVideo, calcVoice } from '@/lib/billing/cost'
+import { CREDITS_PER_CNY, calcImage, calcText, calcVideo, calcVoice } from '@/lib/billing/cost'
 
 describe('billing/cost error branches', () => {
   beforeEach(() => {
@@ -56,8 +56,8 @@ describe('billing/cost error branches', () => {
       },
     )
 
-    expect(calcText('text-model', Number.NaN, 1_000_000)).toBeCloseTo(4, 8)
-    expect(calcText('text-model', 1_000_000, Number.NaN)).toBeCloseTo(2, 8)
+    expect(calcText('text-model', Number.NaN, 1_000_000)).toBeCloseTo(4 * CREDITS_PER_CNY, 8)
+    expect(calcText('text-model', 1_000_000, Number.NaN)).toBeCloseTo(2 * CREDITS_PER_CNY, 8)
     expect(calcImage('image-model', Number.NaN)).toBe(0)
     expect(calcVideo('video-model', '720p', Number.NaN)).toBe(0)
     expect(calcVoice(Number.NaN)).toBe(0)

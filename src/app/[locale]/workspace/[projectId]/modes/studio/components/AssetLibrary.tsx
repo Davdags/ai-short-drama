@@ -15,6 +15,7 @@ import { AppIcon } from '@/components/ui/icons'
 import { useAssets } from '@/lib/query/hooks'
 import JSZip from 'jszip'
 import { logError as _logError } from '@/lib/logging/core'
+import { notifyAlert } from '@/lib/ui/notify'
 
 interface AssetLibraryProps {
   projectId: string
@@ -74,7 +75,7 @@ export default function AssetLibrary({
     }
 
     if (imageEntries.length === 0) {
-      alert(t('assetLibrary.downloadEmpty'))
+      notifyAlert(t('assetLibrary.downloadEmpty'))
       return
     }
 
@@ -103,7 +104,7 @@ export default function AssetLibrary({
       URL.revokeObjectURL(link.href)
     } catch (error) {
       _logError('打包下载失败:', error)
-      alert(t('assetLibrary.downloadFailed'))
+      notifyAlert(t('assetLibrary.downloadFailed'))
     } finally {
       setIsDownloading(false)
     }

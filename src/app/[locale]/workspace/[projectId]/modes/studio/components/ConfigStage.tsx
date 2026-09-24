@@ -7,6 +7,7 @@ import SmartImportWizard from './SmartImportWizard'
 import { useWorkspaceStageRuntime } from '../WorkspaceStageRuntimeContext'
 import { useWorkspaceEpisodeStageData } from '../hooks/useWorkspaceEpisodeStageData'
 import type { SplitEpisode } from './smart-import/types'
+import { StoryLengthControls } from './StoryLengthControls'
 
 /**
  * 配置阶段 — 整合 NovelInputStage + 长文本智能分集
@@ -59,10 +60,19 @@ export default function ConfigStage() {
       isSwitchingStage={runtime.isTransitioning}
       videoRatio={runtime.videoRatio ?? undefined}
       artStyle={runtime.artStyle ?? undefined}
+      analysisModel={runtime.analysisModel ?? undefined}
       onVideoRatioChange={runtime.onVideoRatioChange}
       onArtStyleChange={runtime.onArtStyleChange}
       onNext={runtime.onRunStoryToScript}
       onSmartSplit={handleSmartSplit}
+      lengthControls={projectId ? (
+        <StoryLengthControls
+          projectId={projectId}
+          videoModel={runtime.videoModel}
+          analysisModel={runtime.analysisModel}
+          disabled={runtime.isStartingStoryToScript || runtime.isTransitioning}
+        />
+      ) : null}
     />
   )
 }

@@ -4,6 +4,7 @@ import { requireUserAuth, isErrorResponse } from '@/lib/api-auth'
 import { apiHandler, ApiError } from '@/lib/api-errors'
 import { toMoneyNumber } from '@/lib/billing/money'
 import { isArtStyleValue } from '@/lib/constants'
+import { DEFAULT_SHOT_SECONDS, DEFAULT_TARGET_SECONDS } from '@/lib/studio/story-length'
 
 // GET - 获取用户的项目（支持分页和搜索）
 export const GET = apiHandler(async (request: NextRequest) => {
@@ -206,6 +207,9 @@ export const POST = apiHandler(async (request: NextRequest) => {
   await prisma.studioProject.create({
     data: {
       projectId: project.id,
+      // New projects start with story length control on (30s, 8s long takes).
+      targetDurationSec: DEFAULT_TARGET_SECONDS,
+      shotLengthSec: DEFAULT_SHOT_SECONDS,
       ...(userPreference && {
         analysisModel: userPreference.analysisModel,
         characterModel: userPreference.characterModel,

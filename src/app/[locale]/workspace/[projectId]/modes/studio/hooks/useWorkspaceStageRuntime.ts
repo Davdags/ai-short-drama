@@ -15,6 +15,7 @@ interface UseWorkspaceStageRuntimeParams {
   isStartingScriptToStoryboard: boolean
   videoRatio: string | undefined
   artStyle: string | undefined
+  analysisModel: string | undefined
   videoModel: string | undefined
   capabilityOverrides: CapabilitySelections
   userVideoModels: Array<{
@@ -65,6 +66,7 @@ export function useWorkspaceStageRuntime({
   isStartingScriptToStoryboard,
   videoRatio,
   artStyle,
+  analysisModel,
   videoModel,
   capabilityOverrides,
   userVideoModels,
@@ -95,6 +97,7 @@ export function useWorkspaceStageRuntime({
     isStartingScriptToStoryboard,
     videoRatio,
     artStyle,
+    analysisModel,
     videoModel,
     capabilityOverrides,
     userVideoModels: resolvedUserVideoModels,
@@ -138,6 +141,7 @@ export function useWorkspaceStageRuntime({
     runWithRebuildConfirm,
     resolvedUserVideoModels,
     capabilityOverrides,
+    analysisModel,
     videoModel,
     videoRatio,
   ])

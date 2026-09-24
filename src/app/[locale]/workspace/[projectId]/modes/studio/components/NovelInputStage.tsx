@@ -14,6 +14,8 @@ import { resolveTaskPresentationState } from '@/lib/task/presentation'
 import { AppIcon } from '@/components/ui/icons'
 import { trackEvent } from '@/lib/analytics'
 import { RatioSelector, StyleSelector } from '@/components/selectors/RatioStyleSelectors'
+import { estimateScriptWritingCredits } from '@/lib/studio/writing-cost'
+import { apiFetch, showOutOfCredits } from '@/lib/api-fetch'
 
 /** 触发智能分集建议的字数阈值 */
 const LONG_TEXT_THRESHOLD = 1000
@@ -41,6 +43,10 @@ interface NovelInputStageProps {
   artStyle?: string
   onVideoRatioChange?: (value: string) => void
   onArtStyleChange?: (value: string) => void
+  /** Story length / shot length pickers, rendered under the ratio + style row. */
+  lengthControls?: React.ReactNode
+  /** Writing model, so the button shows what this model will charge. */
+  analysisModel?: string
 }
 
 export default function NovelInputStage({
@@ -49,6 +55,7 @@ export default function NovelInputStage({
   onNovelTextChange,
   onNext,
   onSmartSplit,
+  analysisModel,
   isSubmittingTask = false,
   isSwitchingStage = false,
   enableNarration = false,
@@ -56,7 +63,8 @@ export default function NovelInputStage({
   videoRatio = '9:16',
   artStyle = 'american-comic',
   onVideoRatioChange,
-  onArtStyleChange
+  onArtStyleChange,
+  lengthControls,
 }: NovelInputStageProps) {
   const t = useTranslations('studio')
 
@@ -97,20 +105,29 @@ export default function NovelInputStage({
   const hasContent = localText.trim().length > 0
   const [showLongTextPrompt, setShowLongTextPrompt] = useState(false)
 
+  const scriptCredits = estimateScriptWritingCredits(analysisModel, localText.length)
+
   /** 点击"开始创作"时，先检测文本长度 */
-  const handleStartClick = useCallback(() => {
+  const handleStartClick = useCallback(async () => {
     trackEvent('novel_import')
+    // Not enough credits for this writing model: open the upgrade prompt instead of starting.
+    try {
+      const res = await apiFetch('/api/user/balance')
+      const data = res.ok ? await res.json() as { balance?: number } : null
+      if (typeof data?.balance === 'number' && data.balance < scriptCredits) {
+        showOutOfCredits(scriptCredits, data.balance)
+        return
+      }
+    } catch {
+      // Balance unknown: let the server decide (it refuses with the same prompt).
+    }
     const textLength = localText.trim().length
     if (textLength > LONG_TEXT_THRESHOLD && onSmartSplit) {
       setShowLongTextPrompt(true)
     } else {
       onNext()
     }
-  }, [localText, onNext, onSmartSplit])
-
-  // 当前配置展示文案
-  const ratioDisplayLabel = (VIDEO_RATIOS.find((option) => option.value === videoRatio) ?? VIDEO_RATIOS[0])?.label
-  const artStyleDisplayLabel = (ART_STYLES.find((option) => option.value === artStyle) ?? ART_STYLES[0])?.label
+  }, [localText, onNext, onSmartSplit, scriptCredits])
 
   // 不同比例适合的素材类型文案映射（完整句子，用于 info 悬浮层）
   const ratioUsageTextMap: Record<string, string> = {
@@ -226,24 +243,20 @@ export default function NovelInputStage({
             ) : (
               <>
                 <span>{t("smartImport.manualCreate.button")}</span>
+                {hasContent && (
+                  <span className="rounded-md bg-white/20 px-1.5 py-0.5 text-xs font-semibold">
+                    ~{scriptCredits} credits
+                  </span>
+                )}
                 <AppIcon name="arrowRight" className="w-4 h-4" />
               </>
             )}
           </button>
         </div>
 
-        {/* 配置提示 */}
-        <div className="px-6 pb-4 space-y-1 text-center">
-          <p className="text-xs text-[var(--glass-text-secondary)]">
-            {t("storyInput.currentConfigSummary", {
-              ratio: ratioDisplayLabel,
-              style: artStyleDisplayLabel
-            })}
-          </p>
-          <p className="text-xs text-[var(--glass-text-tertiary)]">
-            {t("storyInput.moreConfig")}
-          </p>
-        </div>
+        {lengthControls}
+
+        <div className="pb-4" />
       </div>
 
       {/* 资产库引导提示 */}

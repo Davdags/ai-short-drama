@@ -13,6 +13,7 @@ import {
     generateVoiceDesignOptions,
     type GeneratedVoice,
 } from '@/components/voice/voice-design-shared'
+import { notifyAlert } from '@/lib/ui/notify'
 
 export interface VoiceCreationModalShellProps {
     isOpen: boolean
@@ -98,7 +99,7 @@ export function useVoiceCreation({ isOpen, folderId, onClose, onSuccess, initial
             const errMsg = err instanceof Error ? err.message : 'Unknown error'
             const status = (err as Error & { status?: number }).status
             if (status === 402) {
-                alert(t('insufficientBalance') + '\n\n' + t('insufficientBalanceDetail'))
+                notifyAlert(t('insufficientBalance') + '\n\n' + t('insufficientBalanceDetail'))
             } else if (errMsg === 'VOICE_DESIGN_EMPTY_RESULT') {
                 setError(tv('noVoiceGenerated'))
             } else if (errMsg !== 'INSUFFICIENT_BALANCE') {

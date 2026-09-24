@@ -2,6 +2,7 @@ import { logInfo as _ulogInfo } from '@/lib/logging/core'
 import type { UnifiedErrorCode } from '@/lib/errors/codes'
 import { getUserMessageByCode } from '@/lib/errors/user-messages'
 import { normalizeAnyError } from '@/lib/errors/normalize'
+import { notifyAlert } from '@/lib/ui/notify'
 
 /**
  * 检查错误是否是由于页面卸载/刷新导致的 fetch 中止
@@ -69,11 +70,11 @@ export function safeAlert(message: string, error?: unknown): void {
 
     if (error) {
         const resolved = resolveClientError(error)
-        alert(message || resolved.message)
+        notifyAlert(message || resolved.message)
         return
     }
 
-    alert(message)
+    notifyAlert(message)
 }
 
 /**

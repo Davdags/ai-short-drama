@@ -66,6 +66,15 @@ export class EvolinkStorageProvider implements StorageProvider {
       return this.cachedApiKey
     }
 
+    // Central platform account (SaaS mode)
+    const { listCentralEvolinkKeys } = await import('@/lib/providers/evolink/central')
+    const centralKey = listCentralEvolinkKeys()[0]
+    if (centralKey) {
+      this.cachedApiKey = centralKey
+      this.cachedApiKeyAt = now
+      return this.cachedApiKey
+    }
+
     // Lazy load from database — dynamic imports to avoid circular deps
     try {
       const { prisma } = await import('@/lib/prisma')

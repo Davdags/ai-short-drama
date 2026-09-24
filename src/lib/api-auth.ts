@@ -308,6 +308,11 @@ export async function requireUserAuth(): Promise<{ session: AuthSession } | Next
     if (!session?.user?.id) {
         return unauthorized()
     }
+    // Suspended accounts lose access immediately, even with a valid session cookie.
+    const { isUserSuspended } = await import('@/lib/admin/access')
+    if (await isUserSuspended(session.user.id)) {
+        return forbidden('Your account has been suspended. Contact support if you think this is a mistake.')
+    }
     bindAuthLogContext(session)
     return { session }
 }

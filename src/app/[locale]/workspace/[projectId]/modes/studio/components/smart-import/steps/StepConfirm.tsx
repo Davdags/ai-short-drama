@@ -30,7 +30,7 @@ export default function StepConfirm({
         <div>
           <h2 className="text-2xl font-semibold mb-2">{t('preview.title')}</h2>
           <p className="text-[var(--glass-text-secondary)]">
-            {t('preview.episodeCount', { count: episodes.length })}，
+            {t('preview.episodeCount', { count: episodes.length })},
             {t('preview.totalWords', { count: episodes.reduce((sum, ep) => sum + ep.wordCount, 0).toLocaleString() })}
             <span className="text-[var(--glass-tone-success-fg)] ml-2">{t('preview.autoSaved')}</span>
           </p>

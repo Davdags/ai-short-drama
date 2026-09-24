@@ -1,6 +1,7 @@
 import { normalizeTaskError } from '@/lib/errors/normalize'
 import { isKnownErrorCode, type UnifiedErrorCode } from '@/lib/errors/codes'
 import { getUserMessageByCode } from '@/lib/errors/user-messages'
+import { humanizeErrorMessage } from '@/lib/errors/humanize'
 
 export type TaskErrorSummary = {
   code: string | null
@@ -92,11 +93,17 @@ export function resolveTaskErrorSummary(payload: unknown, fallbackMessage = 'Tas
     normalized?.code === 'MODEL_NOT_OPEN'
     || normalized?.code === 'EMPTY_RESPONSE'
 
+  // Raw worker/provider errors are diagnostics for us; customers get plain English,
+  // using the code-specific message when there is one.
+  const humanFallback = userFriendlyMessage || undefined
+  const humanMessage = message ? humanizeErrorMessage(message, humanFallback) : null
+  const humanNormalized = normalizedMessage ? humanizeErrorMessage(normalizedMessage, humanFallback) : null
+
   return {
     code: normalized?.code || code || null,
     message: shouldPreferUserFriendlyMessage
-      ? (userFriendlyMessage || message || normalizedMessage || fallbackMessage)
-      : (message || userFriendlyMessage || normalizedMessage || fallbackMessage),
+      ? (userFriendlyMessage || humanMessage || humanNormalized || fallbackMessage)
+      : (humanMessage || userFriendlyMessage || humanNormalized || fallbackMessage),
     cancelled: false,
   }
 }

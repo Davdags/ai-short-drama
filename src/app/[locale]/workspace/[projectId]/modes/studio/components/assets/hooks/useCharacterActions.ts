@@ -1,6 +1,7 @@
 'use client'
 import { logInfo as _ulogInfo, logError as _ulogError } from '@/lib/logging/core'
 import { useTranslations } from 'next-intl'
+import { notifyAlert } from '@/lib/ui/notify'
 
 /**
  * useCharacterActions - 角色资产操作 Hook
@@ -24,6 +25,7 @@ import {
     useUpdateProjectAppearanceDescription,
     type Character
 } from '@/lib/query/hooks'
+import { humanizeErrorMessage } from '@/lib/errors/humanize'
 
 interface UseCharacterActionsProps {
     projectId: string
@@ -31,10 +33,10 @@ interface UseCharacterActionsProps {
 }
 
 function getErrorMessage(error: unknown, fallback: string): string {
-    if (error instanceof Error) return error.message
+    if (error instanceof Error) return humanizeErrorMessage(error.message, fallback)
     if (typeof error === 'object' && error !== null) {
         const message = (error as { message?: unknown }).message
-        if (typeof message === 'string') return message
+        if (typeof message === 'string') return humanizeErrorMessage(message, fallback)
     }
     return fallback
 }
@@ -72,7 +74,7 @@ export function useCharacterActions({
             await deleteCharacterMutation.mutateAsync(characterId)
         } catch (error: unknown) {
             if (!isAbortError(error)) {
-                alert(t('character.deleteFailed', { error: getErrorMessage(error, t('common.unknownError')) }))
+                notifyAlert(t('character.deleteFailed', { error: getErrorMessage(error, t('common.unknownError')) }))
             }
         }
     }, [deleteCharacterMutation, t])
@@ -86,7 +88,7 @@ export function useCharacterActions({
             refreshAssets()
         } catch (error: unknown) {
             if (!isAbortError(error)) {
-                alert(t('character.deleteFailed', { error: getErrorMessage(error, t('common.unknownError')) }))
+                notifyAlert(t('character.deleteFailed', { error: getErrorMessage(error, t('common.unknownError')) }))
             }
         }
     }, [deleteAppearanceMutation, refreshAssets, t])
@@ -108,7 +110,7 @@ export function useCharacterActions({
                 _ulogInfo('请求被中断（可能是页面刷新），后端仍在执行')
                 return
             }
-            alert(t('image.selectFailed', { error: getErrorMessage(error, t('common.unknownError')) }))
+            notifyAlert(t('image.selectFailed', { error: getErrorMessage(error, t('common.unknownError')) }))
         }
     }, [selectCharacterImageMutation, t])
 
@@ -136,7 +138,7 @@ export function useCharacterActions({
             await regenerateSingleImage.mutateAsync({ characterId, appearanceId, imageIndex })
         } catch (error: unknown) {
             if (!isAbortError(error)) {
-                alert(t('image.regenerateFailed', { error: getErrorMessage(error, t('common.unknownError')) }))
+                notifyAlert(t('image.regenerateFailed', { error: getErrorMessage(error, t('common.unknownError')) }))
             }
             throw error
         }
@@ -152,7 +154,7 @@ export function useCharacterActions({
             await regenerateGroup.mutateAsync({ characterId, appearanceId, count })
         } catch (error: unknown) {
             if (!isAbortError(error)) {
-                alert(t('image.regenerateFailed', { error: getErrorMessage(error, t('common.unknownError')) }))
+                notifyAlert(t('image.regenerateFailed', { error: getErrorMessage(error, t('common.unknownError')) }))
             }
             throw error
         }

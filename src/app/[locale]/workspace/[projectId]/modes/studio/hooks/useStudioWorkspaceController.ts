@@ -155,6 +155,7 @@ export function useStudioWorkspaceController({
     isStartingScriptToStoryboard,
     videoRatio: projectSnapshot.videoRatio,
     artStyle: projectSnapshot.artStyle,
+    analysisModel: projectSnapshot.analysisModel,
     videoModel: projectSnapshot.videoModel,
     capabilityOverrides: projectSnapshot.capabilityOverrides,
     userVideoModels: userModels.userVideoModels || [],

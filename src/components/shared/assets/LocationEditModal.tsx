@@ -14,6 +14,7 @@ import {
     useUpdateProjectLocationDescription,
     useUpdateProjectLocationName,
 } from '@/lib/query/hooks'
+import { notifyAlert } from '@/lib/ui/notify'
 
 export interface LocationEditModalProps {
     mode: 'asset-hub' | 'project'
@@ -159,7 +160,7 @@ export function LocationEditModal({
             }
         } catch (error: unknown) {
             if (shouldShowError(error)) {
-                alert(`${t('modal.modifyFailed')}: ${getErrorMessage(error, t('errors.failed'))}`)
+                notifyAlert(`${t('modal.modifyFailed')}: ${getErrorMessage(error, t('errors.failed'))}`)
             }
         } finally {
             setIsAiModifying(false)
@@ -172,7 +173,7 @@ export function LocationEditModal({
             onRefresh?.()
         } catch (error: unknown) {
             if (shouldShowError(error)) {
-                alert(t('modal.saveName') + t('errors.failed'))
+                notifyAlert(t('modal.saveName') + t('errors.failed'))
             }
         }
     }
@@ -188,7 +189,7 @@ export function LocationEditModal({
             onClose()
         } catch (error: unknown) {
             if (shouldShowError(error)) {
-                alert(getErrorMessage(error, t('errors.saveFailed')))
+                notifyAlert(getErrorMessage(error, t('errors.saveFailed')))
             }
         } finally {
             setIsSaving(false)
@@ -208,7 +209,7 @@ export function LocationEditModal({
                 onSave(locationId)
             } catch (error: unknown) {
                 if (shouldShowError(error)) {
-                    alert(getErrorMessage(error, t('errors.saveFailed')))
+                    notifyAlert(getErrorMessage(error, t('errors.saveFailed')))
                 }
             }
         })()

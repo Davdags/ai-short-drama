@@ -11,6 +11,7 @@ import { calculateTimelineDuration, framesToTime } from '../utils/time-utils'
 import { RemotionPreview } from './Preview'
 import { Timeline } from './Timeline'
 import { TransitionPicker, TransitionType } from './TransitionPicker'
+import { notifyAlert } from '@/lib/ui/notify'
 
 interface VideoEditorStageProps {
     projectId: string
@@ -66,20 +67,20 @@ export function VideoEditorStage({
         try {
             await saveProject(project)
             markSaved()
-            alert(t('editor.alert.saveSuccess'))
+            notifyAlert(t('editor.alert.saveSuccess'))
         } catch (error) {
             _ulogError('Save failed:', error)
-            alert(t('editor.alert.saveFailed'))
+            notifyAlert(t('editor.alert.saveFailed'))
         }
     }
 
     const handleExport = async () => {
         try {
             await startRender(project.id)
-            alert(t('editor.alert.exportStarted'))
+            notifyAlert(t('editor.alert.exportStarted'))
         } catch (error) {
             _ulogError('Export failed:', error)
-            alert(t('editor.alert.exportFailed'))
+            notifyAlert(t('editor.alert.exportFailed'))
         }
     }
 

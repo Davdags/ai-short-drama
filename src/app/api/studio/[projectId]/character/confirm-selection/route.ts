@@ -55,7 +55,7 @@ export const POST = apiHandler(async (
     // 已经只有一张图片，无需操作
     return NextResponse.json({
       success: true,
-      message: '已确认选择',
+      message: 'Selection confirmed',
       deletedCount: 0
     })
   }
@@ -109,7 +109,7 @@ export const POST = apiHandler(async (
 
   return NextResponse.json({
     success: true,
-    message: '已确认选择，其他候选图片已删除',
+    message: 'Selection confirmed. The other candidate images were removed.',
     deletedCount: deletedImages.length
   })
 })

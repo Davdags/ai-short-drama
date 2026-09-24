@@ -15,6 +15,7 @@ import {
     useUpdateProjectCharacterIntroduction,
     useUpdateProjectCharacterName,
 } from '@/lib/query/hooks'
+import { notifyAlert } from '@/lib/ui/notify'
 
 export interface CharacterEditModalProps {
     mode: 'asset-hub' | 'project'
@@ -185,7 +186,7 @@ export function CharacterEditModal({
             }
         } catch (error: unknown) {
             if (shouldShowError(error)) {
-                alert(`${t('modal.modifyFailed')}: ${getErrorMessage(error, t('errors.failed'))}`)
+                notifyAlert(`${t('modal.modifyFailed')}: ${getErrorMessage(error, t('errors.failed'))}`)
             }
         } finally {
             setIsAiModifying(false)
@@ -198,7 +199,7 @@ export function CharacterEditModal({
             onRefresh?.()
         } catch (error: unknown) {
             if (shouldShowError(error)) {
-                alert(t('modal.saveName') + t('errors.failed'))
+                notifyAlert(t('modal.saveName') + t('errors.failed'))
             }
         }
     }
@@ -215,7 +216,7 @@ export function CharacterEditModal({
             onClose()
         } catch (error: unknown) {
             if (shouldShowError(error)) {
-                alert(getErrorMessage(error, t('errors.saveFailed')))
+                notifyAlert(getErrorMessage(error, t('errors.saveFailed')))
             }
         } finally {
             setIsSaving(false)
@@ -238,7 +239,7 @@ export function CharacterEditModal({
                 onSave(characterId, savedAppearanceKey)
             } catch (error: unknown) {
                 if (shouldShowError(error)) {
-                    alert(getErrorMessage(error, t('errors.saveFailed')))
+                    notifyAlert(getErrorMessage(error, t('errors.saveFailed')))
                 }
             }
         })()

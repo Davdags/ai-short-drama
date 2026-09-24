@@ -85,7 +85,7 @@ export async function handleAnalyzeNovelTask(job: Job<TaskJobData>) {
 
   let contentToAnalyze = readText(novelData.globalAssetText) || readText(firstEpisode?.novelText)
   if (!contentToAnalyze.trim()) {
-    throw new Error('请先填写全局资产设定或剧本内容')
+    throw new Error('Please add global settings or story text first')
   }
 
   const maxContentLength = 30000
@@ -107,7 +107,7 @@ export async function handleAnalyzeNovelTask(job: Job<TaskJobData>) {
     locale: job.data.locale,
     variables: {
       input: contentToAnalyze,
-      characters_lib_info: charactersLibName || '无',
+      characters_lib_info: charactersLibName || 'None',
     },
   })
   const locationPromptTemplate = buildPrompt({
@@ -115,7 +115,7 @@ export async function handleAnalyzeNovelTask(job: Job<TaskJobData>) {
     locale: job.data.locale,
     variables: {
       input: contentToAnalyze,
-      locations_lib_name: locationsLibName || '无',
+      locations_lib_name: locationsLibName || 'None',
     },
   })
   const propPromptTemplate = buildPrompt({
@@ -123,13 +123,13 @@ export async function handleAnalyzeNovelTask(job: Job<TaskJobData>) {
     locale: job.data.locale,
     variables: {
       input: contentToAnalyze,
-      props_lib_name: propsLibName || '无',
+      props_lib_name: propsLibName || 'None',
     },
   })
 
   await reportTaskProgress(job, 20, {
     stage: 'analyze_novel_prepare',
-    stageLabel: '准备资产分析参数',
+    stageLabel: 'Preparing asset analysis',
     displayMode: 'detail',
   })
   await assertTaskActive(job, 'analyze_novel_prepare')
@@ -151,7 +151,7 @@ export async function handleAnalyzeNovelTask(job: Job<TaskJobData>) {
               action: 'analyze_characters',
               meta: {
                 stepId: 'analyze_characters',
-                stepTitle: '角色分析',
+                stepTitle: 'Character analysis',
                 stepIndex: 1,
                 stepTotal: 2,
               },
@@ -165,7 +165,7 @@ export async function handleAnalyzeNovelTask(job: Job<TaskJobData>) {
               action: 'analyze_locations',
               meta: {
                 stepId: 'analyze_locations',
-                stepTitle: '场景分析',
+                stepTitle: 'Location analysis',
                 stepIndex: 2,
                 stepTotal: 3,
               },
@@ -179,7 +179,7 @@ export async function handleAnalyzeNovelTask(job: Job<TaskJobData>) {
               action: 'analyze_props',
               meta: {
                 stepId: 'analyze_props',
-                stepTitle: '道具分析',
+                stepTitle: 'Prop analysis',
                 stepIndex: 3,
                 stepTotal: 3,
               },
@@ -197,10 +197,10 @@ export async function handleAnalyzeNovelTask(job: Job<TaskJobData>) {
 
   await reportTaskProgress(job, 60, {
     stage: 'analyze_novel_characters_done',
-    stageLabel: '角色分析完成',
+    stageLabel: 'Character analysis complete',
     displayMode: 'detail',
     stepId: 'analyze_characters',
-    stepTitle: '角色分析',
+    stepTitle: 'Character analysis',
     stepIndex: 1,
     stepTotal: 3,
     done: true,
@@ -209,10 +209,10 @@ export async function handleAnalyzeNovelTask(job: Job<TaskJobData>) {
 
   await reportTaskProgress(job, 70, {
     stage: 'analyze_novel_locations_done',
-    stageLabel: '场景分析完成',
+    stageLabel: 'Location analysis complete',
     displayMode: 'detail',
     stepId: 'analyze_locations',
-    stepTitle: '场景分析',
+    stepTitle: 'Location analysis',
     stepIndex: 2,
     stepTotal: 3,
     done: true,
@@ -221,10 +221,10 @@ export async function handleAnalyzeNovelTask(job: Job<TaskJobData>) {
 
   await reportTaskProgress(job, 80, {
     stage: 'analyze_novel_props_done',
-    stageLabel: '道具分析完成',
+    stageLabel: 'Prop analysis complete',
     displayMode: 'detail',
     stepId: 'analyze_props',
-    stepTitle: '道具分析',
+    stepTitle: 'Prop analysis',
     stepIndex: 3,
     stepTotal: 3,
     done: true,
@@ -246,7 +246,7 @@ export async function handleAnalyzeNovelTask(job: Job<TaskJobData>) {
 
   await reportTaskProgress(job, 75, {
     stage: 'analyze_novel_persist',
-    stageLabel: '保存资产分析结果',
+    stageLabel: 'Saving asset analysis',
     displayMode: 'detail',
   })
   await assertTaskActive(job, 'analyze_novel_persist')
@@ -370,7 +370,7 @@ export async function handleAnalyzeNovelTask(job: Job<TaskJobData>) {
 
   await reportTaskProgress(job, 96, {
     stage: 'analyze_novel_done',
-    stageLabel: '资产分析已完成',
+    stageLabel: 'Asset analysis complete',
     displayMode: 'detail',
   })
 

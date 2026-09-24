@@ -18,6 +18,7 @@ import {
   HOME_QUICK_START_MIN_ROWS,
   resolveTextareaTargetHeight,
 } from '@/lib/home/quick-start-textarea'
+import { notifyAlert } from '@/lib/ui/notify'
 
 interface ProjectStats {
   episodes: number
@@ -142,7 +143,7 @@ export default function HomePage() {
       router.push(result.target)
     } catch (error) {
       const message = error instanceof Error ? error.message : t('createFailed')
-      window.alert(message)
+      notifyAlert(message)
     } finally {
       setCreateLoading(false)
     }

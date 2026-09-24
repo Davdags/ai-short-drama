@@ -58,7 +58,7 @@ export default function StoryboardGroupHeader({
       </div>
       <div>
         <h3 className="text-sm font-medium text-[var(--glass-text-secondary)]">
-          {t('group.segment')}【{formatClipTitle(clip)}】
+          {t('group.segment')} · {formatClipTitle(clip)}
         </h3>
         <p className="mt-0.5 line-clamp-1 text-xs text-[var(--glass-text-tertiary)]">{clip?.summary}</p>
       </div>

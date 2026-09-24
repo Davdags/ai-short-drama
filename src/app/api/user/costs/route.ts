@@ -32,7 +32,7 @@ export const GET = apiHandler(async () => {
   // 合并项目名称
   const byProjectWithNames = costSummary.byProject.map(p => ({
     projectId: p.projectId,
-    projectName: projectMap.get(p.projectId) || '未知项目',
+    projectName: projectMap.get(p.projectId) || 'Unknown project',
     totalCost: p._sum.cost || 0,
     recordCount: p._count
   }))

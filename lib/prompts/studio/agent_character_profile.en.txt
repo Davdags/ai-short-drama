@@ -84,4 +84,5 @@ Strict constraints:
 1. JSON only.
 2. If no valid character is found, return empty arrays.
 3. Keep all strings in English.
-4. ⚠️ JSON SAFETY: All quotation marks in text (""''「」 etc.) MUST be converted to corner brackets「」in JSON string values. NEVER use raw ASCII double quotes " inside string values.
+4. ⚠️ JSON SAFETY: All quotation marks in text (straight " and ' quotes) MUST be converted to curly quotes “ ” in JSON string values. NEVER use raw ASCII double quotes " inside string values.
+5. visual_keywords must include the character’s apparent ethnicity (inferred from their name, the setting and culture when the story does not say it, e.g. “Black Nigerian woman”).

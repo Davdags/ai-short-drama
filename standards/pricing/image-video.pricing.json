@@ -6013,6 +6013,42 @@
   },
   {
     "apiType": "lip-sync",
+    "provider": "evolink",
+    "modelId": "videoretalk",
+    "pricing": {
+      "mode": "flat",
+      "flatAmount": 6
+    }
+  },
+  {
+    "apiType": "voice",
+    "provider": "evolink",
+    "modelId": "qwen3-tts-vd",
+    "pricing": {
+      "mode": "flat",
+      "flatAmount": 0.0144
+    }
+  },
+  {
+    "apiType": "voice",
+    "provider": "evolink",
+    "modelId": "qwen-voice-design",
+    "pricing": {
+      "mode": "flat",
+      "flatAmount": 0.2
+    }
+  },
+  {
+    "apiType": "voice-design",
+    "provider": "evolink",
+    "modelId": "qwen-voice-design",
+    "pricing": {
+      "mode": "flat",
+      "flatAmount": 0.2
+    }
+  },
+  {
+    "apiType": "lip-sync",
     "provider": "vidu",
     "modelId": "vidu-lipsync",
     "pricing": {
@@ -6027,8 +6063,18 @@
     "pricing": {
       "mode": "capability",
       "tiers": [
-        { "when": { "tokenType": "input" }, "amount": 11.6 },
-        { "when": { "tokenType": "output" }, "amount": 69.2 }
+        {
+          "when": {
+            "tokenType": "input"
+          },
+          "amount": 12.7
+        },
+        {
+          "when": {
+            "tokenType": "output"
+          },
+          "amount": 76.1
+        }
       ]
     }
   },
@@ -6039,8 +6085,18 @@
     "pricing": {
       "mode": "capability",
       "tiers": [
-        { "when": { "tokenType": "input" }, "amount": 14.4 },
-        { "when": { "tokenType": "output" }, "amount": 86.4 }
+        {
+          "when": {
+            "tokenType": "input"
+          },
+          "amount": 15.4
+        },
+        {
+          "when": {
+            "tokenType": "output"
+          },
+          "amount": 91.9
+        }
       ]
     }
   },
@@ -6051,20 +6107,40 @@
     "pricing": {
       "mode": "capability",
       "tiers": [
-        { "when": { "tokenType": "input" }, "amount": 1.5 },
-        { "when": { "tokenType": "output" }, "amount": 8.64 }
+        {
+          "when": {
+            "tokenType": "input"
+          },
+          "amount": 1.6
+        },
+        {
+          "when": {
+            "tokenType": "output"
+          },
+          "amount": 9.6
+        }
       ]
     }
   },
   {
     "apiType": "text",
     "provider": "evolink",
-    "modelId": "gemini-3.0-flash-preview",
+    "modelId": "gemini-3-flash-preview",
     "pricing": {
       "mode": "capability",
       "tiers": [
-        { "when": { "tokenType": "input" }, "amount": 2.9 },
-        { "when": { "tokenType": "output" }, "amount": 17.3 }
+        {
+          "when": {
+            "tokenType": "input"
+          },
+          "amount": 3.2
+        },
+        {
+          "when": {
+            "tokenType": "output"
+          },
+          "amount": 19.1
+        }
       ]
     }
   },
@@ -6075,8 +6151,18 @@
     "pricing": {
       "mode": "capability",
       "tiers": [
-        { "when": { "tokenType": "input" }, "amount": 29.8 },
-        { "when": { "tokenType": "output" }, "amount": 153 }
+        {
+          "when": {
+            "tokenType": "input"
+          },
+          "amount": 30.6
+        },
+        {
+          "when": {
+            "tokenType": "output"
+          },
+          "amount": 153
+        }
       ]
     }
   },
@@ -6087,8 +6173,62 @@
     "pricing": {
       "mode": "capability",
       "tiers": [
-        { "when": { "tokenType": "input" }, "amount": 18.4 },
-        { "when": { "tokenType": "output" }, "amount": 91.8 }
+        {
+          "when": {
+            "tokenType": "input"
+          },
+          "amount": 18.4
+        },
+        {
+          "when": {
+            "tokenType": "output"
+          },
+          "amount": 91.9
+        }
+      ]
+    }
+  },
+  {
+    "apiType": "text",
+    "provider": "evolink",
+    "modelId": "claude-opus-5-5",
+    "pricing": {
+      "mode": "capability",
+      "tiers": [
+        {
+          "when": {
+            "tokenType": "input"
+          },
+          "amount": 25.84
+        },
+        {
+          "when": {
+            "tokenType": "output"
+          },
+          "amount": 129.2
+        }
+      ]
+    }
+  },
+  {
+    "apiType": "text",
+    "provider": "evolink",
+    "modelId": "claude-sonnet-5",
+    "pricing": {
+      "mode": "capability",
+      "tiers": [
+        {
+          "when": {
+            "tokenType": "input"
+          },
+          "amount": 12.24
+        },
+        {
+          "when": {
+            "tokenType": "output"
+          },
+          "amount": 61.2
+        }
       ]
     }
   },
@@ -6104,7 +6244,7 @@
   {
     "apiType": "image",
     "provider": "evolink",
-    "modelId": "seedream-5.0-lite",
+    "modelId": "doubao-seedream-5.0-lite",
     "pricing": {
       "mode": "flat",
       "flatAmount": 0.22
@@ -6116,7 +6256,7 @@
     "modelId": "gemini-3.1-flash-image-preview",
     "pricing": {
       "mode": "flat",
-      "flatAmount": 0.39
+      "flatAmount": 0.64
     }
   },
   {
@@ -6125,7 +6265,25 @@
     "modelId": "gemini-3-pro-image-preview",
     "pricing": {
       "mode": "flat",
-      "flatAmount": 0.87
+      "flatAmount": 0.9
+    }
+  },
+  {
+    "apiType": "image",
+    "provider": "evolink",
+    "modelId": "gpt-image-2",
+    "pricing": {
+      "mode": "flat",
+      "flatAmount": 0.5
+    }
+  },
+  {
+    "apiType": "image",
+    "provider": "evolink",
+    "modelId": "gpt-image-2-beta",
+    "pricing": {
+      "mode": "flat",
+      "flatAmount": 0.5
     }
   },
   {
@@ -6134,7 +6292,7 @@
     "modelId": "kling-v3-image-to-video",
     "pricing": {
       "mode": "flat",
-      "flatAmount": 0.72
+      "flatAmount": 4.05
     }
   },
   {
@@ -6143,7 +6301,7 @@
     "modelId": "kling-o3-image-to-video",
     "pricing": {
       "mode": "flat",
-      "flatAmount": 0.72
+      "flatAmount": 4.05
     }
   },
   {
@@ -6152,7 +6310,7 @@
     "modelId": "wan2.6-image-to-video",
     "pricing": {
       "mode": "flat",
-      "flatAmount": 0.51
+      "flatAmount": 4.2585
     }
   },
   {
@@ -6161,7 +6319,7 @@
     "modelId": "wan2.6-image-to-video-flash",
     "pricing": {
       "mode": "flat",
-      "flatAmount": 0.13
+      "flatAmount": 4.2585
     }
   },
   {
@@ -6170,7 +6328,35 @@
     "modelId": "seedance-1.5-pro",
     "pricing": {
       "mode": "flat",
-      "flatAmount": 0.18
+      "flatAmount": 3.9675
+    }
+  },
+  {
+    "apiType": "video",
+    "provider": "evolink",
+    "modelId": "seedance-2.5",
+    "pricing": {
+      "mode": "capability",
+      "tiers": [
+        {
+          "when": {
+            "resolution": "480p"
+          },
+          "amount": 4.67095
+        },
+        {
+          "when": {
+            "resolution": "720p"
+          },
+          "amount": 10.045
+        },
+        {
+          "when": {
+            "resolution": "1080p"
+          },
+          "amount": 25.1125
+        }
+      ]
     }
   },
   {
@@ -6178,8 +6364,21 @@
     "provider": "evolink",
     "modelId": "seedance-2.0",
     "pricing": {
-      "mode": "flat",
-      "flatAmount": 0.20
+      "mode": "capability",
+      "tiers": [
+        {
+          "when": {
+            "resolution": "480p"
+          },
+          "amount": 3.13875
+        },
+        {
+          "when": {
+            "resolution": "720p"
+          },
+          "amount": 6.75
+        }
+      ]
     }
   },
   {

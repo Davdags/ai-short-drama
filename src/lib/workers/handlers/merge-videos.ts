@@ -8,6 +8,7 @@ import { prisma } from '@/lib/prisma'
 import { uploadObject, getSignedUrl, toFetchableUrl } from '@/lib/storage'
 import type { TaskJobData } from '@/lib/task/types'
 import { reportTaskProgress } from '../shared'
+import { notifyEpisodeReady } from '@/lib/email/notifications'
 
 const execFileAsync = promisify(execFile)
 
@@ -328,6 +329,7 @@ async function runMergeEpisodeVideos(
     await uploadObject(mergedBuffer, storageKey, 3, 'video/mp4')
 
     await reportTaskProgress(job, 95, { stage: 'done' })
+    void notifyEpisodeReady({ userId: job.data.userId, projectId: job.data.projectId, episodeId, taskId: job.data.taskId })
 
     return {
       mergedVideoKey: storageKey,

@@ -95,7 +95,7 @@ export default function SpeakerVoiceStatus({
                 <span className="w-1.5 h-5 bg-[var(--glass-accent-from)] rounded-full" />
                 {t("speakerVoice.title")}
                 <span className="text-sm font-normal text-[var(--glass-text-tertiary)] ml-2">
-                    （{t("speakerVoice.hint")}）
+                    ({t("speakerVoice.hint")})
                 </span>
             </h3>
             <div className="flex flex-wrap gap-2">

@@ -25,6 +25,7 @@ import {
   type AssistantSavedEvent,
   type UseAssistantChatResult,
 } from '@/components/assistant/useAssistantChat'
+import { notifyAlert } from '@/lib/ui/notify'
 
 type KeyTestStepStatus = 'pass' | 'fail' | 'skip'
 interface KeyTestStep {
@@ -573,7 +574,7 @@ export function useProviderCardState({
       await onFlushConfig()
       return true
     } catch {
-      alert(t('flushConfigFailed'))
+      notifyAlert(t('flushConfigFailed'))
       return false
     }
   }, [onFlushConfig, t])
@@ -581,7 +582,7 @@ export function useProviderCardState({
   const handleSaveModel = async (originalModelKey: string): Promise<void> => {
     if (isModelSavePending) return
     if (!editModel.name || !editModel.modelId) {
-      alert(t('fillComplete'))
+      notifyAlert(t('fillComplete'))
       return
     }
 
@@ -594,7 +595,7 @@ export function useProviderCardState({
     )
 
     if (duplicate) {
-      alert(t('modelIdExists'))
+      notifyAlert(t('modelIdExists'))
       return
     }
 
@@ -616,7 +617,7 @@ export function useProviderCardState({
             modelId: editModel.modelId,
           })
         } catch (error) {
-          alert(resolveProbeFailureMessage(error))
+          notifyAlert(resolveProbeFailureMessage(error))
           return
         }
       }
@@ -636,7 +637,7 @@ export function useProviderCardState({
   const handleAddModel = async (type: ProviderCardModelType): Promise<void> => {
     if (isModelSavePending) return
     if (!newModel.name || !newModel.modelId) {
-      alert(t('fillComplete'))
+      notifyAlert(t('fillComplete'))
       return
     }
 
@@ -648,7 +649,7 @@ export function useProviderCardState({
 
     const all = allModels || models
     if (all.some((model) => model.modelKey === finalModelKey)) {
-      alert(t('modelIdExists'))
+      notifyAlert(t('modelIdExists'))
       return
     }
 
@@ -670,7 +671,7 @@ export function useProviderCardState({
             modelId: finalModelId,
           })
         } catch (error) {
-          alert(resolveProbeFailureMessage(error))
+          notifyAlert(resolveProbeFailureMessage(error))
           return
         }
       }

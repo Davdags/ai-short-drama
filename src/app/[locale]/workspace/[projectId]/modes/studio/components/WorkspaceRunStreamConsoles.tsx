@@ -127,7 +127,7 @@ export default function WorkspaceRunStreamConsoles({
     stepId: string,
   ) => {
     const input = typeof window !== 'undefined'
-      ? window.prompt('可选：输入重试模型（留空使用当前模型）')
+      ? window.prompt('Optional: enter a model to retry with (leave empty to use the current model)')
       : null
     const modelOverride = typeof input === 'string' ? input.trim() : ''
     await stream.retryStep({

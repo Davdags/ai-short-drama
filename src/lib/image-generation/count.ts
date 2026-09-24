@@ -12,14 +12,16 @@ interface ImageGenerationCountConfig {
 }
 
 const IMAGE_GENERATION_COUNT_CONFIG: Record<ImageGenerationCountScope, ImageGenerationCountConfig> = {
+  // One picture per click by default: three options cost three times as much, and a free
+  // account would spend most of its credits on a single character.
   character: {
-    defaultValue: 3,
+    defaultValue: 1,
     min: 1,
     max: 6,
     storageKey: 'image-count:character',
   },
   location: {
-    defaultValue: 3,
+    defaultValue: 1,
     min: 1,
     max: 6,
     storageKey: 'image-count:location',
@@ -31,7 +33,7 @@ const IMAGE_GENERATION_COUNT_CONFIG: Record<ImageGenerationCountScope, ImageGene
     storageKey: 'image-count:storyboard-candidates',
   },
   'reference-to-character': {
-    defaultValue: 3,
+    defaultValue: 1,
     min: 1,
     max: 6,
     storageKey: 'image-count:reference-to-character',

@@ -114,7 +114,7 @@ describe('api specific - asset hub generate image art style', () => {
     expect(prismaMock.globalLocation.findFirst).toHaveBeenCalled()
     const submitArg = submitTaskMock.mock.calls[0]?.[0] as { payload?: Record<string, unknown> } | undefined
     expect(submitArg?.payload?.artStyle).toBe('japanese-anime')
-    expect(submitArg?.payload?.count).toBe(3)
+    expect(submitArg?.payload?.count).toBe(1) // one picture per click is the default
   })
 
   it('fails with invalid params when persisted artStyle is missing', async () => {

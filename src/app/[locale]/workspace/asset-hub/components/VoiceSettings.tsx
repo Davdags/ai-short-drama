@@ -10,6 +10,7 @@ import { useTranslations } from 'next-intl'
 import { shouldShowError } from '@/lib/error-utils'
 import { useUploadCharacterVoice } from '@/lib/query/mutations'
 import { AppIcon } from '@/components/ui/icons'
+import { notifyAlert } from '@/lib/ui/notify'
 
 interface VoiceSettingsProps {
     characterId: string
@@ -67,7 +68,7 @@ export default function VoiceSettings({
         } catch (error: unknown) {
             if (shouldShowError(error)) {
                 const message = error instanceof Error ? error.message : String(error)
-                alert(t('voiceSettings.previewFailed', { error: message }))
+                notifyAlert(t('voiceSettings.previewFailed', { error: message }))
             }
             setIsPreviewingVoice(false)
         }
@@ -87,7 +88,7 @@ export default function VoiceSettings({
                 },
                 onError: (error) => {
                     if (shouldShowError(error)) {
-                        alert(t('voiceSettings.uploadFailed', { error: error.message }))
+                        notifyAlert(t('voiceSettings.uploadFailed', { error: error.message }))
                     }
                 },
                 onSettled: () => {

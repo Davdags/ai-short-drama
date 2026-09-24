@@ -1,5 +1,5 @@
 import type { Job } from 'bullmq'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { TASK_TYPE, type TaskJobData } from '@/lib/task/types'
 
 const bailianMock = vi.hoisted(() => ({
@@ -77,6 +77,17 @@ describe('worker voice-design behavior', () => {
       requestId: 'req-bl-1',
     })
     apiConfigMock.getProviderConfig.mockResolvedValue({ apiKey: 'test-key' })
+
+    // EvoLink returns a preview URL, and the handler downloads it to produce base64.
+    // Stub that download so the test never touches the network.
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok: true,
+      arrayBuffer: async () => new TextEncoder().encode('preview-audio-bytes').buffer,
+    })))
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
   })
 
   it('missing required fields -> explicit error', async () => {

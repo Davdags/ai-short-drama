@@ -1,6 +1,7 @@
 'use client'
 import { logInfo as _ulogInfo, logError as _ulogError } from '@/lib/logging/core'
 import { useTranslations } from 'next-intl'
+import { notifyAlert } from '@/lib/ui/notify'
 
 /**
  * useLocationActions - 场景资产操作 Hook
@@ -22,6 +23,7 @@ import {
     useConfirmProjectLocationSelection,
     useUpdateProjectLocationDescription,
 } from '@/lib/query/hooks'
+import { humanizeErrorMessage } from '@/lib/errors/humanize'
 
 interface UseLocationActionsProps {
     projectId: string
@@ -30,10 +32,10 @@ interface UseLocationActionsProps {
 }
 
 function getErrorMessage(error: unknown, fallback: string): string {
-    if (error instanceof Error) return error.message
+    if (error instanceof Error) return humanizeErrorMessage(error.message, fallback)
     if (typeof error === 'object' && error !== null) {
         const message = (error as { message?: unknown }).message
-        if (typeof message === 'string') return message
+        if (typeof message === 'string') return humanizeErrorMessage(message, fallback)
     }
     return fallback
 }
@@ -72,7 +74,7 @@ export function useLocationActions({
             }
         } catch (error: unknown) {
             if (!isAbortError(error)) {
-                alert(t(`${assetKey}.deleteFailed`, { error: getErrorMessage(error, t('common.unknownError')) }))
+                notifyAlert(t(`${assetKey}.deleteFailed`, { error: getErrorMessage(error, t('common.unknownError')) }))
             }
         }
     }, [assetKey, assetType, deleteLocationMutation, propActions, t])
@@ -90,7 +92,7 @@ export function useLocationActions({
                 _ulogInfo('请求被中断（可能是页面刷新），后端仍在执行')
                 return
             }
-            alert(t('image.selectFailed', { error: getErrorMessage(error, t('common.unknownError')) }))
+            notifyAlert(t('image.selectFailed', { error: getErrorMessage(error, t('common.unknownError')) }))
         }
     }, [assetType, propActions, selectLocationImageMutation, t])
 
@@ -121,7 +123,7 @@ export function useLocationActions({
             }
         } catch (error: unknown) {
             if (!isAbortError(error)) {
-                alert(t('image.regenerateFailed', { error: getErrorMessage(error, t('common.unknownError')) }))
+                notifyAlert(t('image.regenerateFailed', { error: getErrorMessage(error, t('common.unknownError')) }))
             }
             throw error
         }
@@ -137,7 +139,7 @@ export function useLocationActions({
             }
         } catch (error: unknown) {
             if (!isAbortError(error)) {
-                alert(t('image.regenerateFailed', { error: getErrorMessage(error, t('common.unknownError')) }))
+                notifyAlert(t('image.regenerateFailed', { error: getErrorMessage(error, t('common.unknownError')) }))
             }
             throw error
         }

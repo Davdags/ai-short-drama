@@ -10,6 +10,8 @@ import { useTranslations } from 'next-intl'
 import { shouldShowError } from '@/lib/error-utils'
 import { useUploadProjectCharacterVoice } from '@/lib/query/mutations'
 import { AppIcon } from '@/components/ui/icons'
+import { humanizeErrorMessage } from '@/lib/errors/humanize'
+import { notifyAlert } from '@/lib/ui/notify'
 
 interface VoiceSettingsProps {
     characterId: string
@@ -23,10 +25,10 @@ interface VoiceSettingsProps {
 }
 
 function getErrorMessage(error: unknown, fallback: string): string {
-    if (error instanceof Error) return error.message
+    if (error instanceof Error) return humanizeErrorMessage(error.message, fallback)
     if (typeof error === 'object' && error !== null) {
         const message = (error as { message?: unknown }).message
-        if (typeof message === 'string') return message
+        if (typeof message === 'string') return humanizeErrorMessage(message, fallback)
     }
     return fallback
 }
@@ -77,7 +79,7 @@ export default function VoiceSettings({
             setIsPreviewingVoice(true)
         } catch (error: unknown) {
             if (shouldShowError(error)) {
-                alert(t('tts.previewFailed', { error: getErrorMessage(error, t('common.unknownError')) }))
+                notifyAlert(t('tts.previewFailed', { error: getErrorMessage(error, t('common.unknownError')) }))
             }
             setIsPreviewingVoice(false)
         }
@@ -97,7 +99,7 @@ export default function VoiceSettings({
                 },
                 onError: (error) => {
                     if (shouldShowError(error)) {
-                        alert(t('tts.uploadFailed', { error: error.message }))
+                        notifyAlert(t('tts.uploadFailed', { error: error.message }))
                     }
                 },
                 onSettled: () => {

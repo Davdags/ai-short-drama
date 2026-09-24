@@ -89,7 +89,7 @@ function DefaultParamsRenderer({ fields, overrides, onChange, className }: { fie
     if (fields.length === 0) return null;
     return (
         <div className={className}>
-            <div className="text-[11px] font-bold text-[#8e8e93] px-1 pt-0.5 mb-2">参数配置</div>
+            <div className="text-[11px] font-bold text-[#8e8e93] px-1 pt-0.5 mb-2">Settings</div>
             {fields.map(field => {
                 const val = overrides[field.field] !== undefined ? String(overrides[field.field]) : String(field.options[0] || '')
                 if (field.field === 'duration' || field.options.length >= 4) {

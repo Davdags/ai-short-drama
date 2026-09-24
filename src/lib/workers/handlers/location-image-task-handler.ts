@@ -140,7 +140,7 @@ export async function handleLocationImageTask(job: Job<TaskJobData>) {
     const promptBody = item.description || ''
     if (!promptBody) continue
 
-    const prompt = artStyle ? `${addLocationPromptSuffix(promptBody)}，${artStyle}` : addLocationPromptSuffix(promptBody)
+    const prompt = artStyle ? `${addLocationPromptSuffix(promptBody)} ${artStyle}` : addLocationPromptSuffix(promptBody)
     await reportTaskProgress(job, 20 + Math.floor((i / Math.max(locationImages.length, 1)) * 55), {
       stage: 'generate_location_image',
       imageId: item.id,

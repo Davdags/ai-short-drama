@@ -34,6 +34,6 @@ export async function resolveProjectModel(projectId: string) {
   })
   if (!project) throw new Error('Project not found')
   if (!project.studioData) throw new Error('Studio data not found')
-  if (!project.studioData.analysisModel) throw new Error('请先在项目设置中配置分析模型')
+  if (!project.studioData.analysisModel) throw new Error('Please choose an analysis model in Model preferences first')
   return project
 }

@@ -76,17 +76,17 @@ export function useFetchProjectVoiceStageData(projectId: string) {
                 requestJsonWithError<{ voiceLines?: ProjectVoiceLine[] }>(
                     `/api/studio/${projectId}/voice-lines?episodeId=${episodeId}`,
                     { method: 'GET' },
-                    '获取台词失败',
+                    'Could not load lines',
                 ),
                 requestJsonWithError<{ speakerVoices?: Record<string, SpeakerVoiceEntry> }>(
                     `/api/studio/${projectId}/speaker-voice?episodeId=${episodeId}`,
                     { method: 'GET' },
-                    '获取角色音色失败',
+                    'Could not load character voices',
                 ),
                 requestJsonWithError<{ speakers?: string[] }>(
                     `/api/studio/${projectId}/voice-lines?speakersOnly=1`,
                     { method: 'GET' },
-                    '获取说话人失败',
+                    'Could not load speakers',
                 ),
             ])
 

@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Provider, PRESET_PROVIDERS } from './types'
 import { AppIcon } from '@/components/ui/icons'
+import { notifyAlert } from '@/lib/ui/notify'
 
 interface ProviderSectionProps {
     title: string
@@ -46,7 +47,7 @@ export function ProviderSection({
 
     const handleAdd = () => {
         if (!newProvider.name) {
-            alert(t('fillRequired'))
+            notifyAlert(t('fillRequired'))
             return
         }
         onAdd?.({

@@ -1,9 +1,23 @@
 import React from 'react'
+import { notify } from '@/lib/ui/notify'
+
+/**
+ * Why a video button cannot run yet, in words — the buttons used to be greyed out with no
+ * explanation, so customers thought video generation was broken.
+ */
+function videoBlockReason(input: { hasImage: boolean; hasNextImage?: boolean; model: string | null | undefined; missingFields: string[] }): string | null {
+  if (!input.hasImage) return 'This shot needs a scene picture first. Create it in the Storyboard step.'
+  if (input.hasNextImage === false) return 'The next shot needs a scene picture too. Create it in the Storyboard step.'
+  if (!input.model) return 'Choose a video model next to this button first.'
+  if (input.missingFields.length > 0) return `Choose ${input.missingFields.join(', ')} for this model first.`
+  return null
+}
 import TaskStatusInline from '@/components/task/TaskStatusInline'
 import { resolveTaskPresentationState } from '@/lib/task/presentation'
 import { ModelCapabilityDropdown } from '@/components/ui/config-modals/ModelCapabilityDropdown'
 import { AppIcon } from '@/components/ui/icons'
 import type { VideoPanelRuntime } from './hooks/useVideoPanelActions'
+import { CreditCost } from '@/components/credits/CreditCost'
 
 interface VideoPanelCardBodyProps {
   runtime: VideoPanelRuntime
@@ -120,23 +134,27 @@ export default function VideoPanelCardBody({ runtime }: VideoPanelCardBodyProps)
               return (
                 <div className="mt-2 flex items-center gap-2">
                   <button
-                    onClick={() => actions.onGenerateFirstLastFrame(
-                      panel.storyboardId,
-                      panel.panelIndex,
-                      linkedNextPanel.storyboardId,
-                      linkedNextPanel.panelIndex,
-                      panelKey,
-                      layout.flGenerationOptions,
-                      panel.panelId,
-                    )}
-                    disabled={
-                      taskStatus.isVideoTaskRunning
-                      || !panel.imageUrl
-                      || !linkedNextPanel.imageUrl
-                      || !layout.flModel
-                      || layout.flMissingCapabilityFields.length > 0
-                    }
-                    className="flex-shrink-0 min-w-[120px] py-2 px-3 text-sm font-medium rounded-lg shadow-sm transition-all disabled:opacity-50 bg-[var(--glass-accent-from)] text-white"
+                    onClick={() => {
+                      const reason = videoBlockReason({
+                        hasImage: Boolean(panel.imageUrl),
+                        hasNextImage: Boolean(linkedNextPanel.imageUrl),
+                        model: layout.flModel,
+                        missingFields: layout.flMissingCapabilityFields,
+                      })
+                      if (reason) return notify.info(reason)
+                      actions.onGenerateFirstLastFrame(
+                        panel.storyboardId,
+                        panel.panelIndex,
+                        linkedNextPanel.storyboardId,
+                        linkedNextPanel.panelIndex,
+                        panelKey,
+                        layout.flGenerationOptions,
+                        panel.panelId,
+                      )
+                    }}
+                    disabled={taskStatus.isVideoTaskRunning}
+                    aria-disabled={!panel.imageUrl || !linkedNextPanel.imageUrl || !layout.flModel || layout.flMissingCapabilityFields.length > 0}
+                    className="flex-shrink-0 min-w-[120px] py-2 px-3 text-sm font-medium rounded-lg shadow-sm transition-all disabled:opacity-50 aria-disabled:opacity-50 bg-[var(--glass-accent-from)] text-white"
                   >
                     {isFirstLastFrameGenerated ? t('firstLastFrame.generated') : taskStatus.isVideoTaskRunning ? taskStatus.taskRunningVideoLabel : t('firstLastFrame.generate')}
                   </button>
@@ -162,8 +180,15 @@ export default function VideoPanelCardBody({ runtime }: VideoPanelCardBodyProps)
             })() : (
               <>
                 <div className="flex items-center gap-2">
-                  <button
-                    onClick={() =>
+                  <div className="flex flex-shrink-0 flex-col items-stretch gap-0.5">
+                    <button
+                    onClick={() => {
+                      const reason = videoBlockReason({
+                        hasImage: Boolean(panel.imageUrl),
+                        model: videoModel.selectedModel,
+                        missingFields: videoModel.missingCapabilityFields,
+                      })
+                      if (reason) return notify.info(reason)
                       actions.onGenerateVideo(
                         panel.storyboardId,
                         panel.panelIndex,
@@ -171,17 +196,21 @@ export default function VideoPanelCardBody({ runtime }: VideoPanelCardBodyProps)
                         undefined,
                         videoModel.generationOptions,
                         panel.panelId,
-                      )}
-                    disabled={
-                      taskStatus.isVideoTaskRunning
-                      || !panel.imageUrl
-                      || !videoModel.selectedModel
-                      || videoModel.missingCapabilityFields.length > 0
-                    }
-                    className="flex-shrink-0 min-w-[90px] py-2 px-3 text-sm font-medium rounded-lg shadow-sm transition-all disabled:opacity-50 bg-[var(--glass-accent-from)] text-white"
+                      )
+                    }}
+                    disabled={taskStatus.isVideoTaskRunning}
+                    aria-disabled={!panel.imageUrl || !videoModel.selectedModel || videoModel.missingCapabilityFields.length > 0}
+                    className="flex-shrink-0 min-w-[90px] py-2 px-3 text-sm font-medium rounded-lg shadow-sm transition-all disabled:opacity-50 aria-disabled:opacity-50 bg-[var(--glass-accent-from)] text-white"
                   >
                     {panel.videoUrl ? t('stage.hasSynced') : taskStatus.isVideoTaskRunning ? taskStatus.taskRunningVideoLabel : t('panelCard.generateVideo')}
                   </button>
+                  {!panel.videoUrl && !taskStatus.isVideoTaskRunning && (
+                    <CreditCost
+                      className="text-center"
+                      items={videoModel.selectedModel ? [{ apiType: 'video', model: videoModel.selectedModel, quantity: 1, metadata: videoModel.generationOptions as Record<string, unknown> }] : null}
+                    />
+                  )}
+                  </div>
                   <div className="flex-1 min-w-0">
                     <ModelCapabilityDropdown
                       compact

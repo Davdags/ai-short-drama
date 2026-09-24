@@ -12,6 +12,7 @@
  */
 
 import { createScopedLogger } from '@/lib/logging/core'
+import { waitForEvolinkRequestSlot } from './rate-limiter'
 
 const logger = createScopedLogger({ module: 'evolink-audio-task' })
 
@@ -83,6 +84,7 @@ export async function submitAudioTask(
   if (!apiKey?.trim()) throw new Error('EVOLINK_API_KEY_REQUIRED')
   if (!body.model) throw new Error('EVOLINK_AUDIO_MODEL_REQUIRED')
 
+  await waitForEvolinkRequestSlot(String(body.model))
   const response = await fetch(AUDIO_GENERATIONS_ENDPOINT, {
     method: 'POST',
     headers: {

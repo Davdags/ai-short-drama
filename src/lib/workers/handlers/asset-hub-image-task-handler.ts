@@ -90,7 +90,7 @@ export async function handleAssetHubImageTask(job: Job<TaskJobData>) {
 
     for (let i = 0; i < count; i++) {
       const raw = base[i] || base[0]
-      const prompt = artStyle ? `${addCharacterPromptSuffix(raw)}，${artStyle}` : addCharacterPromptSuffix(raw)
+      const prompt = artStyle ? `${addCharacterPromptSuffix(raw)} ${artStyle}` : addCharacterPromptSuffix(raw)
       const cosKey = await generateLabeledImageToCos({
         job,
         userId,
@@ -140,7 +140,7 @@ export async function handleAssetHubImageTask(job: Job<TaskJobData>) {
 
     for (const image of targetImages) {
       if (!image.description) continue
-      const prompt = artStyle ? `${addLocationPromptSuffix(image.description)}，${artStyle}` : addLocationPromptSuffix(image.description)
+      const prompt = artStyle ? `${addLocationPromptSuffix(image.description)} ${artStyle}` : addLocationPromptSuffix(image.description)
 
       const cosKey = await generateLabeledImageToCos({
         job,

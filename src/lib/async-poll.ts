@@ -19,6 +19,7 @@ import { logInfo as _ulogInfo, logError as _ulogError } from '@/lib/logging/core
 import { queryFalStatus } from './async-submit'
 import { queryGeminiBatchStatus, querySeedanceVideoStatus, queryGoogleVideoStatus } from './async-task-utils'
 import { getProviderConfig, getUserModels } from './api-config'
+import { listCentralEvolinkKeys } from './providers/evolink/central'
 import { buildRenderedTemplateRequest, buildTemplateVariables, normalizeResponseJson, readJsonPath } from './openai-compat-template-runtime'
 import { composeModelKey } from './model-config-contract'
 
@@ -40,7 +41,7 @@ function getErrorMessage(error: unknown): string {
         const candidate = (error as { message?: unknown }).message
         if (typeof candidate === 'string') return candidate
     }
-    return '查询异常'
+    return 'Status check error'
 }
 
 /**
@@ -214,7 +215,7 @@ export function parseExternalId(externalId: string): {
         const type = parts[1]
         const requestId = parts.slice(2).join(':')
         if ((type !== 'VIDEO' && type !== 'IMAGE') || !requestId) {
-            throw new Error(`无效 EVOLINK externalId: "${externalId}"，应为 EVOLINK:TYPE:requestId`)
+            throw new Error(`Invalid EVOLINK externalId: "${externalId}" (expected EVOLINK:TYPE:requestId)`)
         }
         return {
             provider: 'EVOLINK',
@@ -238,7 +239,7 @@ export async function pollAsyncTask(
     userId: string
 ): Promise<PollResult> {
     if (!userId) {
-        throw new Error('缺少用户ID，无法获取 API Key')
+        throw new Error('Missing user id; cannot resolve the API key')
     }
 
     const parsed = parseExternalId(externalId)
@@ -878,21 +879,32 @@ async function pollEvolinkTask(taskId: string, userId: string, type: 'VIDEO' | '
 
     try {
         const { apiKey } = await getProviderConfig(userId, 'evolink')
-        const response = await fetch(
+        const queryTask = (key: string) => fetch(
             `https://api.evolink.ai/v1/tasks/${encodeURIComponent(taskId)}`,
             {
                 headers: {
-                    'Authorization': `Bearer ${apiKey}`,
+                    'Authorization': `Bearer ${key}`,
                 },
             },
         )
+        let response = await queryTask(apiKey)
+        // Central account with several keys: the task may have been submitted with another key.
+        if ([401, 403, 404].includes(response.status)) {
+            for (const otherKey of listCentralEvolinkKeys().filter((key) => key !== apiKey)) {
+                const retry = await queryTask(otherKey)
+                if (retry.ok) {
+                    response = retry
+                    break
+                }
+            }
+        }
 
         if (!response.ok) {
             const errorText = await response.text().catch(() => '')
             _ulogError(`${logPrefix} 查询失败: ${response.status} ${errorText.slice(0, 200)}`)
             return {
                 status: 'failed',
-                error: `EvoLink: 查询失败 ${response.status}`,
+                error: `EvoLink: status check failed (${response.status})`,
             }
         }
 
@@ -910,7 +922,7 @@ async function pollEvolinkTask(taskId: string, userId: string, type: 'VIDEO' | '
             if (!resultUrl) {
                 return {
                     status: 'failed',
-                    error: `EvoLink: 任务完成但未返回结果 URL`,
+                    error: `EvoLink: the task finished but returned no result`,
                 }
             }
             _ulogInfo(`${logPrefix} task_id=${taskId} 完成`)
@@ -922,7 +934,7 @@ async function pollEvolinkTask(taskId: string, userId: string, type: 'VIDEO' | '
         }
 
         if (status === 'failed') {
-            const errorMsg = data.error?.message || data.error?.code || '任务失败'
+            const errorMsg = data.error?.message || data.error?.code || 'Task failed'
             _ulogError(`${logPrefix} task_id=${taskId} 失败: ${errorMsg}`)
             return {
                 status: 'failed',

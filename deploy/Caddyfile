@@ -1,0 +1,9 @@
+# Automatic HTTPS for the domain; www redirects to the bare domain.
+{$DOMAIN} {
+	encode zstd gzip
+	reverse_proxy web:3000
+}
+
+www.{$DOMAIN} {
+	redir https://{$DOMAIN}{uri} permanent
+}

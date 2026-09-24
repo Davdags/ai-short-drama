@@ -23,6 +23,7 @@ import {
 } from './runtime-shared'
 import { completeBailianLlm } from '@/lib/providers/bailian'
 import { completeSiliconFlowLlm } from '@/lib/providers/siliconflow'
+import { waitForEvolinkRequestSlot } from '@/lib/providers/evolink/rate-limiter'
 
 type GoogleVisionPart = { inlineData: { mimeType: string; data: string } } | { text: string }
 type ArkVisionContentItem = { type: 'input_image'; image_url: string } | { type: 'input_text'; text: string }
@@ -67,7 +68,7 @@ export async function chatCompletionWithVision(
 
   if (!model) {
     _ulogError('[LLM Vision] 模型未配置，调用栈:', new Error().stack)
-    throw new Error('ANALYSIS_MODEL_NOT_CONFIGURED: 请先在设置页面配置分析模型')
+    throw new Error('ANALYSIS_MODEL_NOT_CONFIGURED: Please choose an analysis model in Model preferences first')
   }
 
   const selection = await resolveLlmRuntimeModel(userId, model)
@@ -83,6 +84,7 @@ export async function chatCompletionWithVision(
     const attemptStartedAt = Date.now()
     try {
       const providerConfig = await getProviderConfig(userId, provider)
+      if (providerKey === 'evolink') await waitForEvolinkRequestSlot(resolvedModelId)
       if (providerKey === 'google' || providerKey === 'gemini-compatible') {
         const ai = new GoogleGenAI({ apiKey: providerConfig.apiKey })
         const { normalizeToBase64ForGeneration } = await import('@/lib/media/outbound-image')
@@ -291,7 +293,7 @@ export async function chatCompletionWithVision(
       const errorBody = getErrorBody(error)
       if (errorBody?.message === 'PROHIBITED_CONTENT' || errorBody?.code === 502) {
         _ulogError('[LLM Vision] ❌ 内容安全检测失败 - Google AI Studio 拒绝处理此内容')
-        throw new Error('SENSITIVE_CONTENT: 图片或提示词包含敏感信息,无法处理')
+        throw new Error('SENSITIVE_CONTENT: The image or prompt may break our content rules')
       }
 
       _ulogWarn(`[LLM Vision] 调用失败 (${attempt}/${maxRetries + 1}): ${errorMessage}`)
@@ -300,7 +302,7 @@ export async function chatCompletionWithVision(
       await new Promise((resolve) => setTimeout(resolve, delayMs))
     }
   }
-  throw lastError || new Error('LLM Vision 调用失败')
+  throw lastError || new Error('The AI vision request failed')
 }
 
 export async function chatCompletionWithVisionStream(

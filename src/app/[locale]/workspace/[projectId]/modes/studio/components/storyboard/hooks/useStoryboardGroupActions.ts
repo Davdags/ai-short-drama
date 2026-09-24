@@ -11,6 +11,7 @@ import {
 } from '@/lib/query/hooks'
 import { isAsyncTaskResponse, waitForTaskResult } from '@/lib/task/client'
 import { getErrorMessage, isAbortError } from './panel-operations-shared'
+import { notifyAlert } from '@/lib/ui/notify'
 
 interface UseStoryboardGroupActionsProps {
   projectId: string
@@ -42,7 +43,7 @@ export function useStoryboardGroupActions({
       await onRefresh()
     } catch (error: unknown) {
       _ulogError('删除分镜组失败:', error)
-      alert(
+      notifyAlert(
         t('messages.deleteGroupFailed', {
           error: getErrorMessage(error, t('common.unknownError')),
         }),
@@ -68,7 +69,7 @@ export function useStoryboardGroupActions({
         return
       }
       _ulogError('重新生成分镜失败:', error)
-      alert(
+      notifyAlert(
         t('messages.regenerateGroupFailed', {
           error: getErrorMessage(error, t('common.unknownError')),
         }),
@@ -90,7 +91,7 @@ export function useStoryboardGroupActions({
       await onRefresh()
     } catch (error: unknown) {
       _ulogError('添加分镜组失败:', error)
-      alert(
+      notifyAlert(
         t('messages.addGroupFailed', {
           error: getErrorMessage(error, t('common.unknownError')),
         }),
@@ -108,7 +109,7 @@ export function useStoryboardGroupActions({
       await onRefresh()
     } catch (error: unknown) {
       _ulogError('移动分镜组失败:', error)
-      alert(
+      notifyAlert(
         t('messages.moveGroupFailed', {
           error: getErrorMessage(error, t('common.unknownError')),
         }),

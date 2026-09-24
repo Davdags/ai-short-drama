@@ -23,6 +23,7 @@ import { PRIMARY_APPEARANCE_INDEX } from '@/lib/constants'
 import { getImageGenerationCountOptions } from '@/lib/image-generation/count'
 import { useImageGenerationCount } from '@/lib/image-generation/use-image-generation-count'
 import { AppIcon } from '@/components/ui/icons'
+import { notifyAlert } from '@/lib/ui/notify'
 
 interface Appearance {
     id: string
@@ -129,7 +130,7 @@ export function CharacterCard({ character, onImageClick, onImageEdit, onVoiceDes
                 artStyle: appearance.artStyle || undefined,
                 count,
             },
-            { onError: (error) => alert(error.message || t('generateFailed')) }
+            { onError: (error) => notifyAlert(error.message || t('generateFailed')) }
         )
     }
 
@@ -146,7 +147,7 @@ export function CharacterCard({ character, onImageClick, onImageEdit, onVoiceDes
         }, {
             onError: (error) => {
                 if (latestSelectRequestRef.current !== requestId) return
-                alert(error.message || t('selectFailed'))
+                notifyAlert(error.message || t('selectFailed'))
             }
         })
     }
@@ -163,7 +164,7 @@ export function CharacterCard({ character, onImageClick, onImageEdit, onVoiceDes
         }, {
             onError: (error) => {
                 if (latestSelectRequestRef.current !== requestId) return
-                alert(error.message || t('selectFailed'))
+                notifyAlert(error.message || t('selectFailed'))
             }
         })
     }
@@ -187,7 +188,7 @@ export function CharacterCard({ character, onImageClick, onImageEdit, onVoiceDes
                 imageIndex: effectiveSelectedIndex ?? undefined
             },
             {
-                onError: (error) => alert(error.message || t('uploadFailed')),
+                onError: (error) => notifyAlert(error.message || t('uploadFailed')),
                 onSettled: () => {
                     if (fileInputRef.current) fileInputRef.current.value = ''
                 }
@@ -467,7 +468,7 @@ export function CharacterCard({ character, onImageClick, onImageEdit, onVoiceDes
                     <div className="flex gap-1 mt-2 overflow-x-auto">
                         {character.appearances.map((app, index) => (
                             <button key={app.id} onClick={() => setActiveAppearance(index)} className={`glass-btn-base px-2 py-0.5 text-xs rounded-full whitespace-nowrap ${index === activeAppearance ? 'glass-btn-primary' : 'glass-btn-soft text-[var(--glass-text-secondary)]'}`}>
-                                {app.changeReason || `形象 ${app.appearanceIndex}`}
+                                {app.changeReason || `Look ${app.appearanceIndex}`}
                             </button>
                         ))}
                     </div>

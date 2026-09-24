@@ -34,6 +34,7 @@ import { resolveAnalysisModel } from './resolve-analysis-model'
 import { createArtifact, listArtifacts } from '@/lib/run-runtime/service'
 import { assertWorkflowRunActive, withWorkflowRunLease } from '@/lib/run-runtime/workflow-lease'
 import { parseScreenplayPayload } from './screenplay-convert-helpers'
+import { resolveStoryLengthPlan } from '@/lib/studio/story-length'
 
 function readAssetKind(value: Record<string, unknown>): string {
   return typeof value.assetKind === 'string' ? value.assetKind : 'location'
@@ -431,6 +432,8 @@ export async function handleStoryToScriptTask(job: Job<TaskJobData>) {
                 screenplayPromptTemplate,
               },
               runStep,
+              lengthPlan: resolveStoryLengthPlan(novelData),
+              locale: job.data.locale,
             }),
           )
         } finally {

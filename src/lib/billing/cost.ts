@@ -21,6 +21,18 @@ import type { PricingApiType } from '@/lib/model-pricing/catalog'
 
 export const USD_TO_CNY = 7.2
 
+/**
+ * NucleusArt credits.
+ *
+ * The pricing catalog stays denominated in CNY (the provider's real cost).
+ * EvoLink task usage reports 1 EvoLink credit = 0.1 CNY, and NucleusArt charges
+ * 5 NucleusArt credits per EvoLink credit, so every catalog amount is converted
+ * at 50 credits per CNY. Balances and ledger amounts are in NucleusArt credits.
+ */
+export const EVOLINK_CREDIT_CNY = 0.1
+export const CREDITS_PER_EVOLINK_CREDIT = 5
+export const CREDITS_PER_CNY = CREDITS_PER_EVOLINK_CREDIT / EVOLINK_CREDIT_CNY
+
 export const MARKUP = {
   global: 1.0,
   text: 1.0,
@@ -57,7 +69,7 @@ const DEFAULT_VOICE_DESIGN_MODEL_ID = 'bailian-voice-design'
 const DEFAULT_LIP_SYNC_MODEL_ID = 'kling'
 
 function getMarkup(category: MarkupCategory): number {
-  return MARKUP[category] ?? MARKUP.global
+  return (MARKUP[category] ?? MARKUP.global) * CREDITS_PER_CNY
 }
 
 function parseModelId(model: string): string {

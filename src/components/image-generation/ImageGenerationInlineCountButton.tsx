@@ -2,6 +2,7 @@
 
 import type { KeyboardEvent, MouseEvent, ReactNode } from 'react'
 import { AppIcon } from '@/components/ui/icons'
+import { CreditCost, type QuoteItem } from '@/components/credits/CreditCost'
 
 interface ImageGenerationInlineCountButtonProps {
   prefix: ReactNode
@@ -17,6 +18,8 @@ interface ImageGenerationInlineCountButtonProps {
   selectClassName?: string
   labelClassName?: string
   ariaLabel: string
+  /** What one click generates, priced on the button (e.g. "· 25 credits"). */
+  costItems?: QuoteItem[] | null
 }
 
 export default function ImageGenerationInlineCountButton({
@@ -33,6 +36,7 @@ export default function ImageGenerationInlineCountButton({
   selectClassName = '',
   labelClassName = '',
   ariaLabel,
+  costItems,
 }: ImageGenerationInlineCountButtonProps) {
   const isActionDisabled = disabled || actionDisabled === true
   const isSelectDisabled = disabled || selectDisabled === true
@@ -86,6 +90,7 @@ export default function ImageGenerationInlineCountButton({
         </span>
       </span>
       <span className={labelClassName}>{suffix}</span>
+      {costItems ? <CreditCost items={costItems} prefix="· " className="!text-current opacity-80" /> : null}
     </div>
   )
 }

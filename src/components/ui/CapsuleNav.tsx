@@ -291,7 +291,7 @@ export function EpisodeSelector({
                                 return (
                                     <div key={ep.id} className="flex items-center gap-2 p-3 rounded-xl bg-[var(--glass-tone-danger-bg)] border border-[var(--glass-tone-danger-fg)]/30">
                                         <div className="flex-1 text-sm font-medium text-[var(--glass-tone-danger-fg)] truncate">
-                                            {t('deleteEpisode')}：{ep.title}
+                                            {t('deleteEpisode')}: {ep.title}
                                         </div>
                                         <button
                                             onClick={() => {

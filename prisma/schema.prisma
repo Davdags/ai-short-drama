@@ -264,6 +264,8 @@ model StudioProject {
   lastEpisodeId   String?
   imageResolution String                    @default("2K")
   importStatus    String?
+  targetDurationSec Int? // story length control: 15/30/60/90 (null = unconstrained)
+  shotLengthSec   Int? // seconds per shot, 4-15 (null = default)
   characters      StudioCharacter[]
   episodes        StudioEpisode[]
   locations       StudioLocation[]
@@ -407,6 +409,7 @@ model User {
   emailVerified DateTime?
   image         String?
   password      String?
+  suspendedAt   DateTime? // set by an admin; blocks sign-in and all API access
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @default(now()) @updatedAt
   accounts      Account[]
@@ -425,6 +428,8 @@ model User {
   taskEvents         TaskEvent[]
   graphRuns          GraphRun[]
   graphEvents        GraphEvent[]
+  subscriptions      Subscription[]
+  payments           Payment[]
 
   @@map("user")
 }
@@ -452,6 +457,8 @@ model UserPreference {
   updatedAt       DateTime @default(now()) @updatedAt
   imageResolution String   @default("2K")
   capabilityDefaults String? @db.Text
+  emailGenerationUpdates Boolean @default(true) // episode ready / generation failed emails
+  emailCreditAlerts Boolean @default(true) // low / out of credits emails
 
   // API Key 配置（极简版）
   llmBaseUrl  String? @default("https://openrouter.ai/api/v1")
@@ -998,4 +1005,151 @@ model LegacyMediaRefBackup {
   @@index([runId])
   @@index([tableName, fieldName])
   @@map("legacy_media_refs_backup")
+}
+
+// ── Affiliate program (NucleusArt) ──
+// userId / referredUserId are plain ids (no relations) so the core User model stays untouched.
+
+model Affiliate {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  code          String   @unique @db.VarChar(32)
+  payoutMethod  String?  @db.VarChar(32)
+  payoutDetails String?  @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now()) @updatedAt
+
+  @@map("affiliates")
+}
+
+model AffiliateClick {
+  id          String   @id @default(uuid())
+  affiliateId String
+  visitorHash String   @db.VarChar(64)
+  createdAt   DateTime @default(now())
+
+  @@index([affiliateId, createdAt])
+  @@index([affiliateId, visitorHash])
+  @@map("affiliate_clicks")
+}
+
+model AffiliateReferral {
+  id             String   @id @default(uuid())
+  affiliateId    String
+  referredUserId String   @unique
+  createdAt      DateTime @default(now())
+
+  @@index([affiliateId, createdAt])
+  @@map("affiliate_referrals")
+}
+
+model AffiliateCommission {
+  id               String   @id @default(uuid())
+  affiliateId      String
+  referredUserId   String
+  paymentRef       String   @unique @db.VarChar(128)
+  paymentAmountUsd Decimal  @db.Decimal(12, 2)
+  rate             Decimal  @db.Decimal(5, 4)
+  amountUsd        Decimal  @db.Decimal(12, 2)
+  tier             String   @db.VarChar(16)
+  /// pending (in hold) | paid | void (refunded)
+  status           String   @default("pending") @db.VarChar(16)
+  availableAt      DateTime
+  payoutId         String?
+  createdAt        DateTime @default(now())
+
+  @@index([affiliateId, status])
+  @@index([referredUserId])
+  @@map("affiliate_commissions")
+}
+
+model AffiliatePayout {
+  id          String   @id @default(uuid())
+  affiliateId String
+  amountUsd   Decimal  @db.Decimal(12, 2)
+  method      String?  @db.VarChar(32)
+  reference   String?  @db.VarChar(191)
+  paidAt      DateTime @default(now())
+
+  @@index([affiliateId, paidAt])
+  @@map("affiliate_payouts")
+}
+
+// Transactional email log: one row per sent email; dedupeKey guarantees each event emails once.
+model EmailEvent {
+  id        String   @id @default(uuid())
+  userId    String?
+  kind      String   @db.VarChar(40)
+  dedupeKey String   @unique @db.VarChar(191)
+  status    String   @default("sending") @db.VarChar(16)
+  createdAt DateTime @default(now())
+
+  @@index([userId, kind])
+  @@map("email_events")
+}
+
+/// A customer's paid plan. One active row per user; history kept for audit.
+model Subscription {
+  id                     String    @id @default(uuid())
+  userId                 String
+  /// free | starter | pro | studio
+  planId                 String    @db.VarChar(16)
+  /// monthly | yearly
+  cycle                  String    @db.VarChar(16)
+  /// active | past_due | cancelled | expired
+  status                 String    @default("active") @db.VarChar(16)
+  /// paystack | flutterwave
+  provider               String    @db.VarChar(24)
+  /// Provider's own subscription/plan identifier, when it manages recurring billing.
+  providerSubscriptionId String?   @db.VarChar(128)
+  providerCustomerId     String?   @db.VarChar(128)
+  currentPeriodStart     DateTime
+  currentPeriodEnd       DateTime
+  /// Set when the customer cancels; the plan runs to currentPeriodEnd then expires.
+  cancelAtPeriodEnd      Boolean   @default(false)
+  cancelledAt            DateTime?
+  /// Guards against granting the same period's credits twice.
+  creditsGrantedFor      DateTime?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @default(now()) @updatedAt
+  user                   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([status, currentPeriodEnd])
+  @@unique([provider, providerSubscriptionId], map: "Subscription_provider_ref_key")
+  @@map("subscriptions")
+}
+
+/// Every payment attempt. providerRef is the idempotency key for webhooks.
+model Payment {
+  id             String    @id @default(uuid())
+  userId         String
+  /// paystack | flutterwave | whop
+  provider       String    @db.VarChar(24)
+  /// Provider transaction reference — unique, so a replayed webhook cannot double-credit.
+  providerRef    String    @unique @db.VarChar(128)
+  /// Provider's own checkout id when it is not our reference (Whop looks payments up by it).
+  providerCheckoutId String? @db.VarChar(128)
+  /// subscription | credit_pack
+  purpose        String    @db.VarChar(24)
+  planId         String?   @db.VarChar(16)
+  cycle          String?   @db.VarChar(16)
+  /// Amount in the currency actually charged.
+  amount         Decimal   @db.Decimal(14, 2)
+  currency       String    @db.VarChar(8)
+  /// Same payment converted to USD, for affiliate commission and reporting.
+  amountUsd      Decimal   @db.Decimal(12, 2)
+  /// pending | success | failed | refunded
+  status         String    @default("pending") @db.VarChar(16)
+  /// NucleusArt credits granted by this payment, once settled.
+  creditsGranted Int       @default(0)
+  failureReason  String?   @db.VarChar(255)
+  paidAt         DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @default(now()) @updatedAt
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([provider, status])
+  @@map("payments")
 }

@@ -53,8 +53,8 @@
   /* Tone system — functional colors */
   --glass-tone-neutral-bg: rgba(100, 116, 139, 0.12);
   --glass-tone-neutral-fg: #525252;
-  --glass-tone-info-bg: rgba(13, 89, 242, 0.1);
-  --glass-tone-info-fg: #0d59f2;
+  --glass-tone-info-bg: rgba(128, 32, 252, 0.1);
+  --glass-tone-info-fg: #7019e0;
   --glass-tone-success-bg: rgba(16, 185, 129, 0.12);
   --glass-tone-success-fg: #16a34a;
   --glass-tone-warning-bg: rgba(245, 158, 11, 0.12);
@@ -66,13 +66,13 @@
   --glass-overlay: rgba(0, 0, 0, 0.45);
   --glass-overlay-strong: rgba(0, 0, 0, 0.6);
 
-  /* Accent — black primary, minimal rings */
-  --glass-accent-from: #000000;
-  --glass-accent-to: #262626;
-  --glass-accent-shadow-soft: rgba(0, 0, 0, 0.08);
-  --glass-accent-shadow-strong: rgba(0, 0, 0, 0.15);
-  --glass-focus-ring: rgba(0, 0, 0, 0.05);
-  --glass-focus-ring-strong: rgba(0, 0, 0, 0.1);
+  /* Accent — NucleusArt violet → indigo (from the logo), violet rings */
+  --glass-accent-from: #8020fc;
+  --glass-accent-to: #5b3df5;
+  --glass-accent-shadow-soft: rgba(128, 32, 252, 0.16);
+  --glass-accent-shadow-strong: rgba(128, 32, 252, 0.3);
+  --glass-focus-ring: rgba(128, 32, 252, 0.12);
+  --glass-focus-ring-strong: rgba(128, 32, 252, 0.25);
   --glass-danger-ring: rgba(239, 68, 68, 0.14);
   --glass-ghost-hover-bg: rgba(0, 0, 0, 0.04);
 

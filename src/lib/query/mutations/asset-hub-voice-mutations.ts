@@ -71,7 +71,7 @@ export function useSaveDesignedAssetHubVoice() {
           type: 'audio/wav',
           extension: 'wav',
         }),
-      }, '上传音频失败')
+      }, 'Could not upload the audio')
       const res = await requestJsonWithError('/api/asset-hub/voices', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -86,7 +86,7 @@ export function useSaveDesignedAssetHubVoice() {
           gender: null,
           language: 'zh',
         }),
-      }, '保存失败')
+      }, 'Could not save')
       return res
     },
     onSuccess: invalidateVoices,
@@ -112,7 +112,7 @@ export function useUploadAssetHubVoice() {
       return await requestJsonWithError('/api/asset-hub/voices/upload', {
         method: 'POST',
         body: formData,
-      }, '上传失败')
+      }, 'Upload failed')
     },
     onSuccess: invalidateVoices,
   })

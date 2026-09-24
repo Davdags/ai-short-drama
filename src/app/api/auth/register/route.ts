@@ -3,6 +3,11 @@ import bcrypt from "bcryptjs"
 import { logAuthAction } from '@/lib/logging/semantic'
 import { apiHandler, ApiError } from '@/lib/api-errors'
 import { prisma } from '@/lib/prisma'
+import { findUserByEmail, isValidEmail, normalizeEmail } from '@/lib/auth-accounts'
+import { sendVerificationEmail } from '@/lib/email-verification'
+import { ensurePlatformDefaultModels } from '@/lib/providers/evolink/platform-defaults'
+import { AFFILIATE_PROGRAM } from '@/lib/affiliate/program'
+import { attributeReferral } from '@/lib/affiliate/service'
 import { checkRateLimit, getClientIp, AUTH_REGISTER_LIMIT } from '@/lib/rate-limit'
 
 export const POST = apiHandler(async (request: NextRequest) => {
@@ -12,7 +17,7 @@ export const POST = apiHandler(async (request: NextRequest) => {
   if (rateResult.limited) {
     logAuthAction('REGISTER', 'unknown', { error: 'Rate limited', ip })
     return NextResponse.json(
-      { success: false, message: `请求过于频繁，请 ${rateResult.retryAfterSeconds} 秒后再试` },
+      { success: false, message: `Too many attempts. Please try again in ${rateResult.retryAfterSeconds} seconds.` },
       {
         status: 429,
         headers: { 'Retry-After': String(rateResult.retryAfterSeconds) },
@@ -23,13 +28,24 @@ export const POST = apiHandler(async (request: NextRequest) => {
   const body = await request.json()
   const name = typeof body?.name === 'string' ? body.name.trim() : ''
   const password = typeof body?.password === 'string' ? body.password : ''
-  const email = typeof body?.email === 'string' ? body.email.trim() : ''
+  const email = typeof body?.email === 'string' ? normalizeEmail(body.email) : ''
   const phone = typeof body?.phone === 'string' ? body.phone.trim() : ''
 
   // ── 入参校验：按字段逐一返回具体错误 ───────────────────────────
   if (!name) {
     logAuthAction('REGISTER', 'unknown', { error: 'Missing username' })
     throw new ApiError('INVALID_PARAMS', { field: 'name', reason: 'required' })
+  }
+
+  // Email is required: it's needed for password resets and payments.
+  if (!email) {
+    logAuthAction('REGISTER', name, { error: 'Missing email' })
+    throw new ApiError('INVALID_PARAMS', { field: 'email', reason: 'required' })
+  }
+
+  if (!isValidEmail(email)) {
+    logAuthAction('REGISTER', name, { error: 'Invalid email' })
+    throw new ApiError('INVALID_PARAMS', { field: 'email', reason: 'invalid' })
   }
 
   if (!password) {
@@ -56,6 +72,11 @@ export const POST = apiHandler(async (request: NextRequest) => {
     throw new ApiError('CONFLICT', { field: 'name', reason: 'taken' })
   }
 
+  if (await findUserByEmail(email)) {
+    logAuthAction('REGISTER', name, { error: 'Email already registered' })
+    throw new ApiError('CONFLICT', { field: 'email', reason: 'taken' })
+  }
+
   // 哈希密码
   const hashedPassword = await bcrypt.hash(password, 12)
 
@@ -66,7 +87,7 @@ export const POST = apiHandler(async (request: NextRequest) => {
       data: {
         name,
         password: hashedPassword,
-        ...(email && { email }),
+        email,
         ...(phone && { phone }),
       }
     })
@@ -84,11 +105,15 @@ export const POST = apiHandler(async (request: NextRequest) => {
     return newUser
   })
 
+  // Free credits are granted when the email is verified (stops throwaway accounts).
+  await sendVerificationEmail({ id: user.id, email })
+  await ensurePlatformDefaultModels(user.id)
+  await attributeReferral(user.id, request.cookies.get(AFFILIATE_PROGRAM.cookieName)?.value)
   logAuthAction('REGISTER', name, { userId: user.id, success: true })
 
   return NextResponse.json(
     {
-      message: "注册成功",
+      message: "Account created",
       user: {
         id: user.id,
         name: user.name

@@ -87,7 +87,7 @@ export default function WorkflowDetailPage() {
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-mono mb-4">{t('notFound')}</h1>
-          <Link href="/workflows" className="text-indigo-600 hover:underline">
+          <Link href={{ pathname: '/workflows' } as never} className="text-indigo-600 hover:underline">
             {t('backToList')}
           </Link>
         </div>
@@ -109,7 +109,7 @@ export default function WorkflowDetailPage() {
       {/* Compact header */}
       <div className="px-6 lg:px-10 pt-3 pb-3 max-w-[1280px] mx-auto w-full">
         <div className="flex items-center gap-3 mb-1.5 flex-wrap">
-          <Link href="/workflows" className="font-mono text-[12px] text-[#555] hover:text-[#0a0a0a]">← Workflows</Link>
+          <Link href={{ pathname: '/workflows' } as never} className="font-mono text-[12px] text-[#555] hover:text-[#0a0a0a]">← Workflows</Link>
           <span className="text-[#ddd]">|</span>
           <span className="px-2.5 py-0.5 rounded-full text-[11px] bg-[#f5f5f5] text-[#555] font-mono">
             case {String(workflow.caseNumber).padStart(2, '0')}
@@ -321,7 +321,7 @@ export default function WorkflowDetailPage() {
               wf.error === 'API_KEY_REQUIRED' ? (
                 <div className="p-3 bg-amber-50 border border-amber-200 text-amber-800 text-[13px] rounded-lg flex items-center justify-between">
                   <span>{locale === 'zh' ? '请先配置 EvoLink API Key' : 'Please configure your EvoLink API Key first'}</span>
-                  <Link href="/profile" className="px-4 py-1.5 bg-amber-600 text-white rounded-full text-[12px] font-medium hover:bg-amber-700 transition">
+                  <Link href={{ pathname: '/profile' } as never} className="px-4 py-1.5 bg-amber-600 text-white rounded-full text-[12px] font-medium hover:bg-amber-700 transition">
                     {locale === 'zh' ? '去配置 →' : 'Configure →'}
                   </Link>
                 </div>
@@ -406,7 +406,7 @@ export default function WorkflowDetailPage() {
         <h3 className="font-mono text-base font-normal tracking-tight max-w-[1200px] mx-auto mb-3">{t('related')}</h3>
         <div className="max-w-[1200px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-3">
           {related.map((w) => (
-            <Link key={w.slug} href={`/workflows/${w.slug}`}
+            <Link key={w.slug} href={{ pathname: `/workflows/${w.slug}` } as never}
               className="bg-white border border-[#e5e5e5] rounded-xl p-3 hover:border-[#0a0a0a] transition">
               <div className="font-mono text-[10px] text-[#999] mb-1">case {String(w.caseNumber).padStart(2, '0')} · {w.category}</div>
               <h4 className="text-[13px] font-medium mb-0.5">{w.title}</h4>

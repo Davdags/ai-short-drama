@@ -22,6 +22,7 @@ import {
   isAbortError,
 } from './panel-operations-shared'
 import { syncPanelCharacterDependentJson } from '@/lib/studio/panel-ai-data-sync'
+import { notifyAlert } from '@/lib/ui/notify'
 
 interface UsePanelCrudActionsProps {
   projectId: string
@@ -210,7 +211,7 @@ export function usePanelCrudActions({
       await onRefresh()
     } catch (error: unknown) {
       _ulogError('添加分镜失败:', error)
-      alert(
+      notifyAlert(
         t('messages.addPanelFailed', {
           error: getErrorMessage(error, t('common.unknownError')),
         }),
@@ -239,7 +240,7 @@ export function usePanelCrudActions({
         _ulogInfo('请求被中断（可能是页面刷新），后端仍在执行')
         return
       }
-      alert(
+      notifyAlert(
         t('messages.deletePanelFailed', {
           error: getErrorMessage(error, t('common.unknownError')),
         }),

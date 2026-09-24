@@ -32,6 +32,7 @@ import type {
   TaskBillingInfo,
 } from './types'
 import { BUILTIN_PRICING_VERSION } from '@/lib/model-pricing/version'
+import { notifyCreditsIfLow } from '@/lib/email/notifications'
 
 type CostInput = {
   apiType: ApiType
@@ -986,6 +987,8 @@ export async function settleTaskBilling(task: {
     quotedCost,
   })
   const recordModel = resolveRecordModel(info.model, actual.metadata)
+  // After this charge, warn the user by email if their credits run low (never blocks billing).
+  const notifyLowCredits = () => { void notifyCreditsIfLow(task.userId) }
   try {
     await confirmChargeWithRecord(
       info.freezeId,
@@ -1014,6 +1017,7 @@ export async function settleTaskBilling(task: {
       },
       { chargedAmount: chargedCost },
     )
+    notifyLowCredits()
   } catch (error) {
     const rolledBack = (await rollbackTaskBilling({
       id: task.id,

@@ -8,6 +8,14 @@ import {
   DEFAULT_ANALYSIS_WORKFLOW_CONCURRENCY,
   normalizeWorkflowConcurrencyValue,
 } from '@/lib/workflow-concurrency'
+import {
+  buildClipSplitDirective,
+  buildScreenplayDirective,
+  distributeShots,
+  mergeAdjacentToLimit,
+  totalShots,
+  type StoryLengthPlan,
+} from '@/lib/studio/story-length'
 
 export type StoryToScriptStepMeta = {
   stepId: string
@@ -38,6 +46,8 @@ export type StoryToScriptClipCandidate = {
   content: string
   matchLevel: ClipMatchLevel
   matchConfidence: number
+  /** Story length control: seconds this clip gets in the finished video. */
+  durationSeconds?: number
 }
 
 export type StoryToScriptScreenplayResult = {
@@ -72,6 +82,9 @@ export type StoryToScriptOrchestratorInput = {
   ) => Promise<StoryToScriptStepOutput>
   onStepError?: (meta: StoryToScriptStepMeta, message: string) => void
   onLog?: (message: string, details?: Record<string, unknown>) => void
+  /** Story length control (null/undefined = unconstrained). */
+  lengthPlan?: StoryLengthPlan | null
+  locale?: string
 }
 
 export type StoryToScriptOrchestratorResult = {
@@ -241,6 +254,33 @@ async function runStepWithRetry<T>(
   throw lastError!
 }
 
+/**
+ * Caps the clip count at the planned number of shots (merging neighbours, which keeps the
+ * source text contiguous) and gives each clip its share of the runtime.
+ */
+export function applyLengthPlanToClips(
+  clips: StoryToScriptClipCandidate[],
+  plan: StoryLengthPlan,
+): StoryToScriptClipCandidate[] {
+  const shots = totalShots(plan)
+  const merged = mergeAdjacentToLimit(
+    clips,
+    shots,
+    (clip) => clip.content.length,
+    (a, b) => ({
+      ...a,
+      endText: b.endText,
+      summary: [a.summary, b.summary].filter(Boolean).join(' '),
+      characters: [...new Set([...a.characters, ...b.characters])],
+      props: [...new Set([...a.props, ...b.props])],
+      content: a.content + b.content,
+      matchConfidence: Math.min(a.matchConfidence, b.matchConfidence),
+    }),
+  ).map((clip, index) => ({ ...clip, id: `clip_${index + 1}` }))
+  const perClipShots = distributeShots(merged.map((clip) => clip.content.length), shots)
+  return merged.map((clip, index) => ({ ...clip, durationSeconds: perClipShots[index] * plan.shotSeconds }))
+}
+
 export async function runStoryToScriptOrchestrator(
   input: StoryToScriptOrchestratorInput,
 ): Promise<StoryToScriptOrchestratorResult> {
@@ -255,6 +295,8 @@ export async function runStoryToScriptOrchestrator(
     runStep,
     onStepError,
     onLog,
+    lengthPlan,
+    locale,
   } = input
   const concurrency = normalizeWorkflowConcurrencyValue(
     rawConcurrency,
@@ -411,7 +453,7 @@ export async function runStoryToScriptOrchestrator(
     props_lib_name: propsLibName || '无',
     characters_introduction: charactersIntroduction || '暂无角色介绍',
   })
-  const splitPrompt = `${splitPromptBase}${CLIP_BOUNDARY_SUFFIX}`
+  const splitPrompt = `${splitPromptBase}${CLIP_BOUNDARY_SUFFIX}${lengthPlan ? buildClipSplitDirective(locale, lengthPlan) : ''}`
 
   let splitStep: StoryToScriptStepOutput | null = null
   let clipList: StoryToScriptClipCandidate[] = []
@@ -507,6 +549,15 @@ export async function runStoryToScriptOrchestrator(
     throw lastBoundaryError || new Error('split_clips boundary matching failed')
   }
 
+  if (lengthPlan) {
+    clipList = applyLengthPlanToClips(clipList, lengthPlan)
+    onLog?.('story length plan applied', {
+      targetSeconds: lengthPlan.targetSeconds,
+      shotSeconds: lengthPlan.shotSeconds,
+      clipSeconds: clipList.map((clip) => clip.durationSeconds),
+    })
+  }
+
   onLog?.('开始步骤3：对每个片段做剧本转换（并行）', { clipCount: clipList.length })
 
   const screenplayResults = await mapWithConcurrency(
@@ -532,7 +583,13 @@ export async function runStoryToScriptOrchestrator(
           props_lib_name: propsLibName || '无',
           characters_introduction: charactersIntroduction || '暂无角色介绍',
           clip_id: clip.id,
-        })
+        }) + (lengthPlan && clip.durationSeconds
+          ? buildScreenplayDirective(locale, {
+            clipSeconds: clip.durationSeconds,
+            shots: Math.max(1, Math.round(clip.durationSeconds / lengthPlan.shotSeconds)),
+            shotSeconds: lengthPlan.shotSeconds,
+          })
+          : '')
 
         const { parsed: screenplay } = await runStepWithRetry(
           runStep,

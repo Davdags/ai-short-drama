@@ -2,6 +2,7 @@
 import { logInfo as _ulogInfo } from '@/lib/logging/core'
 
 import { useTranslations } from 'next-intl'
+import { notifyAlert } from '@/lib/ui/notify'
 /**
  * 角色卡片组件 - 支持多图片选择和音色设置
  * 布局：上面名字+描述，下面三张图片（每张图片有独立的编辑和重新生成按钮）
@@ -116,11 +117,11 @@ export default function CharacterCard({
       },
       {
         onSuccess: () => {
-          alert(t('image.uploadSuccess'))
+          notifyAlert(t('image.uploadSuccess'))
         },
         onError: (error) => {
           if (shouldShowError(error)) {
-            alert(t('image.uploadFailed') + ': ' + error.message)
+            notifyAlert(t('image.uploadFailed') + ': ' + error.message)
           }
         },
         onSettled: () => {

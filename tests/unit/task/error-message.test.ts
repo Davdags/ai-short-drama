@@ -66,8 +66,9 @@ describe('task error message normalization', () => {
       },
     })
     expect(summary.code).toBe('MODEL_NOT_OPEN')
-    expect(summary.message).toContain('模型权限未开通')
-    expect(summary.message).toContain('https://console.volcengine.com/ark/region:ark+cn-beijing/openManagement?LLM=%7B%7D&advancedActiveKey=model')
+    expect(summary.message).toContain('This model is not available right now')
+    // Customers use the central EvoLink account, so no provider console link is shown.
+    expect(summary.message).not.toContain('volcengine')
   })
 
   it('prefers user-friendly message for EMPTY_RESPONSE', () => {
@@ -78,6 +79,6 @@ describe('task error message normalization', () => {
       },
     })
     expect(summary.code).toBe('EMPTY_RESPONSE')
-    expect(summary.message).toContain('模型返回空响应')
+    expect(summary.message).toContain('The AI returned an empty result')
   })
 })

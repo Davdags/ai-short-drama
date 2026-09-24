@@ -123,14 +123,14 @@ describe('ScriptViewAssetsPanel', () => {
   it('hides the prop section when the project has no prop assets', () => {
     const html = renderPanel(0)
 
-    expect(html).not.toContain('道具 (0)')
-    expect(html).not.toContain('当前片段未选择道具')
+    expect(html).not.toContain('Props (0)')
+    expect(html).not.toContain('No props selected for this scene')
   })
 
   it('keeps the prop section visible when the project has prop assets even if none are selected in the current clip', () => {
     const html = renderPanel(1)
 
-    expect(html).toContain('道具 (0)')
-    expect(html).toContain('当前片段未选择道具')
+    expect(html).toContain('Props (0)')
+    expect(html).toContain('No props selected for this scene')
   })
 })

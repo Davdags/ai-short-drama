@@ -52,7 +52,7 @@ export function useUpdateProjectCharacterVoiceSettings(projectId: string) {
                     voiceId,
                     customVoiceUrl,
                 }),
-            }, '更新音色失败')
+            }, 'Could not update the voice')
         },
         onSettled: invalidateProjectAssets,
     })
@@ -84,7 +84,7 @@ export function useSaveProjectDesignedVoice(projectId: string) {
                     characterId,
                     voiceDesign: { voiceId, audioBase64 },
                 }),
-            }, '保存失败')
+            }, 'Could not save')
         },
         onSuccess: invalidateProjectAssets,
     })

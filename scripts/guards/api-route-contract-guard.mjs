@@ -15,15 +15,25 @@ export const API_HANDLER_ALLOWLIST = new Set([
 ])
 
 export const PUBLIC_ROUTE_ALLOWLIST = new Set([
+  'src/app/api/affiliate/click/route.ts',
   'src/app/api/auth/[...nextauth]/route.ts',
   'src/app/api/auth/register/route.ts',
+  'src/app/api/auth/forgot-password/route.ts',
+  'src/app/api/auth/reset-password/route.ts',
+  'src/app/api/auth/verify-email/route.ts',
   'src/app/api/cos/image/route.ts',
   'src/app/api/files/[...path]/route.ts',
   'src/app/api/storage/sign/route.ts',
   'src/app/api/system/boot-id/route.ts',
+  // Called by Paystack/Flutterwave, not a signed-in user; every request must carry a valid signature.
+  'src/app/api/billing/webhook/[provider]/route.ts',
+  // Plan prices in local currency for the public pricing page; no account data.
+  'src/app/api/billing/prices/route.ts',
 ])
 
 const AUTH_CALL_PATTERNS = [
+  // Owner-only routes: stricter than requireUserAuth (session + ADMIN_USERNAMES).
+  /\brequireAdminAuth\s*\(/,
   /\brequireUserAuth\s*\(/,
   /\brequireProjectAuth\s*\(/,
   /\brequireProjectAuthLight\s*\(/,

@@ -1,6 +1,7 @@
 'use client'
 
 import { logError as _ulogError } from '@/lib/logging/core'
+import { notify } from '@/lib/ui/notify'
 import { useCallback } from 'react'
 import {
   useGetProjectStoryboardStats,
@@ -32,6 +33,7 @@ export function useWorkspaceConfigActions({
       await updateProjectConfigMutation.mutateAsync({ key, value })
     } catch (error: unknown) {
       _ulogError('Update config error:', error)
+      notify.error(error, { title: 'Your setting was not saved' })
     }
   }, [updateProjectConfigMutation])
 
@@ -45,6 +47,7 @@ export function useWorkspaceConfigActions({
       await updateProjectEpisodeMutation.mutateAsync({ episodeId, key, value })
     } catch (error: unknown) {
       _ulogError('Update episode error:', error)
+      notify.error(error, { title: 'Your change was not saved' })
     }
   }, [episodeId, updateProjectEpisodeMutation])
 

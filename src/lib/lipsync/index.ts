@@ -71,7 +71,7 @@ export async function generateLipSync(
         ? (error as { message?: unknown; body?: unknown })
         : null
     _ulogError('[LipSync Async] 错误:', error)
-    let errorDetails = typeof errorObject?.message === 'string' ? errorObject.message : '未知错误'
+    let errorDetails = typeof errorObject?.message === 'string' ? errorObject.message : 'Unknown error'
     const body = (errorObject?.body && typeof errorObject.body === 'object')
       ? (errorObject.body as { detail?: unknown })
       : null
@@ -83,7 +83,7 @@ export async function generateLipSync(
           : JSON.stringify(body.detail)
       }
     }
-    throw new Error(`口型同步任务提交失败: ${errorDetails}`)
+    throw new Error(`Lip sync submission failed: ${errorDetails}`)
   }
 }
 

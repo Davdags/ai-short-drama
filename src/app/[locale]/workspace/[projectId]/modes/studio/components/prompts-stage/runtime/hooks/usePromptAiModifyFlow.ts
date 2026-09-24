@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { shouldShowError } from '@/lib/error-utils'
 import { getErrorMessage } from '../promptStageRuntime.utils'
 import type { PromptAssetReference, PromptShotEditState } from '../promptStageRuntime.types'
+import { notifyAlert } from '@/lib/ui/notify'
 
 interface ModifyShotPromptResult {
   modifiedImagePrompt: string
@@ -48,7 +49,7 @@ export function usePromptAiModifyFlow({
     const shotId = editingPrompt.shotId
     const currentState = shotEditStates[shotId]
     if (!currentState || !currentState.aiModifyInstruction.trim()) {
-      alert(t('prompts.enterInstruction'))
+      notifyAlert(t('prompts.enterInstruction'))
       return
     }
 
@@ -84,7 +85,7 @@ export function usePromptAiModifyFlow({
       await onGenerateImage(shotId, assetIds.length > 0 ? assetIds : undefined)
     } catch (error: unknown) {
       if (shouldShowError(error)) {
-        alert(t('prompts.modifyFailed', { error: getErrorMessage(error, t('common.unknownError')) }))
+        notifyAlert(t('prompts.modifyFailed', { error: getErrorMessage(error, t('common.unknownError')) }))
       }
     } finally {
       setAiModifyingShots((previous) => {

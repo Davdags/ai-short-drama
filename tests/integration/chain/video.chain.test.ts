@@ -37,9 +37,12 @@ const configServiceMock = vi.hoisted(() => ({
   })),
 }))
 const concurrencyGateMock = vi.hoisted(() => ({
-  withUserConcurrencyGate: vi.fn(async <T>(input: {
+  runWithUserSlot: vi.fn(async <T>(input: {
     run: () => Promise<T>
   }) => await input.run()),
+}))
+const planLimitsMock = vi.hoisted(() => ({
+  getUserParallelLimit: vi.fn(async () => 1),
 }))
 
 const prismaMock = vi.hoisted(() => ({
@@ -99,7 +102,8 @@ vi.mock('@/lib/api-config', () => ({
   getProviderConfig: vi.fn(async () => ({ apiKey: 'api-key' })),
 }))
 vi.mock('@/lib/config-service', () => configServiceMock)
-vi.mock('@/lib/workers/user-concurrency-gate', () => concurrencyGateMock)
+vi.mock('@/lib/workers/user-slot-gate', () => concurrencyGateMock)
+vi.mock('@/lib/billing/plan-limits', () => planLimitsMock)
 
 function toJob(data: TaskJobData): Job<TaskJobData> {
   return { data } as unknown as Job<TaskJobData>

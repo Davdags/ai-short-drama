@@ -22,7 +22,8 @@ describe('resolveTaskPresentationState', () => {
       hasOutput: false,
     })
     expect(state.mode).toBe('placeholder')
-    expect(state.labelKey).toBe('taskStatus.intent.generate.running.image')
+    // Waiting for a free slot reads as "Queued", not "Generating".
+    expect(state.labelKey).toBe('taskStatus.queued.image')
   })
 
   it('maps failed state to failed label', () => {

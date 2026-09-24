@@ -28,6 +28,7 @@ import { queryKeys } from '@/lib/query/keys'
 import { AppIcon } from '@/components/ui/icons'
 import { Link } from '@/i18n/navigation'
 import { useImageGenerationCount } from '@/lib/image-generation/use-image-generation-count'
+import { notifyAlert } from '@/lib/ui/notify'
 
 export default function AssetHubPage() {
     const t = useTranslations('assetHub')
@@ -179,7 +180,7 @@ export default function AssetHubPage() {
                 modifyPrompt,
                 extraImageUrls
             }).catch(() => {
-                alert(t('editFailed'))
+                notifyAlert(t('editFailed'))
             })
         } else if (type === 'location') {
             void locationActions.modifyRender({
@@ -188,7 +189,7 @@ export default function AssetHubPage() {
                 modifyPrompt,
                 extraImageUrls
             }).catch(() => {
-                alert(t('editFailed'))
+                notifyAlert(t('editFailed'))
             })
         }
     }
@@ -219,12 +220,12 @@ export default function AssetHubPage() {
             })
 
             if (res.ok) {
-                alert(t('voiceDesignSaved', { name: voiceDesignCharacter.name }))
+                notifyAlert(t('voiceDesignSaved', { name: voiceDesignCharacter.name }))
                 queryClient.invalidateQueries({ queryKey: queryKeys.globalAssets.characters() })
                 refreshAssets()
             } else {
                 const data = await res.json()
-                alert(
+                notifyAlert(
                     typeof data.error === 'string'
                         ? t('saveVoiceFailedDetail', { error: data.error })
                         : t('saveVoiceFailed'),
@@ -232,7 +233,7 @@ export default function AssetHubPage() {
             }
         } catch (error) {
             _ulogError('保存声音失败:', error)
-            alert(t('saveVoiceFailed'))
+            notifyAlert(t('saveVoiceFailed'))
         }
     }
 
@@ -349,7 +350,7 @@ export default function AssetHubPage() {
             setVoicePickerCharacterId(null)
         } catch (error) {
             _ulogError('绑定音色失败:', error)
-            alert(t('bindVoiceFailed'))
+            notifyAlert(t('bindVoiceFailed'))
         }
     }
 
@@ -403,7 +404,7 @@ export default function AssetHubPage() {
         }
 
         if (imageEntries.length === 0) {
-            alert(t('downloadEmpty'))
+            notifyAlert(t('downloadEmpty'))
             return
         }
 
@@ -433,7 +434,7 @@ export default function AssetHubPage() {
             URL.revokeObjectURL(link.href)
         } catch (error) {
             _ulogError('打包下载失败:', error)
-            alert(t('downloadFailed'))
+            notifyAlert(t('downloadFailed'))
         } finally {
             setIsDownloading(false)
         }
@@ -444,7 +445,7 @@ export default function AssetHubPage() {
             <Navbar />
             <div className="flex flex-1 min-h-0">
             <AppSidebar />
-            <div className="flex-1 overflow-y-auto px-6 py-6">
+            <div className="flex-1 overflow-y-auto px-4 pb-24 pt-6 sm:px-6 md:pb-6">
                 {/* 页面标题 */}
                 <div className="mb-6">
                     <h1 className="text-2xl font-bold text-[var(--glass-text-primary)]">{t('title')}</h1>

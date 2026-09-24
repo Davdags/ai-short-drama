@@ -18,6 +18,7 @@ import {
 } from '@/lib/query/hooks'
 import { useLipSync } from '@/lib/query/hooks/useStoryboards'
 import ImagePreviewModal from '@/components/ui/ImagePreviewModal'
+import { CreditCost } from '@/components/credits/CreditCost'
 import { ModelCapabilityDropdown } from '@/components/ui/config-modals/ModelCapabilityDropdown'
 import VideoTimelinePanel from '@/app/[locale]/workspace/[projectId]/modes/studio/components/video-stage/VideoTimelinePanel'
 import VideoRenderPanel from '@/app/[locale]/workspace/[projectId]/modes/studio/components/video-stage/VideoRenderPanel'
@@ -479,6 +480,12 @@ export function useVideoStageRuntime({
     })
   ), [allPanels, isSubmittingVideoBatch, submittingVideoPanelKeys])
 
+  // Batch generation submits every shot that has an image but no video yet (see generate-video route).
+  const batchPanelCount = useMemo(
+    () => allPanels.filter((panel) => !!panel.imageUrl && !panel.videoUrl).length,
+    [allPanels],
+  )
+
   const runningCount = projectedPanels.filter((panel) => panel.videoTaskRunning || panel.lipSyncTaskRunning).length
   const failedCount = allPanels.filter((panel) => !!panel.videoErrorMessage || !!panel.lipSyncErrorMessage).length
   const isAnyTaskRunning = runningCount > 0 || isSubmittingVideoBatch
@@ -617,7 +624,14 @@ export function useVideoStageRuntime({
               placeholder={t('panelCard.selectModel')}
             />
 
-            <div className="flex justify-end gap-2 pt-1">
+            <div className="flex items-center justify-end gap-2 pt-1">
+              <CreditCost
+                className="mr-auto !text-sm"
+                prefix={`${t('toolbar.totalShots', { count: batchPanelCount })} · `}
+                items={batchSelectedModel && batchPanelCount > 0
+                  ? [{ apiType: 'video', model: batchSelectedModel, quantity: batchPanelCount, metadata: batchGenerationOptions as Record<string, unknown> }]
+                  : null}
+              />
               <button
                 type="button"
                 onClick={handleCloseBatchGenerateModal}

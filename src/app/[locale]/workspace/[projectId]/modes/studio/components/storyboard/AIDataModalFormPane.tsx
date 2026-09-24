@@ -80,7 +80,7 @@ export default function AIDataModalFormPane({
         <div>
           <label className="block text-xs font-medium text-[var(--glass-text-secondary)] mb-1">{t('aiData.characters')}</label>
           <div className="px-3 py-2 bg-[var(--glass-bg-muted)] border border-[var(--glass-stroke-base)] rounded-lg text-sm text-[var(--glass-text-secondary)]">
-            {characters.length > 0 ? characters.join('、') : t('common.none')}
+            {characters.length > 0 ? characters.join(', ') : t('common.none')}
           </div>
         </div>
       </div>

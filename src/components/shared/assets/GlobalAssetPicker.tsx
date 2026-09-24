@@ -301,8 +301,8 @@ export default function GlobalAssetPicker({
                 : voices.length === 0
 
     return (
-        <div className="fixed inset-0 glass-overlay flex items-center justify-center z-50">
-            <div className="glass-surface-modal w-[600px] max-h-[80vh] flex flex-col">
+        <div className="fixed inset-0 glass-overlay flex items-center justify-center z-50 p-4">
+            <div className="glass-surface-modal w-full max-w-[600px] max-h-[80vh] flex flex-col">
                 {/* 头部 */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-stroke-base)]">
                     <h2 className="text-lg font-semibold text-[var(--glass-text-primary)]">

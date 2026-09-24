@@ -96,7 +96,7 @@ export async function handleModifyAssetImageTask(job: Job<TaskJobData>) {
       index: imageIndex,
     })
 
-    const prompt = `请根据以下指令修改图片，保持人物核心特征一致：\n${modifyInstruction}`
+    const prompt = `Edit the image according to these instructions, keeping the character's core features consistent:\n${modifyInstruction}`
     const source = await resolveImageSourceFromGeneration(job, {
       userId: job.data.userId,
       modelId: editModel,
@@ -108,7 +108,7 @@ export async function handleModifyAssetImageTask(job: Job<TaskJobData>) {
       },
     })
 
-    const label = `${appearance.character?.name || '角色'} - ${appearance.changeReason || '形象'}`
+    const label = `${appearance.character?.name || 'Character'} - ${appearance.changeReason || 'Look'}`
     const labeled = await withLabelBar(source, label)
     const cosKey = await uploadImageSourceToCos(labeled, 'character-modify', appearance.id)
 
@@ -199,7 +199,7 @@ export async function handleModifyAssetImageTask(job: Job<TaskJobData>) {
     const normalizedExtras = await normalizeReferenceImagesForGeneration(extraReferenceInputs)
     const referenceImages = Array.from(new Set([requiredReference, ...normalizedExtras]))
 
-    const prompt = `请根据以下指令修改场景图片，保持整体风格一致：\n${modifyInstruction}`
+    const prompt = `Edit the location image according to these instructions, keeping the overall style consistent:\n${modifyInstruction}`
     const source = await resolveImageSourceFromGeneration(job, {
       userId: job.data.userId,
       modelId: editModel,
@@ -211,7 +211,7 @@ export async function handleModifyAssetImageTask(job: Job<TaskJobData>) {
       },
     })
 
-    const label = locationImage.location?.name || '场景'
+    const label = locationImage.location?.name || 'Location'
     const labeled = await withLabelBar(source, label)
     const cosKey = await uploadImageSourceToCos(labeled, 'location-modify', locationImage.id)
 
@@ -229,7 +229,7 @@ export async function handleModifyAssetImageTask(job: Job<TaskJobData>) {
             currentDescription: locationImage.description,
             modifyInstruction,
             referenceImages: normalizedExtras,
-            locationName: locationImage.location?.name || '场景',
+            locationName: locationImage.location?.name || 'Location',
             projectId: job.data.projectId,
           })
         }
@@ -318,7 +318,7 @@ export async function handleModifyAssetImageTask(job: Job<TaskJobData>) {
 
     const normalizedExtras = await normalizeReferenceImagesForGeneration(extraReferenceInputs)
     const uniqueReferences = Array.from(new Set([requiredReference, ...normalizedExtras]))
-    const prompt = `请根据以下指令修改分镜图片，保持镜头语言和主体一致：\n${modifyPrompt}`
+    const prompt = `Edit the storyboard image according to these instructions, keeping the shot composition and subject consistent:\n${modifyPrompt}`
     const source = await resolveImageSourceFromGeneration(job, {
       userId: job.data.userId,
       modelId: editModel,

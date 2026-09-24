@@ -13,6 +13,7 @@ import {
   type VoiceDesignMutationPayload,
   type VoiceDesignMutationResult,
 } from './voice-design-shared'
+import { notifyAlert } from '@/lib/ui/notify'
 
 export type { VoiceDesignMutationPayload, VoiceDesignMutationResult } from './voice-design-shared'
 
@@ -79,7 +80,7 @@ export default function VoiceDesignDialogBase({
       const status = err instanceof Error ? (err as Error & { status?: number }).status : undefined
       if (status === 402) {
         const detail = err instanceof Error ? (err as Error & { detail?: string }).detail : undefined
-        alert(t('insufficientBalance') + '\n\n' + (detail || t('insufficientBalanceDetail')))
+        notifyAlert(t('insufficientBalance') + '\n\n' + (detail || t('insufficientBalanceDetail')))
         setError('INSUFFICIENT_BALANCE')
         return
       }
@@ -218,7 +219,7 @@ export default function VoiceDesignDialogBase({
             <h3 className="font-semibold text-[var(--glass-text-primary)] mb-1">{tv('confirmReplace')}</h3>
             <p className="text-sm text-[var(--glass-text-secondary)] mb-4">
               {tv('replaceWarning')}
-              <span className="font-medium text-[var(--glass-text-primary)]">「{speaker}」</span>
+              <span className="font-medium text-[var(--glass-text-primary)]">&ldquo;{speaker}&rdquo;</span>
             </p>
             <div className="flex gap-2">
               <button
