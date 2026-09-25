@@ -52,7 +52,7 @@ export const PLANS: PricingPlan[] = [
     features: [
       '500 credits per month',
       'Dramas up to 90 seconds long',
-      'Script, cast and storyboard for your drama, plus a few seconds of video',
+      'Script, cast and storyboard for your drama',
       'Access to all standard models',
       'Faster generation speed',
       'HD video (720p)',
@@ -74,7 +74,6 @@ export const PLANS: PricingPlan[] = [
     features: [
       '2,000 credits per month',
       'Dramas up to 90 seconds long',
-      'About 1 minute of finished video a month',
       'Seedance, Kling and Wan video models',
       'Priority generation speed',
       'Up to 1080p video with Seedance 2.5',
@@ -96,7 +95,6 @@ export const PLANS: PricingPlan[] = [
     features: [
       '5,000 credits per month',
       'Dramas up to 90 seconds long',
-      'About 2½ minutes of finished video a month',
       'All video models, plus early access to new ones',
       'Fastest generation speed',
       'Up to 1080p video with Seedance 2.5',
