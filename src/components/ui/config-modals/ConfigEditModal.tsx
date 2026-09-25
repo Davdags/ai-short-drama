@@ -94,7 +94,9 @@ function extractCapabilityFields(
     if (!isRecord(rawNamespace)) return []
 
     return Object.entries(rawNamespace)
-        .filter(([key, value]) => key.endsWith('Options') && Array.isArray(value) && value.every(isCapabilityValue) && value.length > 0)
+        // Aspect ratio is the project's own setting (videoRatio); the API rejects it as a per-model override.
+
+        .filter(([key, value]) => key !== 'aspectRatioOptions' && key.endsWith('Options') && Array.isArray(value) && value.every(isCapabilityValue) && value.length > 0)
         .map(([key, value]) => {
             const field = key.slice(0, -'Options'.length)
             return {
@@ -400,7 +402,7 @@ export function SettingsModal({
                                     value={analysisModel}
                                     onModelChange={(v) => handleChange(onAnalysisModelChange)(v)}
                                     capabilityFields={analysisCapabilityFields}
-                                    placementMode="downward"
+                                    placementMode="auto"
                                     capabilityOverrides={selectedAnalysisOverrides}
                                     onCapabilityChange={(field, rawValue, sample) => {
                                         applyCapabilityOverride(analysisModel, field, rawValue, sample)
@@ -416,7 +418,7 @@ export function SettingsModal({
                                     value={characterModel}
                                     onModelChange={(v) => handleModelChange(v, userModels.image, 'image', onCharacterModelChange)}
                                     capabilityFields={characterCapabilityFields}
-                                    placementMode="downward"
+                                    placementMode="auto"
                                     capabilityOverrides={selectedCharacterOverrides}
                                     onCapabilityChange={(field, rawValue, sample) => {
                                         applyCapabilityOverride(characterModel, field, rawValue, sample)
@@ -431,7 +433,7 @@ export function SettingsModal({
                                     value={locationModel}
                                     onModelChange={(v) => handleModelChange(v, userModels.image, 'image', onLocationModelChange)}
                                     capabilityFields={locationCapabilityFields}
-                                    placementMode="downward"
+                                    placementMode="auto"
                                     capabilityOverrides={selectedLocationOverrides}
                                     onCapabilityChange={(field, rawValue, sample) => {
                                         applyCapabilityOverride(locationModel, field, rawValue, sample)
@@ -446,7 +448,7 @@ export function SettingsModal({
                                     value={imageModel}
                                     onModelChange={(v) => handleModelChange(v, userModels.image, 'image', onImageModelChange)}
                                     capabilityFields={storyboardCapabilityFields}
-                                    placementMode="downward"
+                                    placementMode="auto"
                                     capabilityOverrides={selectedStoryboardOverrides}
                                     onCapabilityChange={(field, rawValue, sample) => {
                                         applyCapabilityOverride(imageModel, field, rawValue, sample)
@@ -461,7 +463,7 @@ export function SettingsModal({
                                     value={editModel}
                                     onModelChange={(v) => handleModelChange(v, userModels.image, 'image', onEditModelChange)}
                                     capabilityFields={editCapabilityFields}
-                                    placementMode="downward"
+                                    placementMode="auto"
                                     capabilityOverrides={selectedEditOverrides}
                                     onCapabilityChange={(field, rawValue, sample) => {
                                         applyCapabilityOverride(editModel, field, rawValue, sample)
@@ -476,7 +478,7 @@ export function SettingsModal({
                                     value={videoModel}
                                     onModelChange={(v) => handleModelChange(v, normalVideoModels, 'video', onVideoModelChange)}
                                     capabilityFields={videoCapabilityFields}
-                                    placementMode="downward"
+                                    placementMode="auto"
                                     capabilityOverrides={selectedVideoOverrides}
                                     onCapabilityChange={(field, rawValue, sample) => {
                                         applyCapabilityOverride(videoModel, field, rawValue, sample)
@@ -491,7 +493,7 @@ export function SettingsModal({
                                     value={audioModel}
                                     onModelChange={(v) => handleModelChange(v, userModels.audio, 'audio', onAudioModelChange)}
                                     capabilityFields={audioCapabilityFields}
-                                    placementMode="downward"
+                                    placementMode="auto"
                                     capabilityOverrides={selectedAudioOverrides}
                                     onCapabilityChange={(field, rawValue, sample) => {
                                         applyCapabilityOverride(audioModel, field, rawValue, sample)

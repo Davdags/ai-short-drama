@@ -5,6 +5,7 @@ import Navbar from '@/components/Navbar'
 import { apiFetch } from '@/lib/api-fetch'
 import { AdminUsers } from './components/AdminUsers'
 import { AdminAffiliates } from './components/AdminAffiliates'
+import { AdminRevenue } from './components/AdminRevenue'
 
 interface WindowStats {
   signups: number
@@ -58,7 +59,7 @@ export default function AdminPage() {
       <main className="mx-auto max-w-6xl space-y-5 px-4 py-10 sm:px-6">
         <div>
           <h1 className="text-3xl font-bold text-[#171717]">Admin</h1>
-          <p className="mt-1 text-sm text-[#737373]">Owner dashboard — users, credits and affiliate payouts.</p>
+          <p className="mt-1 text-sm text-[#737373]">Owner dashboard — revenue, users, credits and affiliate payouts. Money is in USD.</p>
         </div>
 
         {status === 'loading' && <div className="h-40 animate-pulse rounded-2xl bg-white" />}
@@ -67,6 +68,10 @@ export default function AdminPage() {
 
         {status === 'ok' && summary && (
           <>
+            <h2 className="pt-2 text-lg font-bold text-[#171717]">Money</h2>
+            <AdminRevenue />
+
+            <h2 className="pt-2 text-lg font-bold text-[#171717]">Usage</h2>
             <div className={`${CARD} grid gap-6 sm:grid-cols-2 lg:grid-cols-4`}>
               <Stat label="Sign-ups (24h)" value={n(summary.last24h.signups)} hint={`${n(summary.last24h.verified)} verified · ${n(summary.last7d.signups)} in 7 days`} />
               <Stat label="Credits used (24h)" value={n(summary.last24h.creditsCharged)} hint={`≈ ${n(summary.last24h.evolinkCreditsUsed)} EvoLink credits ≈ $${(summary.last24h.evolinkCreditsUsed * 0.0147).toFixed(2)} cost`} />

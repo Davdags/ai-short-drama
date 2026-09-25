@@ -30,7 +30,9 @@ function extractCapabilityFieldsFromModel(
   const namespace = capabilities[modelType]
   if (!isRecord(namespace)) return []
   return Object.entries(namespace)
-    .filter(([key, value]) => key.endsWith('Options') && Array.isArray(value) && value.every(isCapabilityValue) && value.length > 0)
+    // Aspect ratio is the project's own setting (videoRatio); the API rejects it as a per-model override.
+
+    .filter(([key, value]) => key !== 'aspectRatioOptions' && key.endsWith('Options') && Array.isArray(value) && value.every(isCapabilityValue) && value.length > 0)
     .map(([key, value]) => ({
       field: key.slice(0, -'Options'.length),
       options: value as CapabilityValue[],

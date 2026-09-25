@@ -6,7 +6,25 @@ import { buildMockRequest } from '../../../helpers/request'
 
 const authState = vi.hoisted(() => ({
   authenticated: false,
+  admin: false,
 }))
+
+const revenueMock = vi.hoisted(() => ({
+  loadRevenueMetrics: vi.fn(async () => ({
+    recurring: { mrr: 68, arr: 816, subscribers: 2 },
+    revenue: { allTime: { total: 118, count: 3 } },
+  })),
+}))
+
+vi.mock('@/lib/admin/access', () => ({
+  requireAdminAuth: async () => {
+    if (!authState.authenticated) return new Response(JSON.stringify({ error: { code: 'UNAUTHORIZED' } }), { status: 401 })
+    if (!authState.admin) return new Response(JSON.stringify({ error: { code: 'FORBIDDEN' } }), { status: 403 })
+    return { session: { user: { id: 'admin-1' } } }
+  },
+}))
+
+vi.mock('@/lib/admin/revenue', () => revenueMock)
 
 const loggingMock = vi.hoisted(() => ({
   readAllLogs: vi.fn(async () => 'worker log line 1\nworker log line 2'),
@@ -45,6 +63,7 @@ describe('api contract - infra routes (behavior)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     authState.authenticated = false
+    authState.admin = false
     vi.resetModules()
   })
 
@@ -73,6 +92,7 @@ describe('api contract - infra routes (behavior)', () => {
   it('infra route group exists', () => {
     expect(routes.map((entry) => entry.routeFile)).toEqual(expect.arrayContaining([
       'src/app/api/admin/download-logs/route.ts',
+      'src/app/api/admin/revenue/route.ts',
       'src/app/api/cos/image/route.ts',
       'src/app/api/files/[...path]/route.ts',
       'src/app/api/storage/sign/route.ts',
@@ -107,6 +127,29 @@ describe('api contract - infra routes (behavior)', () => {
     expect(text).toContain('worker log line 1')
     expect(res.headers.get('content-type')).toBe('text/plain; charset=utf-8')
     expect(res.headers.get('content-disposition')).toMatch(/^attachment; filename="app-logs-/)
+  })
+
+  it('GET /api/admin/revenue rejects signed-out and non-admin users', async () => {
+    const mod = await import('@/app/api/admin/revenue/route')
+    const req = () => buildMockRequest({ path: '/api/admin/revenue', method: 'GET' })
+
+    expect((await mod.GET(req(), { params: Promise.resolve({}) })).status).toBe(401)
+    authState.authenticated = true
+    expect((await mod.GET(req(), { params: Promise.resolve({}) })).status).toBe(403)
+    expect(revenueMock.loadRevenueMetrics).not.toHaveBeenCalled()
+  })
+
+  it('GET /api/admin/revenue returns the money metrics to admins', async () => {
+    authState.authenticated = true
+    authState.admin = true
+    const mod = await import('@/app/api/admin/revenue/route')
+    const res = await mod.GET(buildMockRequest({ path: '/api/admin/revenue', method: 'GET' }), { params: Promise.resolve({}) })
+    const json = await res.json() as { success: boolean; recurring: { mrr: number; arr: number } }
+
+    expect(res.status).toBe(200)
+    expect(json.success).toBe(true)
+    expect(json.recurring).toMatchObject({ mrr: 68, arr: 816 })
+    expect(revenueMock.loadRevenueMetrics).toHaveBeenCalledTimes(1)
   })
 
   it('GET /api/cos/image redirects to signed storage route with normalized query', async () => {

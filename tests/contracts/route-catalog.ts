@@ -28,6 +28,7 @@ export type RouteCatalogEntry = {
 
 const ROUTE_FILES = [
   'src/app/api/admin/download-logs/route.ts',
+  'src/app/api/admin/revenue/route.ts',
   'src/app/api/admin/affiliates/route.ts',
   'src/app/api/admin/summary/route.ts',
   'src/app/api/admin/users/route.ts',

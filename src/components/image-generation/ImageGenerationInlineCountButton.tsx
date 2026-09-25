@@ -63,9 +63,10 @@ export default function ImageGenerationInlineCountButton({
         }
       }}
       aria-disabled={isActionDisabled}
-      className={`${className} ${rootStateClassName}`.trim()}
+      // flex-wrap: in narrow cards the label wraps onto a second line instead of being clipped at both ends.
+      className={`${className} flex-wrap gap-y-0.5 text-center ${rootStateClassName}`.trim()}
     >
-      <span className={labelClassName}>{prefix}</span>
+      <span className={`whitespace-nowrap ${labelClassName}`.trim()}>{prefix}</span>
       <span
         className={`group relative inline-flex items-center rounded-md px-1.5 py-0.5 transition-colors ${
           isSelectDisabled ? '' : 'hover:bg-white/12 focus-within:bg-white/14'
@@ -89,7 +90,7 @@ export default function ImageGenerationInlineCountButton({
           <AppIcon name="chevronDown" className="h-3 w-3" />
         </span>
       </span>
-      <span className={labelClassName}>{suffix}</span>
+      <span className={`whitespace-nowrap ${labelClassName}`.trim()}>{suffix}</span>
       {costItems ? <CreditCost items={costItems} prefix="· " className="!text-current opacity-80" /> : null}
     </div>
   )
