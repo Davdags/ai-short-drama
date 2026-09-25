@@ -46,3 +46,19 @@ describe('merge-episode-videos feature', () => {
     expect(source).toContain('MERGE_EPISODE_VIDEOS')
   })
 })
+
+describe('merge-episode-videos background music', () => {
+  it('the merge route turns background music on unless the user turns it off', async () => {
+    const routePath = path.join(process.cwd(), 'src/app/api/studio/[projectId]/merge-episode-videos/route.ts')
+    const source = await fs.readFile(routePath, 'utf-8')
+    expect(source).toContain('music: body?.music !== false')
+  })
+
+  it('the merge handler scores the episode by shot mood without failing the merge', async () => {
+    const handlerPath = path.join(process.cwd(), 'src/lib/workers/handlers/merge-videos.ts')
+    const source = await fs.readFile(handlerPath, 'utf-8')
+    expect(source).toContain('addBackgroundScore')
+    expect(source).toContain("payload.music !== false")
+    expect(source).toContain("action: 'merge.music.skipped'")
+  })
+})

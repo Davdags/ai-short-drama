@@ -35,7 +35,8 @@ export const POST = apiHandler(async (
     type: TASK_TYPE.MERGE_EPISODE_VIDEOS,
     targetType: 'StudioEpisode',
     targetId: episodeId,
-    payload: { episodeId },
+    // Background music under the merged episode is on unless the user turns it off.
+    payload: { episodeId, music: body?.music !== false },
     dedupeKey: `merge_videos:${episodeId}`,
     billingInfo: { billable: false },
   })

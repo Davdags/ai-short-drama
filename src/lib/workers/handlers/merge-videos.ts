@@ -9,8 +9,45 @@ import { uploadObject, getSignedUrl, toFetchableUrl } from '@/lib/storage'
 import type { TaskJobData } from '@/lib/task/types'
 import { reportTaskProgress } from '../shared'
 import { notifyEpisodeReady } from '@/lib/email/notifications'
+import { createScopedLogger } from '@/lib/logging/core'
+import { buildScorePlan, type ScoredShot } from '@/lib/music/score-plan'
+import { buildScoreMixArgs } from '@/lib/music/score-mix'
+import { ensureMoodCues } from '@/lib/music/mood-cues'
 
 const execFileAsync = promisify(execFile)
+const logger = createScopedLogger({ module: 'worker.merge_videos' })
+const SCORE_TIMEOUT_MS = 5 * 60 * 1000
+
+/**
+ * Lays mood music under the merged episode: one Suno cue per mood (made once per episode),
+ * each shot's mood under that shot, hits on the big moments. Returns the scored file, or null
+ * when there is nothing to score.
+ */
+async function addBackgroundScore(input: {
+  tmpDir: string
+  mergedFile: string
+  episodeId: string
+  userId: string
+  shots: ScoredShot[]
+}): Promise<string | null> {
+  const plan = buildScorePlan(input.shots)
+  if (plan.segments.length === 0 && plan.hits.length === 0) return null
+  const cues = await ensureMoodCues({ episodeId: input.episodeId, userId: input.userId, moods: plan.moods })
+
+  const cueFiles: Record<string, string> = {}
+  for (const mood of plan.moods) {
+    if (!cues[mood]) continue
+    const file = path.join(input.tmpDir, `cue_${mood}.mp3`)
+    await downloadWithRetry(toFetchableUrl(getSignedUrl(cues[mood], 3600)), file)
+    cueFiles[mood] = file
+  }
+
+  const outputFile = path.join(input.tmpDir, 'scored.mp4')
+  const args = buildScoreMixArgs({ mergedFile: input.mergedFile, cueFiles, plan, outputFile })
+  if (!args) return null
+  await runFfmpeg(args, SCORE_TIMEOUT_MS)
+  return outputFile
+}
 
 type AnyObj = Record<string, unknown>
 
@@ -157,6 +194,8 @@ async function runMergeEpisodeVideos(
           panelIndex: true,
           videoUrl: true,
           lipSyncVideoUrl: true,
+          mood: true,
+          musicHit: true,
         },
       },
     },
@@ -166,12 +205,12 @@ async function runMergeEpisodeVideos(
   storyboards.sort((a, b) => (clipOrder.get(a.clipId) ?? 999) - (clipOrder.get(b.clipId) ?? 999))
 
   // Collect panels with video URL, prefer lipSyncVideoUrl
-  const videoPanels: { id: string; videoKey: string }[] = []
+  const videoPanels: { id: string; videoKey: string; mood: string | null; musicHit: boolean }[] = []
   for (const sb of storyboards) {
     for (const panel of sb.panels) {
       const videoKey = panel.lipSyncVideoUrl || panel.videoUrl
       if (videoKey) {
-        videoPanels.push({ id: panel.id, videoKey })
+        videoPanels.push({ id: panel.id, videoKey, mood: panel.mood ?? null, musicHit: panel.musicHit === true })
       }
     }
   }
@@ -321,10 +360,37 @@ async function runMergeEpisodeVideos(
       },
     )
 
+    // ── Step 5b: Background music per shot mood (optional; never fails the merge) ──
+    let finalPath = outputPath
+    if (payload.music !== false && videoPanels.some((panel) => panel.mood)) {
+      await reportTaskProgress(job, 78, { stage: 'scoring' })
+      try {
+        const durations: number[] = []
+        for (const basename of normalizedBasenames) {
+          const out = await runFfprobe(['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', path.join(tmpDir, basename)])
+          durations.push(Number(out.trim()) || 0)
+        }
+        const scored = await addBackgroundScore({
+          tmpDir,
+          mergedFile: outputPath,
+          episodeId,
+          userId: job.data.userId,
+          shots: videoPanels.map((panel, index) => ({ duration: durations[index] || 0, mood: panel.mood, musicHit: panel.musicHit })),
+        })
+        if (scored) finalPath = scored
+      } catch (err) {
+        logger.warn({
+          action: 'merge.music.skipped',
+          message: err instanceof Error ? err.message : String(err),
+          details: { episodeId },
+        })
+      }
+    }
+
     await reportTaskProgress(job, 85, { stage: 'uploading' })
 
     // ── Step 6: Upload merged video ──
-    const mergedBuffer = await fs.readFile(outputPath)
+    const mergedBuffer = await fs.readFile(finalPath)
     const storageKey = `video/merged/${job.data.projectId}/${episodeId}/${job.data.taskId}.mp4`
     await uploadObject(mergedBuffer, storageKey, 3, 'video/mp4')
 

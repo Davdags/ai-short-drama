@@ -131,6 +131,8 @@ model StudioEpisode {
   createdAt               DateTime                   @default(now())
   updatedAt               DateTime                   @default(now()) @updatedAt
   speakerVoices           String?                    @db.Text
+  /// Background music per mood for the merged episode: JSON { mood: storageKey }
+  musicCues               String?                    @db.Text
   clips                   StudioClip[]
   studioProject   StudioProject      @relation(fields: [studioProjectId], references: [id], onDelete: Cascade)
   shots                   StudioShot[]
