@@ -110,9 +110,9 @@ export function Footer() {
 
       {/* Bottom bar */}
       <div className="border-t border-[#e5e5e5] bg-white">
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <div className="mx-auto flex max-w-7xl flex-col items-center gap-2 px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-5 text-center sm:flex-row sm:justify-between sm:px-6 sm:py-4 sm:text-left">
           <p className="text-xs text-[#737373]">© 2026 {BRAND_NAME}. All rights reserved.</p>
-          <div className="flex flex-wrap gap-x-5 gap-y-1">
+          <div className="flex flex-wrap justify-center gap-x-5 gap-y-1 sm:justify-end">
             {socials.length > 0
               ? socials.map((social) => (
                 <Link key={social.title} href={social.href} className="text-xs font-medium text-[#525252] hover:text-[#8020fc]">{social.title}</Link>

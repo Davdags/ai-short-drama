@@ -188,7 +188,7 @@ export default function NovelInputStage({
 
       {/* 主输入区域（含底部工具栏） */}
       <div className="glass-surface-elevated overflow-hidden relative z-10">
-        <div className="p-6 pb-0">
+        <div className="p-4 pb-0 sm:p-6 sm:pb-0">
           {/* 字数统计 */}
           <div className="flex items-center justify-end mb-3">
             <span className="glass-chip glass-chip-neutral text-xs">
@@ -209,9 +209,9 @@ export default function NovelInputStage({
         </div>
 
         {/* 底部工具栏：比例 + 风格 + 开始创作（内嵌在输入框卡片内） */}
-        <div className="flex items-end gap-3 px-6 py-4">
-          <div className="flex items-center gap-3 flex-1 min-w-0">
-            <div className="w-[160px] flex-shrink-0">
+        <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-end sm:px-6">
+          <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-1 sm:items-center sm:min-w-0">
+            <div className="min-w-0 sm:w-[160px] sm:flex-shrink-0">
               <RatioSelector
                 value={videoRatio}
                 onChange={(value) => onVideoRatioChange?.(value)}
@@ -222,7 +222,7 @@ export default function NovelInputStage({
                 getUsage={getRatioUsageTag}
               />
             </div>
-            <div className="w-[160px] flex-shrink-0">
+            <div className="min-w-0 sm:w-[160px] sm:flex-shrink-0">
               <StyleSelector
                 value={artStyle}
                 onChange={(value) => onArtStyleChange?.(value)}
@@ -236,7 +236,7 @@ export default function NovelInputStage({
           <button
             onClick={handleStartClick}
             disabled={!hasContent || isSubmittingTask || isSwitchingStage}
-            className="glass-btn-base glass-btn-primary px-5 py-2.5 text-sm flex-shrink-0 disabled:opacity-50 flex items-center gap-2"
+            className="glass-btn-base glass-btn-primary px-5 py-3 text-sm flex-shrink-0 disabled:opacity-50 flex items-center justify-center gap-2 sm:py-2.5"
           >
             {isSwitchingStage ? (
               <TaskStatusInline state={stageSwitchingState} className="text-white [&>span]:text-white [&_svg]:text-white" />

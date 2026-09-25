@@ -68,10 +68,10 @@ export function RatioSelector({
 
       {isOpen && (
         <div
-          className="glass-surface-modal absolute z-50 bottom-full mb-1 left-0 right-0 p-3 max-h-60 overflow-y-auto custom-scrollbar"
+          className="glass-surface-modal fixed inset-x-3 bottom-3 z-[200] p-3 max-h-[60vh] overflow-y-auto custom-scrollbar shadow-2xl sm:absolute sm:inset-x-auto sm:bottom-full sm:left-0 sm:right-0 sm:z-50 sm:mb-1 sm:max-h-60 sm:shadow-none"
           style={{ minWidth: '300px' }}
         >
-          <div className="grid grid-cols-5 gap-2">
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
             {options.map((option) => {
               const isSelected = value === option.value
               const usageTag = getUsage?.(option.value)
@@ -139,8 +139,9 @@ export function StyleSelector({
         <AppIcon name="chevronDown" className={`w-4 h-4 text-[var(--glass-text-tertiary)] transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
+      {/* A bottom sheet on phones, so it fits wherever the picker sits. */}
       {isOpen && (
-        <div className="glass-surface-modal absolute z-50 bottom-full mb-1 left-0 p-3" style={{ minWidth: '320px' }}>
+        <div className="glass-surface-modal fixed inset-x-3 bottom-3 z-[200] p-3 shadow-2xl sm:absolute sm:inset-x-auto sm:bottom-full sm:left-0 sm:z-50 sm:mb-1 sm:min-w-[320px] sm:shadow-none">
           <div className="grid grid-cols-2 gap-2">
             {options.map((option) => {
               const isSelected = value === option.value

@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { BRAND_NAME } from '@/components/BrandWordmark'
 import { Link } from '@/i18n/navigation'
 import { ResourcesShell } from '@/components/resources/ResourcesShell'
+import { UsePromptButton } from '@/components/resources/UsePromptButton'
 import { STORY_PROMPTS, findPrompt, genreInfo, promptsByGenre } from '@/content/prompt-library'
 
 export function generateStaticParams() {
@@ -39,12 +40,7 @@ export default async function PromptPage({ params }: { params: Promise<{ slug: s
             <p className="mt-2 whitespace-pre-line text-[15px] leading-relaxed text-[#262626]">{prompt.story}</p>
           </div>
           <div className="mt-6 flex flex-wrap items-center gap-3">
-            <Link
-              href={{ pathname: '/start', query: { prompt: prompt.slug } }}
-              className="rounded-full bg-[#8020fc] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#6d12e0]"
-            >
-              Use this prompt
-            </Link>
+            <UsePromptButton slug={prompt.slug} />
             <span className="text-sm text-[#737373]">Opens a new project with this story. You can edit everything.</span>
           </div>
         </div>

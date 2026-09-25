@@ -74,7 +74,13 @@ function StartFromPrompt() {
       </p>
     )
   }
-  return <p className="text-[#525252]">Setting up “{prompt.title}”…</p>
+  return (
+    <div className="flex flex-col items-center gap-4" role="status">
+      <span className="h-10 w-10 animate-spin rounded-full border-4 border-[#8020fc]/20 border-t-[#8020fc]" aria-hidden />
+      <p className="text-lg font-semibold text-[#171717]">Setting up “{prompt.title}”</p>
+      <p className="max-w-xs text-sm text-[#737373]">Creating your project with the story already in it. This takes a few seconds.</p>
+    </div>
+  )
 }
 
 export default function StartPage() {

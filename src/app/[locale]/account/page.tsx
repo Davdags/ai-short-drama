@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import Navbar from '@/components/Navbar'
 import { Link, useRouter } from '@/i18n/navigation'
 import { apiFetch } from '@/lib/api-fetch'
+import { SIGNUP_BONUS_CREDITS } from '@/lib/billing/credits-constants'
 import { UsageHistory } from './components/UsageHistory'
 import { ChangePasswordCard, DeleteAccountCard } from './components/SecurityCards'
 import { BillingCard } from './components/BillingCard'
@@ -30,6 +31,12 @@ export default function AccountPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [summary, setSummary] = useState<AccountSummary | null>(null)
+  const [resend, setResend] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
+  const resendVerification = async () => {
+    setResend('sending')
+    const res = await apiFetch('/api/auth/resend-verification', { method: 'POST' }).catch(() => null)
+    setResend(res?.ok ? 'sent' : 'error')
+  }
 
   useEffect(() => {
     if (status === 'unauthenticated') router.push({ pathname: '/auth/signin' })
@@ -56,6 +63,21 @@ export default function AccountPage() {
         <div className={CARD}><BillingCard /></div>
 
         {session && <div className={CARD}><TopUpCard /></div>}
+
+        {summary && summary.email && !summary.emailVerified && (
+          <div className="rounded-2xl border border-[#8020fc]/25 bg-[#8020fc]/[0.05] p-5">
+            <p className="font-semibold text-[#171717]">Verify your email to unlock your {SIGNUP_BONUS_CREDITS} free credits</p>
+            <p className="mt-1 text-sm text-[#525252]">We sent a link to {summary.email}. Tap it and your credits appear here straight away. Check spam if you can’t see it.</p>
+            <button
+              type="button"
+              onClick={resendVerification}
+              disabled={resend === 'sending' || resend === 'sent'}
+              className="mt-3 rounded-xl bg-[#8020fc] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-70"
+            >
+              {resend === 'sent' ? 'Email sent ✓' : resend === 'sending' ? 'Sending…' : resend === 'error' ? 'Try again' : 'Resend the email'}
+            </button>
+          </div>
+        )}
 
         <div className={`${CARD} grid gap-6 sm:grid-cols-2`}>
           <div>

@@ -25,8 +25,8 @@ export default function ProgressToast({ show, message, step, runBadges }: Progre
   })
 
   return (
-    <div className="fixed bottom-8 right-8 z-50 animate-slide-up">
-      <div className="glass-surface-modal min-w-[280px] max-w-[90vw] p-4">
+    <div className="fixed inset-x-3 bottom-3 z-50 animate-slide-up sm:inset-x-auto sm:bottom-8 sm:right-8">
+      <div className="glass-surface-modal w-full p-3 sm:w-auto sm:min-w-[280px] sm:max-w-[90vw] sm:p-4">
         <div className="flex items-start space-x-3">
           {/* Loading Spinner */}
           <div className="mt-0.5 shrink-0">

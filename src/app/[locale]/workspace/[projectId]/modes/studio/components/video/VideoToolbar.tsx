@@ -58,9 +58,9 @@ export default function VideoToolbar({
     })
     : null
   return (
-    <div className="glass-surface p-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+    <div className="glass-surface p-3 sm:p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
           <span className="text-sm font-semibold text-[var(--glass-text-secondary)]">
              {t('toolbar.title')}
           </span>
@@ -77,7 +77,7 @@ export default function VideoToolbar({
             )}
           </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => { trackEvent('video_generate'); onGenerateAll() }}
             disabled={isAnyTaskRunning}

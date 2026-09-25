@@ -83,7 +83,7 @@ export default function CharacterProfileCard({
 
     return (
         <div className="glass-surface overflow-hidden hover:shadow-md transition-shadow">
-            <div className="p-5">
+            <div className="p-4 sm:p-5">
                 {/* 头部 */}
                 <div className="flex items-start justify-between mb-3">
                     <div className="flex-1 min-w-0">
@@ -121,30 +121,30 @@ export default function CharacterProfileCard({
 
                 {/* 档案摘要 */}
                 <div className="space-y-1.5 mb-3">
-                    <div className="flex items-center gap-2 text-sm">
-                        <span className="text-[var(--glass-text-tertiary)] w-[2.5rem] shrink-0 text-xs">{t('characterProfile.summary.gender')}</span>
+                    <div className="flex items-start gap-2 text-sm">
+                        <span className="text-[var(--glass-text-tertiary)] w-[5.75rem] shrink-0 text-xs">{t('characterProfile.summary.gender')}</span>
                         <span className="text-[var(--glass-text-primary)]">{profileData.gender}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-sm">
-                        <span className="text-[var(--glass-text-tertiary)] w-[2.5rem] shrink-0 text-xs">{t('characterProfile.summary.age')}</span>
+                    <div className="flex items-start gap-2 text-sm">
+                        <span className="text-[var(--glass-text-tertiary)] w-[5.75rem] shrink-0 text-xs">{t('characterProfile.summary.age')}</span>
                         <span className="text-[var(--glass-text-primary)]">{profileData.age_range}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-sm">
-                        <span className="text-[var(--glass-text-tertiary)] w-[2.5rem] shrink-0 text-xs">{t('characterProfile.summary.era')}</span>
+                    <div className="flex items-start gap-2 text-sm">
+                        <span className="text-[var(--glass-text-tertiary)] w-[5.75rem] shrink-0 text-xs">{t('characterProfile.summary.era')}</span>
                         <span className="text-[var(--glass-text-primary)]">{profileData.era_period}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-sm">
-                        <span className="text-[var(--glass-text-tertiary)] w-[2.5rem] shrink-0 text-xs">{t('characterProfile.summary.class')}</span>
+                    <div className="flex items-start gap-2 text-sm">
+                        <span className="text-[var(--glass-text-tertiary)] w-[5.75rem] shrink-0 text-xs">{t('characterProfile.summary.class')}</span>
                         <span className="text-[var(--glass-text-primary)]">{profileData.social_class}</span>
                     </div>
                     {profileData.occupation && (
-                        <div className="flex items-center gap-2 text-sm">
-                            <span className="text-[var(--glass-text-tertiary)] w-[2.5rem] shrink-0 text-xs">{t('characterProfile.summary.occupation')}</span>
+                        <div className="flex items-start gap-2 text-sm">
+                            <span className="text-[var(--glass-text-tertiary)] w-[5.75rem] shrink-0 text-xs">{t('characterProfile.summary.occupation')}</span>
                             <span className="text-[var(--glass-text-primary)]">{profileData.occupation}</span>
                         </div>
                     )}
-                    <div className="flex items-center gap-2 text-sm">
-                        <span className="text-[var(--glass-text-tertiary)] w-[2.5rem] shrink-0 text-xs">{t('characterProfile.summary.personality')}</span>
+                    <div className="flex items-start gap-2 text-sm">
+                        <span className="text-[var(--glass-text-tertiary)] w-[5.75rem] shrink-0 text-xs">{t('characterProfile.summary.personality')}</span>
                         <div className="flex flex-wrap gap-1">
                             {profileData.personality_tags.map((tag, i) => (
                                 <span key={i} className="px-1.5 py-0.5 bg-[var(--glass-tone-info-bg)] text-[var(--glass-tone-info-fg)] rounded text-xs font-medium">
@@ -153,26 +153,26 @@ export default function CharacterProfileCard({
                             ))}
                         </div>
                     </div>
-                    <div className="flex items-center gap-2 text-sm">
-                        <span className="text-[var(--glass-text-tertiary)] w-[2.5rem] shrink-0 text-xs">{t('characterProfile.summary.costume')}</span>
+                    <div className="flex items-start gap-2 text-sm">
+                        <span className="text-[var(--glass-text-tertiary)] w-[5.75rem] shrink-0 text-xs">{t('characterProfile.summary.costume')}</span>
                         <span className="text-[var(--glass-text-primary)]">
                             {'●'.repeat(profileData.costume_tier)}{'○'.repeat(5 - profileData.costume_tier)}
                         </span>
                     </div>
                     {profileData.primary_identifier && (
-                        <div className="flex items-center gap-2 text-sm">
-                            <span className="text-[var(--glass-text-tertiary)] w-[2.5rem] shrink-0 text-xs">{t('characterProfile.summary.identifier')}</span>
+                        <div className="flex items-start gap-2 text-sm">
+                            <span className="text-[var(--glass-text-tertiary)] w-[5.75rem] shrink-0 text-xs">{t('characterProfile.summary.identifier')}</span>
                             <span className="font-medium" style={{ color: tierStyle?.accent ?? 'var(--glass-tone-warning-fg)' }}>{profileData.primary_identifier}</span>
                         </div>
                     )}
                 </div>
 
                 {/* 操作按钮 */}
-                <div className="flex gap-2 pt-3 border-t border-[var(--glass-stroke-base)]">
+                <div className="flex flex-wrap gap-2 pt-3 border-t border-[var(--glass-stroke-base)]">
                     <button
                         onClick={onEdit}
                         disabled={isConfirming}
-                        className="glass-btn-base glass-btn-secondary flex-1 px-3 py-1.5 text-sm rounded-lg disabled:opacity-50"
+                        className="glass-btn-base glass-btn-secondary flex-auto whitespace-nowrap px-3 py-2 text-sm rounded-lg disabled:opacity-50"
                     >
                         {t('characterProfile.editProfile')}
                     </button>
@@ -180,7 +180,7 @@ export default function CharacterProfileCard({
                         <button
                             onClick={onUseExisting}
                             disabled={isConfirming}
-                            className="glass-btn-base glass-btn-tone-info flex-1 px-3 py-1.5 text-sm rounded-lg disabled:opacity-50"
+                            className="glass-btn-base glass-btn-tone-info flex-auto whitespace-nowrap px-3 py-2 text-sm rounded-lg disabled:opacity-50"
                         >
                             {t('characterProfile.useExisting')}
                         </button>
@@ -188,7 +188,7 @@ export default function CharacterProfileCard({
                     <button
                         onClick={onConfirm}
                         disabled={isConfirming}
-                        className="glass-btn-base glass-btn-primary flex-1 px-3 py-1.5 text-sm rounded-lg disabled:opacity-50"
+                        className="glass-btn-base glass-btn-primary flex-auto whitespace-nowrap px-3 py-2 text-sm rounded-lg disabled:opacity-50"
                     >
                         {isConfirming ? (
                             <TaskStatusInline state={confirmingState} className="text-white [&>span]:text-white [&_svg]:text-white" />

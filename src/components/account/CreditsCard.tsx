@@ -7,8 +7,7 @@ import { SIGNUP_BONUS_CREDITS } from '@/lib/billing/credits-constants'
 
 type BalanceState = { status: 'loading' } | { status: 'ready'; available: number; needsVerification: boolean } | { status: 'error' }
 
-/** Current plan until subscriptions ship: every account is on Free. */
-const CURRENT_PLAN = { name: 'Free', allowance: SIGNUP_BONUS_CREDITS }
+const PLAN_NAMES: Record<string, string> = { free: 'Free', starter: 'Starter', pro: 'Pro', studio: 'Studio' }
 
 function formatCredits(value: number): string {
   return Math.max(0, Math.floor(value)).toLocaleString('en-US')
@@ -17,6 +16,22 @@ function formatCredits(value: number): string {
 /** Plan + credits summary shown at the top of the account menu. Loads the balance when mounted. */
 export function CreditsCard({ onNavigate, onAdminDetected }: { onNavigate?: () => void; onAdminDetected?: (isAdmin: boolean) => void }) {
   const [state, setState] = useState<BalanceState>({ status: 'loading' })
+  // The plan shown here, and its monthly credits as the size of the bar (Free: the sign-up credits).
+  const [plan, setPlan] = useState<{ name: string; allowance: number }>({ name: 'Free', allowance: SIGNUP_BONUS_CREDITS })
+
+  useEffect(() => {
+    let cancelled = false
+    apiFetch('/api/billing/subscription')
+      .then(async (res) => (res.ok ? await res.json() as { subscription?: { planId: string; monthlyCredits: number } | null } : null))
+      .then((data) => {
+        const subscription = data?.subscription
+        if (!cancelled && subscription) {
+          setPlan({ name: PLAN_NAMES[subscription.planId] ?? 'Free', allowance: subscription.monthlyCredits || SIGNUP_BONUS_CREDITS })
+        }
+      })
+      .catch(() => undefined)
+    return () => { cancelled = true }
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -47,12 +62,12 @@ export function CreditsCard({ onNavigate, onAdminDetected }: { onNavigate?: () =
   }
 
   const available = state.status === 'ready' ? state.available : 0
-  const percent = Math.min(100, (available / CURRENT_PLAN.allowance) * 100)
+  const percent = Math.min(100, (available / plan.allowance) * 100)
 
   return (
     <div className="mx-3 my-2 rounded-xl border border-[#8020fc]/15 bg-gradient-to-br from-[#8020fc]/[0.06] to-[#5b3df5]/[0.03] p-3">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-[#171717]">{CURRENT_PLAN.name} plan</span>
+        <span className="text-xs font-semibold text-[#171717]">{plan.name} plan</span>
         <span className="text-xs text-[#525252]">
           {state.status === 'loading' && <span className="inline-block h-3 w-16 rounded bg-[#ede9fe] animate-pulse align-middle" />}
           {state.status === 'ready' && <><span className="font-semibold text-[#171717]">{formatCredits(available)}</span> credits left</>}

@@ -280,25 +280,25 @@ export default function CharacterSection({
                             className={`glass-surface rounded-xl p-4 scroll-mt-24 transition-all duration-700 ${highlightedCharacterId === character.id ? 'ring-2 ring-[var(--glass-focus-ring)] bg-[var(--glass-tone-info-bg)]/40' : ''}`}
                         >
                             {/* 角色标题 */}
-                            <div className="flex items-center justify-between pb-2">
-                                <div className="flex items-center gap-3">
+                            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 pb-2">
+                                <div className="flex min-w-0 items-center gap-3">
                                     <h3 className="text-base font-semibold text-[var(--glass-text-primary)]">{character.name}</h3>
-                                    <span className="text-xs text-[var(--glass-text-tertiary)]">
+                                    <span className="whitespace-nowrap text-xs text-[var(--glass-text-tertiary)]">
                                         {t("character.assetCount", { count: sortedAppearances.length })}
                                     </span>
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex flex-wrap items-center gap-2">
                                     {/* 从资产中心复制按钮 */}
                                     <button
                                         onClick={() => onCopyFromGlobal(character.id)}
-                                        className="text-xs text-[var(--glass-tone-info-fg)] hover:text-[var(--glass-tone-info-fg)] flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-[var(--glass-tone-info-bg)] transition-colors"
+                                        className="whitespace-nowrap text-xs text-[var(--glass-tone-info-fg)] hover:text-[var(--glass-tone-info-fg)] flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-[var(--glass-tone-info-bg)] transition-colors"
                                     >
                                         <AppIcon name="copy" className="w-4 h-4" />
                                         {t("character.copyFromGlobal")}
                                     </button>
                                     <button
                                         onClick={() => onDeleteCharacter(character.id)}
-                                        className="text-xs text-[var(--glass-tone-danger-fg)] hover:text-[var(--glass-tone-danger-fg)] flex items-center gap-1"
+                                        className="whitespace-nowrap text-xs text-[var(--glass-tone-danger-fg)] hover:text-[var(--glass-tone-danger-fg)] flex items-center gap-1 px-2 py-1.5"
                                     >
                                         <AppIcon name="trash" className="w-4 h-4" />
                                         {t("character.delete")}
