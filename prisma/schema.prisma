@@ -199,6 +199,10 @@ model StudioPanel {
   srtStart          Float?
   srtEnd            Float?
   duration          Float?
+  /// Music feel chosen by the storyboard AI (tension, villain, triumph, silence, ...)
+  mood              String?                   @db.VarChar(16)
+  /// Biggest reveal / cliffhanger moment: gets a music hit
+  musicHit          Boolean                   @default(false)
   imagePrompt       String?                   @db.Text
   imageUrl          String?                   @db.Text
   imageMediaId      String?

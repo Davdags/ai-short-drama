@@ -44,7 +44,7 @@ function StartFromPrompt() {
         await apiFetch(`/api/studio/${projectId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ artStyle: prompt.style, targetDurationSec: prompt.seconds, shotLengthSec: 8, videoRatio: '9:16' }),
+          body: JSON.stringify({ artStyle: prompt.style, targetDurationSec: prompt.seconds, videoRatio: '9:16' }),
         })
         const episodeRes = await apiFetch(`/api/studio/${projectId}/episodes`, {
           method: 'POST',

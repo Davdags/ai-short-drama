@@ -25,11 +25,20 @@ export const PLATFORM_DEFAULT_MODELS = {
   voiceDesignModel: 'evolink::qwen-voice-design',
 } as const
 
-/** Generated audio off: Seedance otherwise invents its own dialogue over the voice track. */
+/**
+ * Generated audio on: Seedance speaks each shot's exact lines (from the storyboard) and stays
+ * silent afterwards, because every shot is only as long as its dialogue needs.
+ */
 export const PLATFORM_DEFAULT_CAPABILITIES = {
+  'evolink::seedance-2.0': { generateAudio: true },
+  'evolink::seedance-2.5': { generateAudio: true },
+}
+
+/** The previous defaults (audio off). Accounts still on them untouched are moved to the new ones. */
+const PREVIOUS_DEFAULT_CAPABILITIES = JSON.stringify({
   'evolink::seedance-2.0': { generateAudio: false },
   'evolink::seedance-2.5': { generateAudio: false },
-}
+})
 
 /**
  * After the first payment, move the customer from the trial writing model to Opus 5.5 —
@@ -71,7 +80,9 @@ export async function ensurePlatformDefaultModels(userId: string): Promise<void>
     for (const [field, modelKey] of Object.entries(PLATFORM_DEFAULT_MODELS)) {
       if (!existing[field as keyof typeof PLATFORM_DEFAULT_MODELS]) missing[field] = modelKey
     }
-    if (!existing.capabilityDefaults) missing.capabilityDefaults = JSON.stringify(PLATFORM_DEFAULT_CAPABILITIES)
+    if (!existing.capabilityDefaults || existing.capabilityDefaults === PREVIOUS_DEFAULT_CAPABILITIES) {
+      missing.capabilityDefaults = JSON.stringify(PLATFORM_DEFAULT_CAPABILITIES)
+    }
     if (Object.keys(missing).length > 0) {
       await prisma.userPreference.update({ where: { userId }, data: missing })
     }

@@ -12,11 +12,12 @@ import {
 import { applyLengthPlanToClips, type StoryToScriptClipCandidate } from '@/lib/studio/story-to-script/orchestrator'
 
 describe('story length plan', () => {
-  it('is off for legacy projects and validates stored values', () => {
+  it('is off for legacy projects, validates the target and ignores an old fixed shot length', () => {
     expect(resolveStoryLengthPlan({})).toBeNull()
-    expect(resolveStoryLengthPlan({ targetDurationSec: 45, shotLengthSec: 8 })).toBeNull()
-    expect(resolveStoryLengthPlan({ targetDurationSec: 30, shotLengthSec: null })).toEqual({ targetSeconds: 30, shotSeconds: 8 })
-    expect(resolveStoryLengthPlan({ targetDurationSec: 15, shotLengthSec: 99 })).toEqual({ targetSeconds: 15, shotSeconds: 8 })
+    expect(resolveStoryLengthPlan({ targetDurationSec: 45 })).toBeNull()
+    expect(resolveStoryLengthPlan({ targetDurationSec: 30 })).toEqual({ targetSeconds: 30, shotSeconds: 6 })
+    const legacyProject = { targetDurationSec: 15, shotLengthSec: 8 }
+    expect(resolveStoryLengthPlan(legacyProject)).toEqual({ targetSeconds: 15, shotSeconds: 6 })
   })
 
   it('plans shots as length divided by shot length', () => {
@@ -58,9 +59,22 @@ describe('story length plan', () => {
     for (const n of [1, 2, 3, 4, 5]) expect(allText).toContain(`beat ${n}`)
   })
 
+  it('keeps every line of dialogue and adds up lengths when merging panels', () => {
+    const panels = [
+      { panel_number: 1, description: 'a', dialogue: [{ speaker: 'A', line: 'One.' }], duration: 5, mood: 'tension' },
+      { panel_number: 2, description: 'b', dialogue: [{ speaker: 'A', line: 'Two.' }], duration: 4 },
+    ]
+    const [merged] = mergePanelsToBudget(panels, 1)
+    expect(merged.dialogue).toEqual([{ speaker: 'A', line: 'One.' }, { speaker: 'A', line: 'Two.' }])
+    expect(merged.duration).toBe(9)
+    expect(merged.mood).toBe('tension')
+  })
+
   it('writes the storyboard instruction in the project language', () => {
-    expect(buildStoryboardDirective('en', { panelBudget: 3, shotSeconds: 8 })).toContain('exactly 3 panel')
-    expect(buildStoryboardDirective('zh', { panelBudget: 3, shotSeconds: 8, overBy: 2 })).toContain('恰好规划 3 个分镜')
+    const en = buildStoryboardDirective('en', { panelBudget: 3, clipSeconds: 18 })
+    expect(en).toContain('at most 3 panel')
+    expect(en).toContain('about 18 seconds')
+    expect(buildStoryboardDirective('zh', { panelBudget: 3, clipSeconds: 18, overBy: 2 })).toContain('最多规划 3 个分镜')
   })
 
   it('estimates credits from shots and the video model', () => {

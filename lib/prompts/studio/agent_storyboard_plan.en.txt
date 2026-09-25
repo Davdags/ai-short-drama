@@ -42,7 +42,12 @@ Output format (JSON array only):
     "shot_type": "medium shot",
     "camera_move": "static",
     "video_prompt": "short visual motion prompt",
-    "duration": 3
+    "dialogue": [
+      { "speaker": "Character Name", "line": "exact words spoken in this shot", "delivery": "how it is said, e.g. shouting, fast" }
+    ],
+    "duration": 6,
+    "mood": "tension",
+    "music_hit": false
   }
 ]
 
@@ -55,3 +60,9 @@ Planning rules:
 6. Return strict JSON only.
 7. ⚠️ JSON SAFETY: All quotation marks in text (straight " and ' quotes) MUST be converted to curly quotes “ ” in JSON string values. NEVER use raw ASCII double quotes " inside string values.
 8. CONTINUITY: keep the time of day the story establishes in every panel (“tonight” means night throughout) and never change a character’s clothing unless the source text does.
+9. DIALOGUE: put every spoken line from the clip content into the "dialogue" of the panel where it is said, word for word, in order. Never drop or shorten a line. Panels with no speech get "dialogue": [].
+10. ONE SPEAKER PER PANEL: when characters talk to each other, give each speaker their own panel (shot / reverse shot) with the speaker clearly visible and facing the camera. A panel may hold one or two consecutive lines from the same speaker.
+11. DURATION (whole seconds, 4–15): long enough to say the panel’s lines calmly (about 2.5 words per second) plus about a second for the reaction; silent reactions and establishing shots 4–5 seconds. Never pad a shot beyond what happens in it.
+12. MOOD: the music feel of the panel, one of: tension, villain, confident, anger, triumph, sad, romantic, suspense, comedy, calm, silence. Use "silence" for a shocking beat where the music should stop.
+13. MUSIC_HIT: true only on the one or two biggest reveal or cliffhanger panels of the clip, otherwise false.
+14. In "video_prompt", describe the speaker’s facial acting and mouth movement for panels with dialogue.

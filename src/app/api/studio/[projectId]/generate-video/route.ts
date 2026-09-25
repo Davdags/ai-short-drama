@@ -9,6 +9,7 @@ import { buildDefaultTaskBillingInfo } from '@/lib/billing'
 import { BillingOperationError } from '@/lib/billing/errors'
 import { hasPanelVideoOutput } from '@/lib/task/has-output'
 import { withTaskUiPayload } from '@/lib/task/ui-payload'
+import { withPanelDuration } from '@/lib/video/panel-duration'
 import { parseModelKeyStrict, type CapabilityValue } from '@/lib/model-config-contract'
 import {
   resolveBuiltinCapabilitiesByModelKey,
@@ -213,7 +214,7 @@ export const POST = apiHandler(async (
           { videoUrl: '' },
         ],
       },
-      select: { id: true },
+      select: { id: true, duration: true },
     })
 
     if (panels.length === 0) {
@@ -221,8 +222,9 @@ export const POST = apiHandler(async (
     }
 
     const results = await Promise.all(
-      panels.map(async (panel) =>
-        submitTask({
+      panels.map(async (panel) => {
+        const panelBody = withPanelDuration(body, panel.duration)
+        return submitTask({
           userId: session.user.id,
           locale,
           requestId: getRequestId(request),
@@ -231,13 +233,13 @@ export const POST = apiHandler(async (
           type: TASK_TYPE.VIDEO_PANEL,
           targetType: 'StudioPanel',
           targetId: panel.id,
-          payload: withTaskUiPayload(body, {
+          payload: withTaskUiPayload(panelBody, {
             hasOutputAtStart: await hasPanelVideoOutput(panel.id),
           }),
           dedupeKey: `video_panel:${panel.id}`,
-          billingInfo: buildVideoPanelBillingInfoOrThrow(body),
-        }),
-      ),
+          billingInfo: buildVideoPanelBillingInfoOrThrow(panelBody),
+        })
+      }),
     )
 
     return NextResponse.json({ tasks: results, total: panels.length })

@@ -65,8 +65,8 @@ describe('assertCanAffordWriting', () => {
   it('uses the storyboard size from the length plan', async () => {
     balance.getBalance.mockResolvedValue({ balance: 100 })
     const { assertCanAffordWriting } = await import('@/lib/billing/writing-precheck')
-    // Opus 5.5, 30s of 8s shots = 4 shots × 29 = 116 > 100
+    // Opus 5.5, 30s planned at 6s per shot on average (an old fixed 8s is ignored) = 5 shots × 29 = 145 > 100
     await expect(assertCanAffordWriting({ userId: 'u', projectId: 'p', stage: 'storyboard' }))
-      .rejects.toMatchObject({ required: 116 })
+      .rejects.toMatchObject({ required: 145 })
   })
 })

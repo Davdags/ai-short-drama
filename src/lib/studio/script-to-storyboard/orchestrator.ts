@@ -25,6 +25,7 @@ import {
   normalizeWorkflowConcurrencyValue,
 } from '@/lib/workflow-concurrency'
 import { buildStoryboardDirective, mergePanelsToBudget } from '@/lib/studio/story-length'
+import { carryShotFields, normalizeShotFields } from '@/lib/studio/shot-dialogue'
 
 type JsonRecord = Record<string, unknown>
 const orchestratorLogger = createScopedLogger({ module: 'worker.orchestrator.script_to_storyboard' })
@@ -80,7 +81,7 @@ export type ScriptToStoryboardOrchestratorInput = {
     props?: PropAsset[]
   }
   promptTemplates: ScriptToStoryboardPromptTemplates
-  /** Story length control: every panel lasts this many seconds (null = unconstrained). */
+  /** Story length control: average shot length used to budget panels (null = unconstrained). */
   shotSeconds?: number | null
   locale?: string
   runStep: (
@@ -293,8 +294,6 @@ export async function runScriptToStoryboardOrchestrator(
   const { clips, studioData, promptTemplates, runStep, concurrency: rawConcurrency, shotSeconds, locale } = input
   const panelBudgetFor = (clip: ClipInput): number | null =>
     shotSeconds && clip.duration ? Math.max(1, Math.round(clip.duration / shotSeconds)) : null
-  const withShotDuration = <T extends StoryboardPanel>(panels: T[]): T[] =>
-    shotSeconds ? panels.map((panel) => ({ ...panel, duration: shotSeconds })) : panels
   if (!Array.isArray(clips) || clips.length === 0) {
     throw new Error('No clips found')
   }
@@ -381,8 +380,8 @@ export async function runScriptToStoryboardOrchestrator(
         }
         return panels
       }
-      const budgetDirective = (overBy?: number) => (panelBudget && shotSeconds
-        ? buildStoryboardDirective(locale, { panelBudget, shotSeconds, overBy })
+      const budgetDirective = (overBy?: number) => (panelBudget && clip.duration
+        ? buildStoryboardDirective(locale, { panelBudget, clipSeconds: clip.duration, overBy })
         : '')
       let { parsed: planPanels } = await runStepWithRetry(
         runStep, phase1Meta, phase1Prompt + budgetDirective(), 'storyboard_phase1_plan', 2600, parsePlan,
@@ -405,7 +404,8 @@ export async function runScriptToStoryboardOrchestrator(
 
       return {
         clipId: clip.id,
-        planPanels: withShotDuration(planPanels),
+        // Each shot keeps its own dialogue, mood and a length that fits its lines.
+        planPanels: planPanels.map((panel) => normalizeShotFields(panel)),
       }
     },
   )
@@ -533,11 +533,11 @@ export async function runScriptToStoryboardOrchestrator(
       return {
         clipId: clip.id,
         clipIndex,
-        finalPanels: withShotDuration(mergePanelsWithRules({
+        finalPanels: carryShotFields(mergePanelsWithRules({
           finalPanels: filteredPhase3Panels,
           photographyRules,
           actingDirections,
-        })),
+        }), planPanels),
       }
     },
   )

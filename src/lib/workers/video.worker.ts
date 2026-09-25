@@ -97,14 +97,14 @@ async function resolveAudioDirective(
     prisma.studioVoiceLine.findMany({
       where: { matchedPanelId: panel.id },
       orderBy: { lineIndex: 'asc' },
-      select: { speaker: true, content: true },
+      select: { speaker: true, content: true, emotionPrompt: true },
     }),
     job.data.episodeId
       ? prisma.studioVoiceLine.count({ where: { episodeId: job.data.episodeId } })
       : Promise.resolve(0),
   ])
   return buildVideoAudioDirective({
-    lines,
+    lines: lines.map((line) => ({ speaker: line.speaker, content: line.content, delivery: line.emotionPrompt })),
     episodeHasVoiceLines: episodeLineCount > 0,
     sourceText: panel.srtSegment,
   })

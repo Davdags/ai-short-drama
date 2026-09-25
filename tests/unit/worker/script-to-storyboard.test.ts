@@ -49,6 +49,7 @@ const runScriptToStoryboardOrchestratorMock = vi.hoisted(() =>
 )
 const parseVoiceLinesJsonMock = vi.hoisted(() => vi.fn())
 const persistStoryboardsAndPanelsMock = vi.hoisted(() => vi.fn())
+const buildVoiceLinesFromPanelsMock = vi.hoisted(() => vi.fn((): Array<Record<string, unknown>> => []))
 const parseStoryboardRetryTargetMock = vi.hoisted(() => vi.fn())
 const runScriptToStoryboardAtomicRetryMock = vi.hoisted(() => vi.fn())
 const workflowLeaseMock = vi.hoisted(() => ({
@@ -159,6 +160,7 @@ vi.mock('@/lib/workers/handlers/script-to-storyboard-helpers', () => ({
     return value as Record<string, unknown>
   },
   buildStoryboardJson: vi.fn(() => '[]'),
+  buildVoiceLinesFromPanels: buildVoiceLinesFromPanelsMock,
   parseEffort: vi.fn(() => null),
   parseTemperature: vi.fn(() => 0.7),
   parseVoiceLinesJson: parseVoiceLinesJsonMock,
@@ -321,6 +323,32 @@ describe('worker script-to-storyboard behavior', () => {
         notIn: [1],
       },
     })
+  })
+
+  it('uses each shot\'s own dialogue as voice lines and skips the voice-analysis step', async () => {
+    buildVoiceLinesFromPanelsMock.mockReturnValueOnce([
+      {
+        lineIndex: 1,
+        speaker: 'Chidi',
+        content: 'You are sitting in my chair.',
+        emotionPrompt: 'shouting, fast',
+        emotionStrength: 0.9,
+        matchedPanel: { storyboardId: 'storyboard-1', panelIndex: 1 },
+      },
+    ])
+    const job = buildJob({ episodeId: 'episode-1' })
+
+    const result = await handleScriptToStoryboardTask(job)
+
+    expect(result).toMatchObject({ episodeId: 'episode-1', voiceLineCount: 1 })
+    expect(parseVoiceLinesJsonMock).not.toHaveBeenCalled()
+    expect(txState.createdRows[0]).toEqual(expect.objectContaining({
+      speaker: 'Chidi',
+      content: 'You are sitting in my chair.',
+      emotionPrompt: 'shouting, fast',
+      emotionStrength: 0.9,
+      matchedPanelId: 'panel-1',
+    }))
   })
 
   it('voice 解析失败后会重试一次再成功', async () => {

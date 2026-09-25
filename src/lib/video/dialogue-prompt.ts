@@ -9,7 +9,12 @@
 export interface PanelDialogueLine {
   speaker: string
   content: string
+  /** How it is said, e.g. "shouting, fast". */
+  delivery?: string | null
 }
+
+/** Music is added in the final mix, so the model must not score the clip itself. */
+const NO_MUSIC = ' No background music.'
 
 const QUOTE_PATTERN = /["“”「」『』]/
 
@@ -26,22 +31,24 @@ export function buildVideoAudioDirective(input: {
   sourceText?: string | null
 }): string {
   const lines = input.lines
-    .map((line) => ({ speaker: clean(line.speaker), content: clean(line.content) }))
+    .map((line) => ({ speaker: clean(line.speaker), content: clean(line.content), delivery: clean(line.delivery || '') }))
     .filter((line) => line.content)
 
   if (lines.length > 0) {
-    const spoken = lines.map((line) => `${line.speaker || 'Character'}: "${line.content}"`).join(' ')
-    return `\n\nDialogue in this shot, spoken exactly as written and in this order, with lip movement matching the speaker: ${spoken} No other speech.`
+    const spoken = lines
+      .map((line) => `${line.speaker || 'Character'}${line.delivery ? ` (${line.delivery})` : ''}: "${line.content}"`)
+      .join(' ')
+    return `\n\nDialogue in this shot, spoken exactly as written and in this order, with lip movement matching the speaker and the delivery in brackets: ${spoken} No other speech: after the last line the characters stay silent, with only breathing, ambient sound and sound effects.${NO_MUSIC}`
   }
 
   if (!input.episodeHasVoiceLines) {
     const source = clean(input.sourceText || '')
     if (source && QUOTE_PATTERN.test(source)) {
-      return `\n\nSpeak only the quoted dialogue from this scene text, exactly as written, with lip movement matching the speaker: ${source} Do not add any other speech.`
+      return `\n\nSpeak only the quoted dialogue from this scene text, exactly as written, with lip movement matching the speaker: ${source} Do not add any other speech.${NO_MUSIC}`
     }
   }
 
-  return '\n\nNo spoken dialogue in this shot: ambient sound and sound effects only. Characters do not talk.'
+  return `\n\nNo spoken dialogue in this shot: ambient sound and sound effects only. Characters do not talk.${NO_MUSIC}`
 }
 
 /** Sound is on when the request says so, or when it's unset and the model's default is on. */

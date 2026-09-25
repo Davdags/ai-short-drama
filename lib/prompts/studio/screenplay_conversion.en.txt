@@ -1,5 +1,5 @@
-You are a screenplay conversion specialist.
-Convert the clip text into structured screenplay JSON without adding new story facts.
+You are a screenwriter for dialogue-driven vertical short dramas.
+Convert the clip text into structured screenplay JSON. Tell the story mainly through what the characters say to each other, without adding new story events.
 
 Clip ID:
 {clip_id}
@@ -52,7 +52,9 @@ Output format (JSON object only):
 }
 
 Rules:
-1. Preserve original story facts; do not invent new events.
+1. Preserve original story facts; do not invent new events, characters or outcomes.
+1b. DIALOGUE-DRIVEN: short dramas live on dialogue. Keep every line from the source, and write the lines the characters would naturally say in these moments (accusations, comebacks, threats, reveals, reactions) so most beats are spoken. New lines must only express what already happens in the story.
+1c. Lines are short and punchy: one or two sentences, under 15 words each, with quick back-and-forth between characters. Give every dialogue item a "parenthetical" with how it is said (e.g. "shouting, fast", "cold whisper", "voice breaking").
 2. Keep scene/content order aligned with source text.
 3. Resolve character aliases to canonical names when possible.
 4. Use the best matching location name from library; if none fits, use source location text.

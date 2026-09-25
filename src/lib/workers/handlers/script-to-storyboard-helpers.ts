@@ -1,6 +1,7 @@
 import { safeParseJson, safeParseJsonArray } from '@/lib/json-repair'
 import { prisma } from '@/lib/prisma'
 import type { StoryboardPanel } from '@/lib/storyboard-phases'
+import { normalizeShotDialogue } from '@/lib/studio/shot-dialogue'
 
 export type JsonRecord = Record<string, unknown>
 
@@ -71,6 +72,45 @@ export function parseVoiceLinesJson(responseText: string): JsonRecord[] {
     throw new Error('voice_analyze: invalid payload')
   }
   return rows as JsonRecord[]
+}
+
+/** How strongly a line is performed, from its delivery note (drives TTS emotion). */
+export function emotionStrengthFromDelivery(delivery: string): number {
+  const text = delivery.toLowerCase()
+  if (/(shout|scream|yell|rage|furious|explod|cry|sob|怒|吼|喊|哭)/.test(text)) return 0.9
+  if (/(whisper|soft|quiet|gentle|calm|murmur|低语|轻声|平静|小声)/.test(text)) return 0.4
+  return 0.6
+}
+
+/**
+ * Voice lines taken straight from each shot's dialogue, in the same shape the voice-analysis
+ * step returns, so they always match the shots. Panels are persisted in the same order as
+ * clipPanels / finalPanels.
+ */
+export function buildVoiceLinesFromPanels(
+  clipPanels: Array<{ finalPanels: Array<Record<string, unknown>> }>,
+  persisted: PersistedStoryboard[],
+): JsonRecord[] {
+  const rows: JsonRecord[] = []
+  clipPanels.forEach((clipEntry, clipIndex) => {
+    const storyboard = persisted[clipIndex]
+    if (!storyboard || !Array.isArray(clipEntry.finalPanels)) return
+    clipEntry.finalPanels.forEach((panel, panelPosition) => {
+      const persistedPanel = storyboard.panels[panelPosition]
+      if (!persistedPanel) return
+      for (const item of normalizeShotDialogue(panel.dialogue)) {
+        rows.push({
+          lineIndex: rows.length + 1,
+          speaker: item.speaker,
+          content: item.line,
+          emotionPrompt: item.delivery || null,
+          emotionStrength: emotionStrengthFromDelivery(item.delivery),
+          matchedPanel: { storyboardId: storyboard.storyboardId, panelIndex: persistedPanel.panelIndex },
+        })
+      }
+    })
+  })
+  return rows
 }
 
 export function asJsonRecord(value: unknown): JsonRecord | null {
@@ -171,6 +211,8 @@ export async function persistStoryboardsAndPanels(params: {
             photographyRules: panel.photographyPlan ? JSON.stringify(panel.photographyPlan) : null,
             actingNotes: panel.actingNotes ? JSON.stringify(panel.actingNotes) : null,
             duration: panel.duration || null,
+            mood: typeof panel.mood === 'string' ? panel.mood : null,
+            musicHit: panel.music_hit === true,
           },
           select: {
             id: true,

@@ -546,6 +546,33 @@ describe('api contract - direct submit routes (behavior)', () => {
     expect(DIRECT_CASES.length).toBe(20)
   })
 
+  it('generate-video "Generate all" gives every shot its own length, snapped to the model', async () => {
+    prismaMock.studioPanel.findMany.mockResolvedValueOnce([
+      { id: 'panel-a', duration: 5.6 },
+      { id: 'panel-b', duration: 11 },
+    ] as never)
+    configServiceMock.resolveProjectModelCapabilityGenerationOptions.mockResolvedValueOnce({ resolution: '480p', duration: 8, generateAudio: true } as never)
+    const lookup = await import('@/lib/model-capabilities/lookup')
+    const capabilities = vi.mocked(lookup.resolveBuiltinCapabilitiesByModelKey)
+    const seedanceDurations = Array.from({ length: 12 }, (_, index) => index + 4)
+    capabilities.mockImplementation(() => ({ video: { durationOptions: seedanceDurations } }) as never)
+    const res = await invokePostRoute({
+      routeFile: 'src/app/api/studio/[projectId]/generate-video/route.ts',
+      body: { videoModel: 'evolink::seedance-2.0', all: true, episodeId: 'episode-1', generationOptions: { resolution: '480p', duration: 8 } },
+      params: { projectId: 'project-1' },
+      expectedTaskType: TASK_TYPE.VIDEO_PANEL,
+      expectedTargetType: 'StudioPanel',
+      expectedProjectId: 'project-1',
+    })
+    capabilities.mockImplementation(() => ({ video: { firstlastframe: true } }) as never)
+    expect(res.status).toBe(200)
+    const durations = submitTaskMock.mock.calls.map((call) => {
+      const arg = call[0] as { targetId: string; payload: { generationOptions: { duration: number } } }
+      return [arg.targetId, arg.payload.generationOptions.duration]
+    })
+    expect(durations).toEqual([['panel-a', 6], ['panel-b', 11]])
+  })
+
   for (const routeCase of DIRECT_CASES) {
     it(`${routeCase.routeFile} -> returns 401 when unauthenticated`, async () => {
       authState.authenticated = false
