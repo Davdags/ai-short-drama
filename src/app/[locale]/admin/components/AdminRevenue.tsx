@@ -7,6 +7,9 @@ import type { RevenueMetrics } from '@/lib/admin/revenue'
 const CARD = 'rounded-2xl border border-[#ececec] bg-white p-6 shadow-sm'
 const usd = (value: number) => `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 const n = (value: number) => value.toLocaleString('en-US')
+/** Short amount for chart labels so six bars fit on a phone ("$1.2k"). */
+const usdShort = (value: number) => (value >= 1000 ? `$${(value / 1000).toFixed(value >= 10000 ? 0 : 1)}k` : `$${Math.round(value)}`)
+const monthName = (yyyyMm: string) => new Date(`${yyyyMm}-01T00:00:00Z`).toLocaleString('en-US', { month: 'short', timeZone: 'UTC' })
 const PLAN_NAMES: Record<string, string> = { starter: 'Starter', pro: 'Pro', studio: 'Studio' }
 const PROVIDER_NAMES: Record<string, string> = { whop: 'Whop (card)', paystack: 'Paystack', flutterwave: 'Flutterwave' }
 
@@ -73,12 +76,12 @@ export function AdminRevenue() {
       <div className={`${CARD} grid gap-8 lg:grid-cols-3`}>
         <div className="lg:col-span-2">
           <p className="text-xs font-semibold uppercase tracking-wide text-[#737373]">Revenue by month</p>
-          <div className="mt-4 flex h-40 items-end gap-3">
+          <div className="mt-4 flex h-40 items-end gap-2 sm:gap-3">
             {revenue.byMonth.map((m) => (
-              <div key={m.month} className="flex flex-1 flex-col items-center gap-1">
-                <span className="text-[11px] font-semibold text-[#404040]">{m.total ? usd(m.total) : '—'}</span>
+              <div key={m.month} className="flex min-w-0 flex-1 flex-col items-center gap-1" title={`${m.month}: ${usd(m.total)}`}>
+                <span className="text-[11px] font-semibold text-[#404040]">{m.total ? usdShort(m.total) : '—'}</span>
                 <div className="w-full rounded-t-md bg-[#8020fc]" style={{ height: `${Math.max(2, (m.total / peak) * 110)}px` }} />
-                <span className="text-[11px] text-[#737373]">{m.month}</span>
+                <span className="text-[11px] text-[#737373]">{monthName(m.month)}</span>
               </div>
             ))}
           </div>
