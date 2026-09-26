@@ -23,6 +23,8 @@ export const AVERAGE_SHOT_SECONDS = 6
 const WORDS_PER_SECOND = 2.5
 /** Share of screen time with someone speaking: short dramas are dialogue-driven. */
 const DIALOGUE_SHARE = 0.7
+/** Roughly one spoken line (one shot) per this many seconds of screen time. */
+const SECONDS_PER_LINE = 3.5
 
 export function isValidTargetSeconds(value: unknown): value is number {
   return typeof value === 'number' && (STORY_LENGTH_OPTIONS as readonly number[]).includes(value)
@@ -120,19 +122,21 @@ export function buildClipSplitDirective(locale: Locale, plan: StoryLengthPlan): 
 export function buildScreenplayDirective(locale: Locale, input: { clipSeconds: number; shots: number; shotSeconds: number }): string {
   const words = Math.max(6, Math.round(input.clipSeconds * WORDS_PER_SECOND * DIALOGUE_SHARE))
   const max = dialogueWordBudget(input.clipSeconds)
+  // Every speaker turn becomes its own shot of at least 4 seconds, so the number of lines is capped too.
+  const lines = Math.max(2, Math.round(input.clipSeconds / SECONDS_PER_LINE))
   if (isZh(locale)) {
-    return `\n\n【时长要求】本片段在成片中约 ${input.clipSeconds} 秒（约 ${input.shots} 个镜头）。以对白推动剧情：台词合计约 ${words} 个字（不超过 ${max}），大多数镜头都要有人说话；删掉次要描写。`
+    return `\n\n【时长要求】本片段在成片中约 ${input.clipSeconds} 秒（约 ${input.shots} 个镜头）。以对白推动剧情：最多 ${lines} 句台词，合计约 ${words} 个字（不超过 ${max}），大多数镜头都要有人说话；删掉次要描写。`
   }
-  return `\n\nLENGTH REQUIREMENT: this part plays for about ${input.clipSeconds} seconds on screen (about ${input.shots} shot(s)). Tell it through dialogue: aim for about ${words} words of spoken lines in total (never more than ${max}), so most shots have someone speaking. Drop minor description.`
+  return `\n\nLENGTH REQUIREMENT: this part plays for about ${input.clipSeconds} seconds on screen (about ${input.shots} shot(s)). Tell it through dialogue: at most ${lines} spoken lines, about ${words} words in total (never more than ${max}), so most shots have someone speaking. Drop minor description.`
 }
 
 export function buildStoryboardDirective(locale: Locale, input: { panelBudget: number; clipSeconds: number; overBy?: number }): string {
   if (isZh(locale)) {
     const retry = input.overBy ? `上一次输出多了 ${input.overBy} 个分镜，请合并相邻分镜。` : ''
-    return `\n\n【时长要求】${retry}本片段最多规划 ${input.panelBudget} 个分镜（不可多于此数），所有分镜的 "duration" 合计约 ${input.clipSeconds} 秒。每个分镜的时长（4–15 秒）按内容决定：有台词的分镜要足够把话说完（约每秒 2.5 个词再加 1 秒反应），无台词的反应或空镜 4–5 秒。`
+    return `\n\n【时长要求】${retry}本片段最多规划 ${input.panelBudget} 个分镜（不可多于此数），每个说话者的台词单独一个分镜，总时长尽量接近 ${input.clipSeconds} 秒。每个分镜的时长（4–15 秒）按内容决定：有台词的分镜要足够把话说完（约每秒 2.5 个词再加 1 秒反应），无台词的反应或空镜 4–5 秒。`
   }
   const retry = input.overBy ? `Your previous answer had ${input.overBy} panel(s) too many — merge neighbouring panels. ` : ''
-  return `\n\nLENGTH REQUIREMENT: ${retry}Plan at most ${input.panelBudget} panel(s) for this clip — never more — and make their "duration" values add up to about ${input.clipSeconds} seconds. Choose each panel's duration (4–15 seconds) from its content: long enough for its dialogue (about 2.5 words per second plus a second of reaction); silent reactions and establishing shots 4–5 seconds.`
+  return `\n\nLENGTH REQUIREMENT: ${retry}Plan at most ${input.panelBudget} panel(s) for this clip — never more. Give each speaker turn its own panel, and keep the total "duration" close to ${input.clipSeconds} seconds. Choose each panel's duration (4–15 seconds) from its content: long enough for its dialogue (about 2.5 words per second plus a second of reaction); silent reactions and establishing shots 4–5 seconds.`
 }
 
 /** Merges storyboard plan panels down to the budget without dropping any beat. */

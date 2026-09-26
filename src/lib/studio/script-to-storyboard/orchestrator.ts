@@ -25,7 +25,10 @@ import {
   normalizeWorkflowConcurrencyValue,
 } from '@/lib/workflow-concurrency'
 import { buildStoryboardDirective, mergePanelsToBudget } from '@/lib/studio/story-length'
-import { carryShotFields, normalizeShotFields } from '@/lib/studio/shot-dialogue'
+import { carryShotFields, countSpeakerTurns, limitMusicHits, normalizeShotFields } from '@/lib/studio/shot-dialogue'
+
+/** Upper bound on shots one clip may take for its speaker turns. */
+const MAX_PANELS_PER_CLIP = 6
 
 type JsonRecord = Record<string, unknown>
 const orchestratorLogger = createScopedLogger({ module: 'worker.orchestrator.script_to_storyboard' })
@@ -292,8 +295,12 @@ export async function runScriptToStoryboardOrchestrator(
   input: ScriptToStoryboardOrchestratorInput,
 ): Promise<ScriptToStoryboardOrchestratorResult> {
   const { clips, studioData, promptTemplates, runStep, concurrency: rawConcurrency, shotSeconds, locale } = input
-  const panelBudgetFor = (clip: ClipInput): number | null =>
-    shotSeconds && clip.duration ? Math.max(1, Math.round(clip.duration / shotSeconds)) : null
+  // Enough panels for the clip's time, and at least one per speaker turn (one speaker per shot).
+  const panelBudgetFor = (clip: ClipInput, screenplay: unknown): number | null => {
+    if (!shotSeconds || !clip.duration) return null
+    const byTime = Math.max(1, Math.round(clip.duration / shotSeconds))
+    return Math.max(byTime, Math.min(countSpeakerTurns(screenplay), MAX_PANELS_PER_CLIP))
+  }
   if (!Array.isArray(clips) || clips.length === 0) {
     throw new Error('No clips found')
   }
@@ -372,7 +379,7 @@ export async function runScriptToStoryboardOrchestrator(
           retryable: true,
         },
       )
-      const panelBudget = panelBudgetFor(clip)
+      const panelBudget = panelBudgetFor(clip, screenplay)
       const parsePlan = (text: string) => {
         const panels = parseJsonArray<StoryboardPanel>(text, `phase1:${formatClipId(clip)}`)
         if (panels.length === 0) {
@@ -405,7 +412,7 @@ export async function runScriptToStoryboardOrchestrator(
       return {
         clipId: clip.id,
         // Each shot keeps its own dialogue, mood and a length that fits its lines.
-        planPanels: planPanels.map((panel) => normalizeShotFields(panel)),
+        planPanels: limitMusicHits(planPanels.map((panel) => normalizeShotFields(panel))),
       }
     },
   )
@@ -533,11 +540,11 @@ export async function runScriptToStoryboardOrchestrator(
       return {
         clipId: clip.id,
         clipIndex,
-        finalPanels: carryShotFields(mergePanelsWithRules({
+        finalPanels: limitMusicHits(carryShotFields(mergePanelsWithRules({
           finalPanels: filteredPhase3Panels,
           photographyRules,
           actingDirections,
-        }), planPanels),
+        }), planPanels)),
       }
     },
   )

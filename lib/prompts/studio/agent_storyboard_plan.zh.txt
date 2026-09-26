@@ -328,6 +328,6 @@ Clip信息：
 15. 台词 dialogue：把内容中每一句台词逐字放进说出它的分镜的 "dialogue"，按顺序，不得删减；无人说话的分镜填 "dialogue": []。格式：[{"speaker": "角色名", "line": "台词原文", "delivery": "怎么说，如怒吼、语速快"}]
 16. 每个分镜只有一个说话者：对话时每个说话者单独一个分镜（正反打），说话者清晰可见并面向镜头；一个分镜最多放同一人的一到两句连续台词
 17. 时长 duration（整数秒，4–15）：足够从容说完本分镜台词（约每秒 2.5 个词），再加约 1 秒反应；无台词的反应或空镜 4–5 秒；不要为凑时长而拖长
-18. 情绪 mood（配乐氛围），从以下选一个：tension, villain, confident, anger, triumph, sad, romantic, suspense, comedy, calm, silence。震惊时刻需要音乐停下时用 "silence"
-19. music_hit：只有本片段最大的一两个揭秘/悬念分镜为 true，其余为 false
+18. 情绪 mood（配乐氛围），从以下选一个：tension, villain, confident, anger, triumph, sad, romantic, suspense, comedy, calm, silence。按每个分镜的情绪选择，让音乐随剧情变化（俏皮反击用 confident，轻松搞笑用 comedy，温柔对视用 romantic，揭秘用 suspense），不要所有分镜都用同一种。震惊时刻需要音乐停下时用 "silence"
+19. music_hit：本片段最多一个分镜为 true（最大的揭秘或悬念），其余为 false
 20. 有台词的分镜，在 "video_prompt" 中描述说话者的面部表演和口型动作

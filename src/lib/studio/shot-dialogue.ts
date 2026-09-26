@@ -73,6 +73,35 @@ export function resolveShotDuration(requested: unknown, lines: ShotDialogueLine[
   return Math.min(MAX_SHOT_SECONDS, Math.max(MIN_SHOT_SECONDS, Math.round(base), needed))
 }
 
+/**
+ * Speaker turns in a clip's screenplay JSON (consecutive lines by the same character count
+ * once). Each turn deserves its own shot so only one person speaks per shot.
+ */
+export function countSpeakerTurns(screenplay: unknown): number {
+  if (!screenplay || typeof screenplay !== 'object') return 0
+  const scenes = (screenplay as { scenes?: unknown }).scenes
+  if (!Array.isArray(scenes)) return 0
+  let turns = 0
+  let lastSpeaker: string | null = null
+  for (const scene of scenes) {
+    const content = scene && typeof scene === 'object' ? (scene as { content?: unknown }).content : null
+    if (!Array.isArray(content)) continue
+    for (const item of content) {
+      if (!item || typeof item !== 'object' || (item as { type?: unknown }).type !== 'dialogue') continue
+      const speaker = text((item as { character?: unknown }).character) || 'Character'
+      if (speaker !== lastSpeaker) turns += 1
+      lastSpeaker = speaker
+    }
+  }
+  return turns
+}
+
+/** Keeps at most one music hit per clip: the last one (usually the reveal or cliffhanger). */
+export function limitMusicHits<T extends Record<string, unknown>>(panels: T[]): T[] {
+  const last = panels.map((panel) => panel.music_hit === true).lastIndexOf(true)
+  return panels.map((panel, index) => (panel.music_hit === true && index !== last ? { ...panel, music_hit: false } : panel))
+}
+
 type PanelLike = Record<string, unknown> & { panel_number?: number; duration?: number }
 
 /**

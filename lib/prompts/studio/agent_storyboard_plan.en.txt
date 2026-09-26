@@ -63,6 +63,6 @@ Planning rules:
 9. DIALOGUE: put every spoken line from the clip content into the "dialogue" of the panel where it is said, word for word, in order. Never drop or shorten a line. Panels with no speech get "dialogue": [].
 10. ONE SPEAKER PER PANEL: when characters talk to each other, give each speaker their own panel (shot / reverse shot) with the speaker clearly visible and facing the camera. A panel may hold one or two consecutive lines from the same speaker.
 11. DURATION (whole seconds, 4–15): long enough to say the panel’s lines calmly (about 2.5 words per second) plus about a second for the reaction; silent reactions and establishing shots 4–5 seconds. Never pad a shot beyond what happens in it.
-12. MOOD: the music feel of the panel, one of: tension, villain, confident, anger, triumph, sad, romantic, suspense, comedy, calm, silence. Use "silence" for a shocking beat where the music should stop.
-13. MUSIC_HIT: true only on the one or two biggest reveal or cliffhanger panels of the clip, otherwise false.
+12. MOOD: the music feel of the panel, one of: tension, villain, confident, anger, triumph, sad, romantic, suspense, comedy, calm, silence. Follow the emotion of each panel so the music changes as the scene turns (a sassy comeback is "confident", a playful moment "comedy", a tender look "romantic", a reveal "suspense"); do not give every panel the same mood. Use "silence" for a shocking beat where the music should stop.
+13. MUSIC_HIT: true on at most one panel of the clip — the biggest reveal or cliffhanger — otherwise false.
 14. In "video_prompt", describe the speaker’s facial acting and mouth movement for panels with dialogue.

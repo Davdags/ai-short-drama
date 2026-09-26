@@ -55,7 +55,6 @@ const NAV_STYLE = {
   bar: 'bg-white/80 border-[#e5e5e5]',
   link: 'text-sm text-[#525252] hover:text-[#171717] font-medium transition-colors',
   strong: 'text-[#171717]',
-  badge: 'bg-black',
   skeleton: 'bg-[#f5f5f5]',
 } as const
 
@@ -106,9 +105,8 @@ export default function Navbar() {
               </Link>
             </>
           )}
-          <Link href={{ pathname: '/workflows' }} className={`relative ${NAV_STYLE.link}`}>
+          <Link href={{ pathname: '/workflows' }} className={NAV_STYLE.link}>
             Workflows
-            <span className={`absolute -top-1.5 -right-5 px-1.5 py-px text-white text-[8px] rounded ${NAV_STYLE.badge}`}>NEW</span>
           </Link>
           <Link href={{ pathname: '/pricing' }} className={NAV_STYLE.link}>
             Pricing

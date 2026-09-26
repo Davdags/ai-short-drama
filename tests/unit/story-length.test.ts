@@ -73,7 +73,8 @@ describe('story length plan', () => {
   it('writes the storyboard instruction in the project language', () => {
     const en = buildStoryboardDirective('en', { panelBudget: 3, clipSeconds: 18 })
     expect(en).toContain('at most 3 panel')
-    expect(en).toContain('about 18 seconds')
+    expect(en).toContain('close to 18 seconds')
+    expect(en).toContain('each speaker turn its own panel')
     expect(buildStoryboardDirective('zh', { panelBudget: 3, clipSeconds: 18, overBy: 2 })).toContain('最多规划 3 个分镜')
   })
 

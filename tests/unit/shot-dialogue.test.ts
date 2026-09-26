@@ -4,6 +4,8 @@ vi.mock('@/lib/prisma', () => ({ prisma: {} }))
 
 import {
   carryShotFields,
+  countSpeakerTurns,
+  limitMusicHits,
   dialogueSeconds,
   normalizeShotDialogue,
   normalizeShotFields,
@@ -53,6 +55,33 @@ describe('shot dialogue', () => {
     const [final] = carryShotFields<Record<string, unknown>>([{ panel_number: 1, description: 'Chidi slams the desk' }], plan)
     expect(final.dialogue).toEqual([chidi])
     expect(final).toMatchObject({ duration: 6, mood: 'anger', music_hit: true, description: 'Chidi slams the desk' })
+  })
+})
+
+describe('speaker turns and music hits', () => {
+  it('counts a new turn each time the speaker changes', () => {
+    const screenplay = {
+      scenes: [
+        { content: [
+          { type: 'action', text: 'Rain.' },
+          { type: 'dialogue', character: 'Seo-yeon', lines: 'We are closed.' },
+          { type: 'dialogue', character: 'Jun-ho', lines: 'Pretend I am your boyfriend.' },
+        ] },
+        { content: [
+          { type: 'dialogue', character: 'Seo-yeon', lines: 'Reporters!' },
+          { type: 'dialogue', character: 'Seo-yeon', lines: 'You are late again, honey!' },
+          { type: 'dialogue', character: 'Jun-ho', lines: 'Sorry, darling.' },
+        ] },
+      ],
+    }
+    expect(countSpeakerTurns(screenplay)).toBe(4)
+    expect(countSpeakerTurns(null)).toBe(0)
+    expect(countSpeakerTurns({ scenes: 'bad' })).toBe(0)
+  })
+
+  it('keeps only the last music hit in a clip', () => {
+    const panels = limitMusicHits([{ music_hit: true }, { music_hit: false }, { music_hit: true }])
+    expect(panels.map((panel) => panel.music_hit)).toEqual([false, false, true])
   })
 })
 
